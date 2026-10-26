@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Janji Temu Orang Tua — BK SMP Labschool Ciracas</title>
+<meta name="description" content="Formulir janji temu orang tua/wali dengan guru BK SMP Labschool Ciracas.">
+<meta name="theme-color" content="#1D3FAE">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Janji Temu Orang Tua — BK SMP Labschool Ciracas">
+<meta property="og:description" content="Formulir janji temu orang tua/wali dengan guru BK SMP Labschool Ciracas.">
+<meta property="og:image" content="https://farel26.github.io/web-bk-labschool-ciracas/assets/img/og-image.jpg">
+<meta property="og:locale" content="id_ID">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div style="background: #FEFBF2; min-height: 100vh">
+<div class="wrap">
+  <header class="site-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+    <a href="index.html" aria-label="Beranda BK SMP Labschool Ciracas" style="display: flex; align-items: center; gap: 16px; text-decoration: none">
+      <img src="assets/img/logo-labschool-ciracas.webp" alt="Logo SMP Labschool Ciracas" style="height: 52px; width: auto; display: block">
+      <span aria-hidden="true" style="width: 1.5px; height: 40px; background: #D9DCE6"></span>
+      <span style="display: flex; flex-direction: column; line-height: 1.15; font-family: Rubik, sans-serif; font-weight: 800; font-size: 17px; color: #1D3FAE"><span>Bimbingan</span><span>dan Konseling</span></span>
+    </a>
+    <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
+  </header>
+  <main style="max-width: 720px; margin: 0 auto; padding: 24px 0 88px">
+    <span class="eyebrow">Untuk orang tua/wali</span>
+    <h1 class="h2" style="margin-top: 12px">Buat janji temu dengan guru BK</h1>
+    <p class="lead" style="margin-top: 14px">Isi formulir berikut. Guru BK akan menghubungi Bapak/Ibu lewat WhatsApp untuk menentukan jadwal.</p>
+    <form class="js-form" data-form="JanjiOrangTua" data-ok="Permintaan terkirim. Guru BK akan menghubungi Bapak/Ibu lewat WhatsApp." novalidate style="margin-top: 28px; background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
+      <div class="field"><label for="j-ortu">Nama orang tua/wali</label><input id="j-ortu" name="nama_ortu" type="text" autocomplete="name" required></div>
+      <div class="g2" style="gap: 16px">
+        <div class="field"><label for="j-siswa">Nama siswa</label><input id="j-siswa" name="nama_siswa" type="text" required></div>
+        <div class="field"><label for="j-kelas">Kelas</label><input id="j-kelas" name="kelas" type="text" placeholder="mis. 7A" required></div>
+      </div>
+      <div class="field"><label for="j-wa">Nomor WhatsApp</label><input id="j-wa" name="wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" required></div>
+      <div class="field"><label for="j-perlu">Keperluan</label><textarea id="j-perlu" name="keperluan" rows="4" required></textarea></div>
+      <div class="field"><label for="j-waktu">Waktu yang diinginkan</label>
+        <select id="j-waktu" name="waktu" required><option value="">Pilih waktu</option><option>Pagi (07.00–10.00)</option><option>Siang (10.00–13.00)</option><option>Sore (13.00–15.00)</option><option>Fleksibel</option></select></div>
+      <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Kirim Permintaan</button>
+      <p class="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+</div>
+<footer style="background: #12204F; color: #DCE3F8">
+  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750</div>
+</footer>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

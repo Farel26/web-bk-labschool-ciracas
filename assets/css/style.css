@@ -1,0 +1,74 @@
+body{margin:0;background:#FEFBF2}
+a{color:#1D3FAE}a:hover{color:#142C7A}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px;box-sizing:border-box}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.nav-links{display:flex;gap:24px;align-items:center}
+.menu-btn{display:none}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.split{display:grid;grid-template-columns:1fr 1.1fr;gap:40px;align-items:start}
+.gal{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:180px 180px;gap:16px}
+.gal .big{grid-row:span 2}
+.gal4{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:170px;gap:16px}
+.gal-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 16px}
+.card{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:20px;padding:24px;box-sizing:border-box}
+.eyebrow{font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9A6A12}
+.h2{margin:0;font-family:Rubik,sans-serif;font-weight:800;font-size:40px;line-height:1.1;color:#12204F}
+.lead{margin:0;font-size:17px;line-height:1.65;color:#3B4568;max-width:620px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:600;color:#12204F}
+.field input,.field select,.field textarea{font:inherit;font-size:15px;color:#12204F;background:#FFFFFF;border:1.5px solid #CFD5E6;border-radius:12px;padding:12px 14px;min-height:46px;box-sizing:border-box}
+.field input:focus,.field select:focus,.field textarea:focus{outline:3px solid #B9C8F2;border-color:#1D3FAE}
+.btn-primary:hover{background:#142C7A !important}
+.btn-ghost:hover{background:#EEF1FB !important}
+.link-card:hover{border-color:#1D3FAE !important}
+@media (max-width: 960px){
+.g4{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr}
+}
+@media (max-width: 860px){
+.hero-grid,.g2,.split{grid-template-columns:1fr;gap:24px}
+.hero-art{order:-1}
+.nav-links{display:none}
+.menu-btn{display:inline-flex}
+.hero-title{font-size:52px !important}
+.h2{font-size:30px}
+.gal{grid-template-columns:1fr 1fr;grid-template-rows:140px 140px 140px}
+.gal .big{grid-row:span 1;grid-column:span 2}
+.gal4{grid-template-columns:1fr 1fr;grid-auto-rows:130px}
+}
+@media (max-width: 560px){
+.g4,.g3{grid-template-columns:1fr}
+}
+
+/* ===== Tambahan untuk versi web ===== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{color:#12204F;font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+img{max-width:100%}
+section[id],div[id]{scroll-margin-top:16px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.soon{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#FDF1DA;color:#7A520C;font-size:13px;font-weight:700;white-space:nowrap}
+.form-status{margin:0;font-size:14px;font-weight:600;min-height:1.2em}
+.form-status.ok{color:#17603B}
+.form-status.err{color:#A1260D}
+.field .hint{font-size:13px;color:#4A5578}
+.field input[aria-invalid="true"],.field select[aria-invalid="true"],.field textarea[aria-invalid="true"]{border-color:#A1260D}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.5}
+.check input{width:20px;height:20px;margin-top:2px;flex:none}
+button[disabled]{opacity:.6;cursor:wait}
+a:focus-visible,button:focus-visible{outline:3px solid #E4A93A;outline-offset:3px;border-radius:8px}
+@media (max-width: 860px){
+  .nav-links.open{display:flex;position:absolute;top:100%;left:0;right:0;z-index:20;flex-direction:column;align-items:stretch;gap:4px;background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:12px;box-shadow:0 16px 40px rgba(18,32,79,.12)}
+  .nav-links.open a{min-height:44px;display:flex;align-items:center;padding:0 12px}
+  .nav-links.open a[href="#konsultasi"]{justify-content:center;margin-top:6px}
+  .site-header a[aria-label] img{height:42px !important}
+}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+.split>*,.g2>*,.hero-grid>*{min-width:0}
+@media (max-width: 860px){
+  [style*="padding: 48px"]{padding:24px !important}
+  form[style*="padding: 32px"]{padding:20px !important}
+  [style*="padding: 36px"]{padding:24px !important}
+}
