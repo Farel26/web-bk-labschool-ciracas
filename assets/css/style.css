@@ -72,3 +72,26 @@ a:focus-visible,button:focus-visible{outline:3px solid #E4A93A;outline-offset:3p
   form[style*="padding: 32px"]{padding:20px !important}
   [style*="padding: 36px"]{padding:24px !important}
 }
+
+/* ===== Pilihan, skala, kode ===== */
+fieldset.choice{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+fieldset.choice legend{width:100%;padding:0;margin-bottom:8px;font-size:14px;font-weight:600;color:#12204F}
+fieldset.choice label{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1.5px solid #CFD5E6;border-radius:12px;background:#FFFFFF;font-size:15px;cursor:pointer}
+fieldset.choice label:has(input:checked){border-color:#1D3FAE;background:#EEF1FB;color:#1D3FAE;font-weight:600}
+fieldset.choice input{width:18px;height:18px;margin:0;accent-color:#1D3FAE}
+fieldset.choice[aria-invalid="true"] label{border-color:#A1260D}
+fieldset.scale label{flex:1;justify-content:center;min-width:52px;padding:0}
+fieldset.scale label input{position:absolute;opacity:0;width:1px;height:1px}
+fieldset.scale label span{font-family:Rubik,sans-serif;font-weight:800;font-size:18px}
+fieldset.scale label:has(input:focus-visible){outline:3px solid #E4A93A;outline-offset:2px}
+.scale-ends{width:100%;margin:2px 0 0;display:flex;justify-content:space-between;font-size:13px;color:#4A5578}
+.kode-box{margin-top:28px;background:#FFFFFF;border:2px solid #1D3FAE;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:14px}
+.kode-box[hidden]{display:none}
+#hasil-cek[hidden]{display:none !important}
+
+@media (max-width: 860px){.lapor-band{grid-template-columns:1fr !important;padding:28px 24px !important}.lapor-band h2{font-size:28px !important}}
+form[hidden]{display:none !important}
+@media (max-width: 560px){
+  .sub-header a[aria-label] > span{display:none}
+  .sub-header a[aria-label] img{height:44px !important}
+}

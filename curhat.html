@@ -22,7 +22,7 @@
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
 <div class="wrap">
-  <header class="site-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+  <header class="site-header sub-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
     <a href="index.html" aria-label="Beranda BK SMP Labschool Ciracas" style="display: flex; align-items: center; gap: 16px; text-decoration: none">
       <img src="assets/img/logo-labschool-ciracas.webp" alt="Logo SMP Labschool Ciracas" style="height: 52px; width: auto; display: block">
       <span aria-hidden="true" style="width: 1.5px; height: 40px; background: #D9DCE6"></span>
@@ -33,8 +33,8 @@
   <main style="max-width: 720px; margin: 0 auto; padding: 24px 0 88px">
     <span class="eyebrow">Kotak curhat anonim</span>
     <h1 class="h2" style="margin-top: 12px">Cerita saja, nggak perlu tulis nama</h1>
-    <p class="lead" style="margin-top: 14px">Tulis apa yang sedang kamu rasakan atau alami. Hanya guru BK yang membaca. Kalau ingin dibantu langsung, kamu boleh meninggalkan nama atau kontak.</p>
-    <form class="js-form" data-form="Curhat" data-ok="Terima kasih sudah bercerita. Guru BK sudah menerima ceritamu." novalidate style="margin-top: 28px; background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+    <p class="lead" style="margin-top: 14px">Tulis apa yang sedang kamu rasakan atau alami. Hanya guru BK yang membaca. Setelah mengirim, kamu mendapat kode untuk melihat balasan guru BK di halaman <a href="cek.html">Cek Balasan</a>.</p>
+    <form class="js-form" data-form="Curhat" data-kode="1" novalidate style="margin-top: 28px; background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
       <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
       <div class="g2" style="gap: 16px">
         <div class="field"><label for="c-jenjang">Kelas (opsional)</label>
@@ -48,6 +48,16 @@
       <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Kirim Cerita</button>
       <p class="form-status" role="status" aria-live="polite"></p>
     </form>
+    <div class="kode-box" hidden tabindex="-1">
+      <h2 style="margin: 0; font-family: Rubik, sans-serif; font-weight: 800; font-size: 24px">Ceritamu sudah diterima guru BK. Terima kasih sudah bercerita.</h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.6">Simpan kode ini. Kamu bisa memakainya untuk melihat balasan guru BK di halaman <a href="cek.html">Cek Balasan</a>, tanpa perlu menyebutkan nama.</p>
+      <p class="kode-val" style="margin: 0; font-family: Rubik, sans-serif; font-weight: 800; font-size: 36px; letter-spacing: 2px; color: #1D3FAE"></p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px">
+        <button type="button" class="btn-ghost kode-copy" style="min-height: 48px; padding: 0 20px; border-radius: 999px; border: 2px solid #1D3FAE; background: transparent; color: #1D3FAE; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">Salin kode</button>
+        <a class="kode-link" href="cek.html" style="min-height: 48px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font-weight: 700; font-size: 15px; text-decoration: none">Cek balasan nanti</a>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: #4A5578">Tip: foto layar ini atau catat kodenya, lalu cek kembali beberapa hari lagi.</p>
+    </div>
     <aside style="margin-top: 24px; background: #FFF4F0; border: 1px solid #F4D6CB; border-radius: 20px; padding: 22px 24px; font-size: 15px; line-height: 1.6; color: #5B3A30">
       <strong style="color: #8A2B12">Butuh bantuan segera?</strong> Formulir ini tidak dipantau setiap saat. Kalau kamu dalam bahaya atau merasa tidak aman, hubungi orang dewasa yang kamu percaya, SAPA 129 (telepon 129 · WA 08111-129-129), atau panggilan darurat 112.
     </aside>

@@ -9,6 +9,9 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `index.html` | Beranda |
 | `curhat.html` | Kotak curhat anonim |
 | `janji-orang-tua.html` | Formulir janji temu orang tua/wali |
+| `lapor.html` | Lapor perundungan (boleh anonim, dapat kode) |
+| `cek.html` | Cek balasan guru BK dengan kode |
+| `survei.html` | Survei kepuasan layanan |
 | `assets/css/style.css` | Tampilan |
 | `assets/js/config.js` | **Tempat URL Apps Script** |
 | `assets/js/main.js` | Menu HP, pengiriman formulir, agenda dari Sheets |
@@ -25,7 +28,9 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 4. Izinkan akses yang diminta, lalu salin URL yang berakhiran `/exec`.
 5. Tempel URL itu di `assets/js/config.js` pada `SCRIPT_URL`, lalu commit.
 
-Isian formulir masuk ke tab **Konseling**, **Curhat**, dan **JanjiOrangTua**. Setiap isian baru juga mengirim email pemberitahuan ke pemilik sheet, tanpa isi ceritanya.
+Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, **JanjiOrangTua**, dan **Survei**. Tab **Rekap** menghitung semuanya otomatis.
+
+**Setelah mengganti `Code.gs`:** Terapkan → Kelola deployment → edit (pensil) → Versi: *Versi baru* → Terapkan. URL tetap sama. Setiap isian baru juga mengirim email pemberitahuan ke pemilik sheet, tanpa isi ceritanya.
 
 ## Memperbarui isi tanpa mengedit kode
 
@@ -36,3 +41,7 @@ Isian formulir masuk ke tab **Konseling**, **Curhat**, dan **JanjiOrangTua**. Se
 
 - Data siswa hanya disimpan di Google Sheet, bukan di repo ini. Repo ini publik.
 - Bagikan sheet hanya kepada guru BK.
+
+## Kode cek balasan
+
+Curhat dan laporan perundungan mendapat kode (mis. `BK-7F3K9Q`). Guru BK menulis jawaban di kolom **"Balasan untuk siswa/pelapor (tampil di web)"**. Siswa membacanya di `cek.html` dengan kode itu. Kolom catatan internal tidak pernah tampil di web.

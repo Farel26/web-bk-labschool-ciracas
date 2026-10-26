@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survei Kepuasan Layanan — BK SMP Labschool Ciracas</title>
+<meta name="description" content="Survei singkat kepuasan layanan Bimbingan dan Konseling SMP Labschool Ciracas.">
+<meta name="theme-color" content="#1D3FAE">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Survei Kepuasan Layanan — BK SMP Labschool Ciracas">
+<meta property="og:description" content="Survei singkat kepuasan layanan Bimbingan dan Konseling SMP Labschool Ciracas.">
+<meta property="og:image" content="https://farel26.github.io/web-bk-labschool-ciracas/assets/img/og-image.jpg">
+<meta property="og:locale" content="id_ID">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div style="background: #FEFBF2; min-height: 100vh">
+<div class="wrap">
+  <header class="site-header sub-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+    <a href="index.html" aria-label="Beranda BK SMP Labschool Ciracas" style="display: flex; align-items: center; gap: 16px; text-decoration: none">
+      <img src="assets/img/logo-labschool-ciracas.webp" alt="Logo SMP Labschool Ciracas" style="height: 52px; width: auto; display: block">
+      <span aria-hidden="true" style="width: 1.5px; height: 40px; background: #D9DCE6"></span>
+      <span style="display: flex; flex-direction: column; line-height: 1.15; font-family: Rubik, sans-serif; font-weight: 800; font-size: 17px; color: #1D3FAE"><span>Bimbingan</span><span>dan Konseling</span></span>
+    </a>
+    <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
+  </header>
+  <main style="max-width: 720px; margin: 0 auto; padding: 24px 0 88px">
+    <span class="eyebrow">Survei kepuasan</span>
+    <h1 class="h2" style="margin-top: 12px">Bagaimana layanan BK hari ini?</h1>
+    <p class="lead" style="margin-top: 14px">Jawabanmu anonim dan membantu guru BK memperbaiki layanan. Cuma butuh satu menit.</p>
+    <form class="js-form" data-form="Survei" data-ok="Terima kasih atas masukanmu!" novalidate style="margin-top: 28px; background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
+      <div class="g2" style="gap: 16px">
+        <div class="field"><label for="s-layanan">Layanan yang kamu ikuti</label>
+          <select id="s-layanan" name="layanan" required><option value="">Pilih layanan</option><option>Konseling individual</option><option>Konseling kelompok</option><option>Bimbingan kelompok</option><option>Bimbingan klasikal</option><option>Konsultasi orang tua</option><option>Lainnya</option></select></div>
+        <div class="field"><label for="s-kelas">Kelas (opsional)</label><input id="s-kelas" name="kelas" type="text" placeholder="mis. 7A"></div>
+      </div>
+      <fieldset class="choice scale"><legend>Seberapa terbantu kamu?</legend><label><input type="radio" name="terbantu" value="1" required> <span>1</span></label><label><input type="radio" name="terbantu" value="2"> <span>2</span></label><label><input type="radio" name="terbantu" value="3"> <span>3</span></label><label><input type="radio" name="terbantu" value="4"> <span>4</span></label><label><input type="radio" name="terbantu" value="5"> <span>5</span></label><p class="scale-ends"><span>1 = sama sekali tidak</span><span>5 = sangat</span></p></fieldset>
+      <fieldset class="choice scale"><legend>Seberapa nyaman kamu bercerita?</legend><label><input type="radio" name="nyaman" value="1" required> <span>1</span></label><label><input type="radio" name="nyaman" value="2"> <span>2</span></label><label><input type="radio" name="nyaman" value="3"> <span>3</span></label><label><input type="radio" name="nyaman" value="4"> <span>4</span></label><label><input type="radio" name="nyaman" value="5"> <span>5</span></label><p class="scale-ends"><span>1 = sama sekali tidak</span><span>5 = sangat</span></p></fieldset>
+      <fieldset class="choice"><legend>Mau datang ke BK lagi kalau butuh?</legend>
+        <label><input type="radio" name="kembali" value="Ya" required> Ya</label>
+        <label><input type="radio" name="kembali" value="Ragu-ragu"> Ragu-ragu</label>
+        <label><input type="radio" name="kembali" value="Tidak"> Tidak</label>
+      </fieldset>
+      <div class="field"><label for="s-saran">Saran untuk guru BK (opsional)</label><textarea id="s-saran" name="saran" rows="3"></textarea></div>
+      <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Kirim Survei</button>
+      <p class="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+</div>
+<footer style="background: #12204F; color: #DCE3F8">
+  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750</div>
+</footer>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
