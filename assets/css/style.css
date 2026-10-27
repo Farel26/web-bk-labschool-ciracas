@@ -95,3 +95,86 @@ form[hidden]{display:none !important}
   .sub-header a[aria-label] > span{display:none}
   .sub-header a[aria-label] img{height:44px !important}
 }
+
+/* ===== Arsip & kaldik ===== */
+.back-link{display:flex;width:max-content;align-items:center;min-height:44px;margin-bottom:12px;font-weight:700;font-size:15px;text-decoration:none}
+.arsip-cover{display:block;width:100%;height:auto;max-height:460px;object-fit:cover;border-radius:24px;margin-top:28px}
+.meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 0;padding:0}
+.meta-grid div{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:14px 16px}
+.meta-grid dt{font-size:13px;font-weight:700;color:#4A5578;margin:0 0 4px}
+.meta-grid dd{margin:0;font-size:15px;line-height:1.5;color:#12204F}
+.arsip-sec{margin-top:48px;display:flex;flex-direction:column;gap:14px}
+.arsip-sec h2{margin:0;font-family:Rubik,sans-serif;font-weight:800;font-size:28px;color:#12204F}
+.arsip-sec p{margin:0;font-size:16px;line-height:1.7;color:#3B4568}
+.prose-list{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:16px;line-height:1.6;color:#3B4568}
+.tri-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.tri-grid .card h3,.key-grid .card h3{margin:0 0 10px;font-family:Rubik,sans-serif;font-weight:700;font-size:19px;color:#12204F}
+.tri-grid .prose-list{font-size:15px}
+.key-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.key-grid .card p{font-size:15px;line-height:1.6}
+.key-grid .stop{background:#EEF1FB;border-color:#C9D3F1}
+.note-box{margin-top:28px;background:#F1F4FC;border-radius:16px;padding:18px 20px;font-size:15px;line-height:1.6;color:#3B4568}
+.note-box.warm{background:#FDF1DA;color:#5C3D07;margin-top:4px}
+.quote{font-family:Rubik,sans-serif;font-weight:700;font-size:22px !important;color:#1D3FAE !important;text-align:center;padding:8px 0}
+.table-wrap{overflow-x:auto;border:1px solid #ECE8DA;border-radius:16px;background:#FFFFFF}
+.table-wrap table{width:100%;border-collapse:collapse;font-size:15px;min-width:420px}
+.table-wrap th{text-align:left;background:#F1F4FC;color:#12204F;font-weight:700;padding:12px 14px}
+.table-wrap td{padding:12px 14px;border-top:1px solid #ECE8DA;color:#3B4568}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.photo-grid figure{margin:0;display:flex;flex-direction:column;gap:6px}
+.photo-grid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;display:block;background:#E7ECFA}
+.photo-grid figcaption{font-size:13px;color:#4A5578}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stat{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:4px}
+.stat-num{font-family:Rubik,sans-serif;font-weight:800;font-size:28px;color:#1D3FAE}
+.stat-label{font-size:14px;color:#4A5578}
+.bars{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.bar-legend{display:flex;gap:18px;font-size:13px;color:#4A5578}
+.bar-legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.sw.pre,.bar.pre{background:#B9C8F2}.sw.post,.bar.post{background:#1D3FAE}
+.bar-row{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;align-items:center}
+.bar-row .bar-label{grid-row:span 2;font-weight:600;font-size:15px}
+.bar-track{display:flex;align-items:center;gap:8px;height:18px}
+.bar{display:block;height:14px;border-radius:4px}
+.bar-val{font-size:13px;color:#3B4568}
+.arsip-list{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:32px}
+.arsip-card{display:flex;flex-direction:column;padding:0;overflow:hidden;text-decoration:none;color:#12204F}
+.arsip-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.arsip-card-body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.arsip-card h2{margin:4px 0 0;font-family:Rubik,sans-serif;font-weight:800;font-size:22px;line-height:1.25}
+.arsip-card p{margin:0;font-size:15px;line-height:1.6;color:#3B4568}
+.arsip-card .arsip-date{font-size:14px;color:#4A5578;font-weight:600}
+.arsip-more{font-weight:700;color:#1D3FAE;font-size:15px;margin-top:4px}
+.kaldik-meta{margin:14px 0 0;font-size:14px;color:#4A5578}
+.kaldik-filter{display:flex;flex-wrap:wrap;gap:8px;margin-top:36px}
+.kaldik-filter button{min-height:44px;padding:0 18px;border-radius:999px;border:1.5px solid #CFD5E6;background:#FFFFFF;color:#12204F;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
+.kaldik-filter button[aria-pressed="true"]{background:#1D3FAE;border-color:#1D3FAE;color:#FFFFFF}
+.kaldik-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px}
+.kaldik-month{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:20px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.kaldik-month.now{border:2px solid #1D3FAE}
+.kaldik-month.past{opacity:.72}
+.kaldik-month h2{margin:0;font-family:Rubik,sans-serif;font-weight:800;font-size:22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.kaldik-month .badge{font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;background:#1D3FAE;color:#FFFFFF;border-radius:999px;padding:3px 10px}
+.kaldik-month .info{margin:0;font-size:13px;color:#4A5578}
+.kaldik-month ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.kaldik-month li{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:15px;line-height:1.5}
+.kaldik-month li .d{font-weight:700;color:#1D3FAE}
+.kaldik-month li.libur .d,.kaldik-month li.libur .n{color:#A1260D}
+.kaldik-month li.done .n{color:#4A5578}
+.kaldik-next{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.kaldik-next li{display:flex;gap:14px;align-items:center;background:#FFFFFF;border:1px solid #ECE8DA;border-radius:14px;padding:12px 16px;font-size:15px}
+.kaldik-next .d{flex:none;min-width:110px;font-weight:800;font-family:Rubik,sans-serif;color:#1D3FAE}
+.kaldik-loading,.kaldik-note{font-size:15px;color:#4A5578}
+.kaldik-note{margin-top:20px}
+@media (max-width: 860px){
+  .meta-grid,.tri-grid,.key-grid,.photo-grid{grid-template-columns:1fr 1fr}
+  .arsip-list,.kaldik-grid,.stat-row{grid-template-columns:1fr}
+  .arsip-sec h2{font-size:24px}
+}
+@media (max-width: 560px){
+  .meta-grid,.tri-grid,.key-grid{grid-template-columns:1fr}
+  .kaldik-month li{grid-template-columns:84px 1fr}
+  .bar-row{grid-template-columns:84px 1fr}
+}
+.kaldik-grid[data-f="kegiatan"] li.libur,.kaldik-grid[data-f="libur"] li.kegiatan{display:none}
+#kaldik-terdekat-wrap[hidden]{display:none}

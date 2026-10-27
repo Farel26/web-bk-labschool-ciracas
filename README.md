@@ -12,6 +12,8 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `lapor.html` | Lapor perundungan (boleh anonim, dapat kode) |
 | `cek.html` | Cek balasan guru BK dengan kode |
 | `survei.html` | Survei kepuasan layanan |
+| `kaldik.html` | Kalender pendidikan, otomatis dari file kaldik resmi |
+| `arsip.html`, `arsip-*.html` | Arsip kegiatan (tujuan, hasil, evaluasi, dokumentasi) |
 | `assets/css/style.css` | Tampilan |
 | `assets/js/config.js` | **Tempat URL Apps Script** |
 | `assets/js/main.js` | Menu HP, pengiriman formulir, agenda dari Sheets |
@@ -34,7 +36,9 @@ Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, *
 
 ## Memperbarui isi tanpa mengedit kode
 
-- **Agenda:** isi tab **Agenda** di sheet. Baris dengan Tampil = `YA` yang tanggalnya belum lewat akan muncul di web, maksimal 4.
+- **Kalender pendidikan:** otomatis. Apps Script menyalin file *Kalender Pendidikan SMP Labscira 2026-2027 (PUBLIC).xlsx* ke tab **Kaldik** setiap jam (fungsi `syncKaldik`). Cukup perbarui file kaldik aslinya. Untuk tahun ajaran baru, ganti `KALDIK_FILE_ID` di `Code.gs`.
+
+- **Agenda beranda:** gabungan kegiatan dari kaldik dan tab **Agenda** (khusus kegiatan BK). Baris dengan Tampil = `YA` yang tanggalnya belum lewat muncul di web, maksimal 4.
 - **Pengumuman:** baris pertama dengan Tampil = `YA` di tab **Pengumuman** muncul di pita biru.
 
 ## Privasi

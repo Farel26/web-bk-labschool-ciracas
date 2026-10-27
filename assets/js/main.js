@@ -145,6 +145,64 @@
     });
   }
 
+  /* ---------- Kalender pendidikan ---------- */
+  var kg = document.getElementById("kaldik-grid");
+  if (kg) {
+    var BLN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    var e3 = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+    var now = new Date();
+    var today = now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2) + "-" + ("0" + now.getDate()).slice(-2);
+    var nowKey = now.getFullYear() * 100 + now.getMonth() + 1;
+    var lbl = function (a, b) {
+      if (!a) return "";
+      var p = a.split("-"), q = (b || a).split("-");
+      var s = +p[2] + " " + BLN[+p[1] - 1];
+      if (b && b !== a) s = (p[1] === q[1] ? +p[2] : s) + "–" + +q[2] + " " + BLN[+q[1] - 1];
+      return s;
+    };
+    var fail = function () {
+      kg.innerHTML = '<p class="kaldik-loading">Kalender belum bisa dimuat. Silakan buka <a href="' + document.getElementById("kaldik-source").href + '" target="_blank" rel="noopener">file kaldik asli</a>.</p>';
+      document.getElementById("kaldik-updated").textContent = "Gagal memuat";
+    };
+    if (!URL_API) { fail(); } else {
+      fetch(URL_API + "?action=kaldik").then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.bulan || !d.bulan.length) { fail(); return; }
+        document.getElementById("kaldik-updated").textContent = d.diperbarui ? "Disinkronkan " + d.diperbarui : "Tersambung ke kaldik resmi";
+        if (d.sumber) document.getElementById("kaldik-source").href = d.sumber;
+        var up = [];
+        kg.innerHTML = d.bulan.map(function (b) {
+          var cls = b.key === nowKey ? " now" : (b.key < nowKey ? " past" : "");
+          var items = b.kegiatan.map(function (k) { return { t: k.tgl, n: k.judul, m: k.mulai, s: k.selesai, lib: false }; })
+            .concat(b.libur.map(function (k) { return { t: k.tgl, n: k.nama, m: k.mulai, s: k.selesai, lib: true }; }))
+            .sort(function (x, y) { return (x.m || "9") < (y.m || "9") ? -1 : 1; });
+          items.forEach(function (it) { if (!it.lib && it.m && (it.s || it.m) >= today) up.push(it); });
+          return '<article class="kaldik-month' + cls + '"' + (cls === " now" ? ' id="bulan-ini"' : "") + '>' +
+            "<h2>" + e3(b.bulan) + (cls === " now" ? ' <span class="badge">Bulan ini</span>' : "") + "</h2>" +
+            ((b.hbe || b.mingguEfektif) ? '<p class="info">Hari belajar efektif: ' + e3(b.hbe || "-") + " · Minggu efektif: " + e3(b.mingguEfektif || "-") + "</p>" : "") +
+            (items.length ? "<ul>" + items.map(function (it) {
+              var done = it.m && (it.s || it.m) < today;
+              return '<li class="' + (it.lib ? "libur" : "kegiatan") + (done ? " done" : "") + '"><span class="d">' + e3(lbl(it.m, it.s) || it.t) + '</span><span class="n">' + (it.lib ? "Libur: " : "") + e3(it.n) + "</span></li>";
+            }).join("") + "</ul>" : '<p class="info">Belum ada kegiatan tercatat.</p>') + "</article>";
+        }).join("");
+        var seen = {};
+        up = up.sort(function (x, y) { return x.m < y.m ? -1 : 1; })
+          .filter(function (it) { var k = it.n.toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; }).slice(0, 5);
+        if (up.length) {
+          document.getElementById("kaldik-terdekat").innerHTML = up.map(function (it) {
+            return '<li><span class="d">' + e3(lbl(it.m, it.s)) + "</span><span>" + e3(it.n) + "</span></li>";
+          }).join("");
+          document.getElementById("kaldik-terdekat-wrap").hidden = false;
+        }
+      }).catch(fail);
+    }
+    document.querySelectorAll(".kaldik-filter button").forEach(function (bt) {
+      bt.addEventListener("click", function () {
+        document.querySelectorAll(".kaldik-filter button").forEach(function (x) { x.setAttribute("aria-pressed", x === bt ? "true" : "false"); });
+        kg.dataset.f = bt.dataset.f;
+      });
+    });
+  }
+
   /* ---------- Agenda & pengumuman dari Google Sheets ---------- */
   var list = document.getElementById("agenda-list");
   var info = document.getElementById("pengumuman-teks");
