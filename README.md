@@ -66,6 +66,10 @@ Folder backup dan arsip scan selalu dibuat di sebelah sheet. Jika sheet dipindah
 - Akun ada di tab **AkunGuruBK** (Username, Nama, Salt, Hash password, Aktif, Terakhir masuk). Password hanya disimpan sebagai hash; ganti lewat tab **Akun** di dashboard. Isi `TIDAK` di kolom Aktif untuk menonaktifkan akun.
 - Data masuk ke tab **LaporanKejadian** dan **SuratPerjanjian**.
 - Sesi berlaku 6 jam; 5x salah password = dikunci 15 menit.
+- **DataSiswa**: daftar siswa resmi (Nama siswa, Kelas, L/P). Dipakai untuk saran nama dan isi kelas otomatis di dashboard. Perbarui setiap tahun ajaran.
+- **CatatanPerkembangan**: catatan tindak lanjut setiap kasus (KJ-). Kolom *Pantau berikutnya* di LaporanKejadian menentukan urutan di menu Pemantauan.
+- Pengingat email setiap Senin 06.00 (fungsi `pengingatPemantauan`, dipasang sekali lewat `pasangPemicuPengingat`).
+- Laporan bulanan untuk kepala sekolah dicetak dari menu Statistik.
 
 ## Kode cek balasan
 

@@ -402,3 +402,23 @@ form[hidden]{display:none !important}
 @media print{body.mode-cetak .scan-viewer{display:none}}
 .field .hint.hint-ok{color:#17603B;font-weight:600}
 .field .hint.hint-err{color:#A1260D;font-weight:600}
+
+/* ===== Dashboard guru BK: pemantauan & laporan bulanan ===== */
+.pill-telat{background:#A1260D;color:#FFFFFF}
+.tiles-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tile-alert{border-color:#E9C9C0;background:#FFF4F0}
+.tile-alert .tile-n{color:#A1260D}
+.riwayat-kasus{padding:0 20px 16px}
+.riwayat-kasus h3{margin:0 0 10px;font-size:15px;color:#12204F}
+.tl-mini{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid #CFD5E6;display:flex;flex-direction:column;gap:12px;font-size:14px;color:#3B4568}
+.tl-mini li{position:relative}
+.tl-mini li::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:#1D3FAE}
+.tl-mini p{margin:4px 0 0}
+.pre-wrap{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width: 760px){.tiles-3{grid-template-columns:minmax(0,1fr)}.riwayat-kasus{padding:0 16px 14px}}
+@media print{
+  #surat-cetak table.lap{border-collapse:collapse;width:100%;margin:4px 0 10px;font-size:10.5pt}
+  #surat-cetak table.lap th,#surat-cetak table.lap td{border:1px solid #000;padding:3px 6px;text-align:left;vertical-align:top}
+  #surat-cetak table.lap th{background:#EEE;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #surat-cetak table.lap tr{break-inside:avoid}
+}

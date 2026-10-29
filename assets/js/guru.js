@@ -73,6 +73,7 @@
     ["k-tanggal", "p-tanggal", "sl-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
     pilihTab("inbox");
     muatNamaSiswa();
+    muatPantau(true);
   }
 
   function keluar(pesan) {
@@ -98,6 +99,7 @@
     if (nama === "riwayat") muatRiwayat();
     if (nama === "statistik" && !dimuat.statistik) muatStatistik();
     if (nama === "akun") muatBackup();
+    if (nama === "pantau") muatPantau();
     if (nama === "scan" && !dimuat.scan) muatScan();
     if (nama === "scan" && !dimuat.nomor) muatNomor();
   }
@@ -130,12 +132,31 @@
     });
   });
 
+  // Daftar siswa resmi: saran nama saat mengetik, dan kelas terisi otomatis.
+  var petaSiswa = {};
   function muatNamaSiswa() {
     api("namaSiswa").then(function (d) {
       if (!d.ok) return;
-      $("dl-siswa").innerHTML = d.nama.map(function (n) { return '<option value="' + esc(n) + '">'; }).join("");
+      var list = d.siswa || (d.nama || []).map(function (n) { return { nama: n, kelas: "" }; });
+      petaSiswa = {};
+      list.forEach(function (x) { petaSiswa[x.nama.toLowerCase()] = x; });
+      $("dl-siswa").innerHTML = list.map(function (x) {
+        return '<option value="' + esc(x.nama) + '"' + (x.kelas ? ' label="' + esc(x.kelas) + '"' : "") + ">";
+      }).join("");
     }).catch(function () {});
   }
+  [["k-nama", "k-kelas"], ["p-nama", "p-kelas"], ["sl-nama", "sl-kelas"]].forEach(function (pas) {
+    var n = $(pas[0]), k = $(pas[1]);
+    function isiKelas() {
+      var x = petaSiswa[n.value.trim().toLowerCase()];
+      if (x && x.kelas && (!k.value.trim() || k.dataset.auto === "1")) {
+        k.value = x.kelas; k.dataset.auto = "1"; k.setAttribute("aria-invalid", "false");
+      }
+    }
+    n.addEventListener("input", isiKelas);
+    n.addEventListener("change", isiKelas);
+    k.addEventListener("input", function () { k.dataset.auto = ""; });
+  });
 
   /* ---------- Kotak masuk ---------- */
   var INBOX_LABEL = {
@@ -255,6 +276,88 @@
     var b = e.target.closest("button[data-lihat]"); if (b) lihatScan(b.dataset.lihat, b);
   });
 
+  /* ---------- Pemantauan kasus ---------- */
+  var dataPantau = [], pilihanStatusKasus = ["Dalam pendampingan", "Dirujuk/alih tangan", "Selesai"];
+  function setBadgePantau(n) { var b = $("badge-pantau"); b.hidden = !n; b.textContent = n; b.setAttribute("aria-label", n + " kasus perlu dipantau"); }
+  function labelJadwal(x, today) {
+    if (x.status === "Selesai") return { cls: "pill-selesai", teks: "Selesai" };
+    if (!x.pantau) return { cls: "", teks: "Belum dijadwalkan" };
+    var minggu = isoLokal(new Date(Date.now() + 7 * 864e5));
+    if (x.pantau < today) return { cls: "pill-telat", teks: "Terlambat · " + tglPanjang(x.pantau) };
+    if (x.pantau <= minggu) return { cls: "pill-baru", teks: "Pantau " + tglPanjang(x.pantau) };
+    return { cls: "", teks: "Pantau " + tglPanjang(x.pantau) };
+  }
+  function muatPantau(diam) {
+    var box = $("pantau-list");
+    if (!diam) box.innerHTML = '<p class="muted">Memuat…</p>';
+    return api("pemantauan", { semua: $("pantau-semua").checked }).then(function (d) {
+      if (!d.ok) { if (!diam) box.innerHTML = '<p class="muted">' + esc(d.error) + "</p>"; return; }
+      setBadgePantau(d.terlambat + d.segera);
+      if (diam) return;
+      dataPantau = d.items; pilihanStatusKasus = d.pilihanStatus || pilihanStatusKasus;
+      $("pantau-ringkas").innerHTML = '<div class="tiles tiles-3">' +
+        '<div class="tile"><span class="tile-n">' + d.aktif + '</span><span class="tile-l">Kasus masih didampingi</span></div>' +
+        '<div class="tile' + (d.terlambat ? " tile-alert" : "") + '"><span class="tile-n">' + d.terlambat + '</span><span class="tile-l">Melewati jadwal pantau</span></div>' +
+        '<div class="tile"><span class="tile-n">' + d.segera + '</span><span class="tile-l">Jadwal pantau 7 hari ke depan</span></div></div>';
+      if (!d.items.length) {
+        box.innerHTML = '<div class="kosong"><strong>Tidak ada kasus yang sedang didampingi.</strong><span>Kasus muncul di sini setelah laporan kejadian disimpan dengan status "Dalam pendampingan" atau "Dirujuk/alih tangan".</span></div>';
+        return;
+      }
+      box.innerHTML = d.items.map(function (x, i) {
+        var lj = labelJadwal(x, d.hariIni);
+        var opsi = pilihanStatusKasus.map(function (s) { return "<option" + (s === x.status ? " selected" : "") + ">" + esc(s) + "</option>"; }).join("");
+        return '<details class="inbox-item"' + (lj.cls === "pill-telat" ? ' data-baru="1"' : "") + "><summary>" +
+          '<span class="pill ' + lj.cls + '">' + esc(lj.teks) + "</span>" +
+          '<span class="inbox-judul">' + esc(x.nama) + " (" + esc(x.kelas) + ") · " + esc(x.kategori) + "</span>" +
+          '<span class="inbox-waktu">' + esc(x.nomor) + "</span></summary>" +
+          '<dl class="isian"><dt>Tanggal kejadian</dt><dd>' + esc(tglPanjang(x.tanggal)) + "</dd><dt>Status</dt><dd>" + esc(x.status) + "</dd>" +
+          "<dt>Deskripsi</dt><dd>" + esc(x.deskripsi) + "</dd><dt>Tindak lanjut awal</dt><dd>" + esc(x.tindak) + "</dd><dt>Dicatat oleh</dt><dd>" + esc(x.oleh) + "</dd></dl>" +
+          '<div class="riwayat-kasus"><h3>Catatan perkembangan</h3>' + (x.riwayat.length
+            ? '<ol class="tl-mini">' + x.riwayat.map(function (c) {
+                return "<li><strong>" + esc(tglPanjang(c.tanggal)) + "</strong> · " + esc(c.status) + " · oleh " + esc(c.oleh) + '<p class="pre-wrap">' + esc(c.catatan) + "</p>" +
+                  (c.rencana ? '<p class="muted pre-wrap" style="margin:4px 0 0">Rencana: ' + esc(c.rencana) + "</p>" : "") + "</li>";
+              }).join("") + "</ol>"
+            : '<p class="muted" style="margin:0">Belum ada catatan perkembangan.</p>') + "</div>" +
+          '<form class="inbox-form pantau-form" data-i="' + i + '" novalidate>' +
+          '<div class="g2" style="gap:14px"><div class="field"><label for="pc-tgl-' + i + '">Tanggal</label><input id="pc-tgl-' + i + '" type="date" value="' + d.hariIni + '" required></div>' +
+          '<div class="field"><label for="pc-st-' + i + '">Status kasus</label><select id="pc-st-' + i + '">' + opsi + "</select></div></div>" +
+          '<div class="field"><label for="pc-cat-' + i + '">Catatan perkembangan</label><textarea id="pc-cat-' + i + '" rows="3" required></textarea><span class="hint">Apa yang dilakukan dan bagaimana perkembangan siswa.</span></div>' +
+          '<div class="field"><label for="pc-ren-' + i + '">Rencana tindak lanjut (opsional)</label><textarea id="pc-ren-' + i + '" rows="2"></textarea></div>' +
+          '<div class="field" style="max-width:320px"><label for="pc-pan-' + i + '">Jadwal pantau berikutnya</label><input id="pc-pan-' + i + '" type="date"><span class="hint">Kosongkan bila kasus selesai.</span></div>' +
+          '<div class="tombol-baris"><button type="submit" class="btn-solid">Simpan catatan</button></div>' +
+          '<p class="form-status" role="status" aria-live="polite"></p></form></details>';
+      }).join("");
+    }).catch(function (err) { if (err.message !== "auth" && !diam) box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
+  }
+  $("pantau-semua").addEventListener("change", function () { muatPantau(); });
+  $("pantau-muat").addEventListener("click", function () { muatPantau(); });
+  $("pantau-list").addEventListener("change", function (e) {
+    var sel = e.target.closest("select[id^=pc-st-]"); if (!sel) return;
+    var pan = $("pc-pan-" + sel.id.slice(6)); pan.disabled = sel.value === "Selesai"; if (pan.disabled) pan.value = "";
+  });
+  $("pantau-list").addEventListener("submit", function (e) {
+    var f = e.target.closest(".pantau-form"); if (!f) return;
+    e.preventDefault();
+    var i = +f.dataset.i, x = dataPantau[i], st = f.querySelector(".form-status"), btn = f.querySelector("button[type=submit]");
+    var bad = tandaiWajib(f);
+    if (bad) { status(st, "Isi tanggal dan catatan perkembangan.", "err"); bad.focus(); return; }
+    var data = { nomor: x.nomor, tanggal: $("pc-tgl-" + i).value, status: $("pc-st-" + i).value, catatan: $("pc-cat-" + i).value,
+      rencana: $("pc-ren-" + i).value, pantau: $("pc-pan-" + i).value };
+    if (data.status !== "Selesai" && !data.pantau) {
+      if (f.dataset.ingat !== "1") { f.dataset.ingat = "1"; status(st, "Jadwal pantau berikutnya belum diisi. Tekan Simpan sekali lagi bila memang belum dijadwalkan.", "err"); $("pc-pan-" + i).focus(); return; }
+    }
+    sibuk(btn, true, "Menyimpan…"); status(st, "");
+    api("tambahCatatan", { data: data }).then(function (d) {
+      if (!d.ok) { status(st, d.error || "Gagal menyimpan.", "err"); return; }
+      dimuat.statistik = false;
+      return muatPantau().then(function () {
+        var item = dataPantau.map(function (y) { return y.nomor; }).indexOf(x.nomor);
+        var det = $("pantau-list").querySelectorAll("details")[item];
+        if (det) { det.open = true; var s2 = det.querySelector(".form-status"); status(s2, "Catatan " + d.id + " tersimpan.", "ok"); }
+      });
+    }).catch(gagalKoneksi(st, "Gagal menyimpan karena koneksi. Coba lagi.")).finally(function () { sibuk(btn, false); });
+  });
+
   /* ---------- Laporan kejadian ---------- */
   $("form-kejadian").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -265,7 +368,7 @@
     sibuk(btn, true, "Menyimpan…"); status(st, "");
     api("simpanKejadian", { data: {
       tanggal: $("k-tanggal").value, nama: $("k-nama").value, kelas: $("k-kelas").value, kategori: $("k-kategori").value,
-      deskripsi: $("k-deskripsi").value, tindakLanjut: $("k-tindak").value, status: $("k-status").value } })
+      deskripsi: $("k-deskripsi").value, tindakLanjut: $("k-tindak").value, status: $("k-status").value, pantau: $("k-pantau").value } })
       .then(function (d) {
         if (!d.ok) { status(st, d.error || "Gagal menyimpan.", "err"); return; }
         f.reset(); $("k-tanggal").value = hariIni(); dimuat.statistik = false;
@@ -658,6 +761,50 @@
       if (!d.ok) { sibuk(h, false); h.dataset.yakin = ""; h.textContent = "Hapus"; alertSingkat(h, d.error); return; }
       muatScan();
     }).catch(function (err) { if (err.message !== "auth") { sibuk(h, false); h.dataset.yakin = ""; h.textContent = "Hapus"; alertSingkat(h, "Gagal menghapus."); } });
+  });
+
+  /* ---------- Laporan bulanan ---------- */
+  (function () { var d = new Date(); $("lb-bulan").value = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2); })();
+  function inisial(n) { return String(n || "").trim().split(/\s+/).filter(String).map(function (w) { return w.charAt(0).toUpperCase() + "."; }).join(" "); }
+  function tabelLap(kepala, baris) {
+    return '<table class="lap"><thead><tr>' + kepala.map(function (k) { return "<th>" + esc(k) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      baris.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
+  }
+  TEMPLATE.bulanan = function (d) {
+    var st = d.statistik, namaBulan = BULAN[+d.bulan.slice(5) - 1] + " " + d.bulan.slice(0, 4);
+    var lay = st.layanan.filter(function (r) { return r.label !== "Survei kepuasan"; });
+    var catPerk = (lay.filter(function (r) { return r.label === "Catatan perkembangan kasus"; })[0] || {}).n || 0;
+    var kat = st.kategori.filter(function (r) { return r.n; });
+    var h = '<h2 class="surat-judul">LAPORAN BULANAN LAYANAN BIMBINGAN DAN KONSELING</h2><p class="surat-no">Bulan ' + esc(namaBulan) + "</p>" +
+      p("Periode " + tglPanjang(d.dari) + " sampai " + tglPanjang(d.sampai) + ". Data diambil otomatis dari web BK dan dashboard guru BK SMP Labschool Ciracas.") +
+      "<h3>A. Ringkasan layanan</h3>" + tabelLap(["Jenis layanan atau catatan", "Jumlah"], lay.map(function (r) { return [r.label, r.n]; })) +
+      "<h3>B. Laporan kejadian per kategori</h3>" + (kat.length ? tabelLap(["Kategori", "Jumlah"], kat.map(function (r) { return [r.label, r.n]; })) : p("Tidak ada laporan kejadian pada bulan ini.")) +
+      (st.tingkat.length ? tabelLap(["Tingkat", "Jumlah kasus"], st.tingkat.map(function (r) { return [r.label, r.n]; })) : "") +
+      "<h3>C. Daftar kasus bulan ini</h3>" + (d.kasus.length
+        ? tabelLap(["No", "Nomor", "Tanggal", "Siswa", "Kelas", "Kategori", "Status"], d.kasus.map(function (k, i) {
+            return [i + 1, k.nomor, tglPanjang(k.tanggal), d.namaLengkap ? k.nama : inisial(k.nama), k.kelas, k.kategori, k.status];
+          }))
+        : p("Tidak ada kasus baru pada bulan ini.")) +
+      "<h3>D. Pemantauan kasus</h3>" + p("Kasus yang masih didampingi saat laporan ini dibuat: " + d.kasusAktif + (d.terlambat ? " (" + d.terlambat + " melewati jadwal pantau)" : "") + ". Catatan perkembangan yang ditulis pada bulan ini: " + catPerk + ".") +
+      "<h3>E. Survei kepuasan layanan</h3>" + (st.survei.n
+        ? p(st.survei.n + " responden. Rata-rata merasa terbantu " + String(st.survei.terbantu).replace(".", ",") + " dari 5, merasa nyaman " + String(st.survei.nyaman).replace(".", ",") + " dari 5, dan " + st.survei.kembaliPersen + "% bersedia datang lagi.")
+        : p("Belum ada survei pada bulan ini.")) +
+      (d.catatan ? "<h3>F. Catatan dan rencana bulan depan</h3>" + blok(d.catatan) : "") +
+      tempatTgl(hariIni()) + '<div class="ttd">' + ttd("Mengetahui,<br>Kepala SMP Labschool Ciracas", d.kepsek) + ttd("Guru BK,", d.guru) + "</div>";
+    return h;
+  };
+  $("form-bulanan").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var st = $("bulanan-status"), btn = this.querySelector("button[type=submit]");
+    if (!$("lb-bulan").value) { status(st, "Pilih bulan laporan.", "err"); $("lb-bulan").focus(); return; }
+    sibuk(btn, true, "Menyiapkan…"); status(st, "");
+    api("laporanBulanan", { bulan: $("lb-bulan").value }).then(function (d) {
+      if (!d.ok) { status(st, d.error || "Gagal menyiapkan laporan.", "err"); return; }
+      d.namaLengkap = $("lb-nama").checked; d.catatan = $("lb-catatan").value.trim(); d.kepsek = $("lb-kepsek").value.trim(); d.guru = sesi.nama;
+      siapkanSurat("bulanan", d);
+      status(st, "Laporan siap. Jendela cetak terbuka; pilih Simpan sebagai PDF bila ingin menyimpan file.", "ok");
+      cetak();
+    }).catch(gagalKoneksi(st)).finally(function () { sibuk(btn, false); });
   });
 
   /* ---------- Statistik ---------- */

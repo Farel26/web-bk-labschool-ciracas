@@ -301,6 +301,7 @@ function parseKaldik_(g) {
 // Akun ada di tab "AkunGuruBK": Username | Nama | Salt | Hash password | Aktif | Terakhir masuk.
 // Password tidak pernah disimpan apa adanya, hanya hash-nya.
 var AKUN_TAB = 'AkunGuruBK';
+var CATATAN_TAB = 'CatatanPerkembangan';   // catatan perkembangan kasus (dipakai juga di profil siswa)
 var SESI_DETIK = 6 * 60 * 60;          // sesi login berlaku 6 jam
 var MAKS_GAGAL = 5;                    // 5x salah password -> dikunci 15 menit
 var KUNCI_DETIK = 15 * 60;
@@ -328,6 +329,9 @@ function guruApi_(q) {
     case 'unggahScan': return unggahScan_(u, q.data || {});
     case 'cariNomor': return cariNomor_(String(q.nomor || ''));
     case 'daftarNomor': return daftarNomor_();
+    case 'pemantauan': return pemantauan_(q.semua === true);
+    case 'tambahCatatan': return tambahCatatan_(u, q.data || {});
+    case 'laporanBulanan': return laporanBulanan_(String(q.bulan || ''));
     case 'daftarScan': return daftarScan_(String(q.cari || ''));
     case 'lihatScan': return lihatScan_(String(q.id || ''));
     case 'hapusScan': return hapusScan_(u, String(q.id || ''));
@@ -422,7 +426,7 @@ function simpanKejadian_(u, d) {
     'Kategori': KEJADIAN_KATEGORI.indexOf(d.kategori) >= 0 ? d.kategori : 'Lainnya',
     'Deskripsi kejadian': clean_(d.deskripsi), 'Tindak lanjut guru BK': clean_(d.tindakLanjut),
     'Status': ['Dalam pendampingan', 'Selesai', 'Dirujuk/alih tangan'].indexOf(d.status) >= 0 ? d.status : 'Dalam pendampingan',
-    'Diinput oleh': u.nama
+    'Diinput oleh': u.nama, 'Pantau berikutnya': /^\d{4}-\d{2}-\d{2}$/.test(d.pantau || '') && d.status !== 'Selesai' ? d.pantau : ''
   });
   return { ok: true, id: id };
 }
@@ -514,6 +518,8 @@ var PROFIL_SUMBER = [
   { tab: SURAT_TAB, jenisKol: 'Jenis surat', nama: 'Nama siswa', tgl: 'Tanggal surat', isi: ['Rincian', 'Nama orang tua/wali'], oleh: 'Diinput oleh' },
   { tab: 'Konseling', jenis: 'Permintaan konseling', nama: 'Nama', tgl: 'Waktu masuk', judul: 'Topik',
     isi: ['Cerita singkat', 'Catatan tindak lanjut'], status: 'Status', oleh: 'Ditangani oleh' },
+  { tab: CATATAN_TAB, jenis: 'Catatan perkembangan', nama: 'Nama siswa', tgl: 'Tanggal', judul: 'Nomor kasus',
+    isi: ['Catatan perkembangan', 'Rencana tindak lanjut', 'Pantau berikutnya'], status: 'Status kasus', oleh: 'Diinput oleh' },
   { tab: 'ArsipScan', jenisKol: 'Jenis dokumen', jenisAwal: 'Scan: ', nama: 'Nama siswa', tgl: 'Tanggal dokumen',
     isi: ['Nomor terkait', 'Keterangan'], oleh: 'Diunggah oleh' },
   { tab: 'JanjiOrangTua', jenis: 'Janji temu orang tua', nama: 'Nama siswa', tgl: 'Waktu masuk', judul: 'Keperluan',
@@ -559,14 +565,32 @@ function profil_(cari) {
   return { ok: true, siswa: Object.keys(siswa).map(function (k) { return siswa[k]; }), items: items.slice(0, 200) };
 }
 
+// Daftar siswa resmi (tab DataSiswa) + nama lain yang pernah tercatat. Nama kapital semua dirapikan.
+var SISWA_TAB = 'DataSiswa';
+function rapiNama_(n) {
+  n = String(n || '').replace(/\s+/g, ' ').trim();
+  if (n && n === n.toUpperCase()) n = n.toLowerCase().replace(/(^|[\s.-])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); });
+  return n;
+}
 function namaSiswa_() {
-  var set = {};
-  PROFIL_SUMBER.forEach(function (s) {
-    var t = tabel_(s.tab), i = kol_(t, s.nama);
-    if (i < 0) return;
-    t.rows.forEach(function (r) { var n = String(r[i] || '').trim(); if (n) set[norm_(n)] = n; });
+  var map = {}, out = [];
+  var t = tabel_(SISWA_TAB);
+  t.rows.forEach(function (r) {
+    var n = rapiNama_(r[0]), k = String(r[1] || '').trim().toUpperCase();
+    if (!n) return;
+    var key = norm_(n);
+    if (!map[key]) { map[key] = { nama: n, kelas: k, resmi: true }; out.push(map[key]); }
   });
-  return { ok: true, nama: Object.keys(set).map(function (k) { return set[k]; }).sort().slice(0, 2000) };
+  PROFIL_SUMBER.forEach(function (s) {
+    var tb = tabel_(s.tab), i = kol_(tb, s.nama), ik = kol_(tb, 'Kelas');
+    if (i < 0) return;
+    tb.rows.forEach(function (r) {
+      var n = String(r[i] || '').trim(), key = norm_(n);
+      if (n && !map[key]) { map[key] = { nama: n, kelas: ik >= 0 ? String(r[ik] || '').trim() : '', resmi: false }; out.push(map[key]); }
+    });
+  });
+  out.sort(function (a, b) { return a.nama.localeCompare(b.nama); });
+  return { ok: true, siswa: out.slice(0, 3000), nama: out.map(function (x) { return x.nama; }).slice(0, 3000) };
 }
 
 /* ---------------- Kotak masuk: curhat, laporan, konseling, janji ---------------- */
@@ -659,6 +683,7 @@ function statistik_(dari, sampai) {
     ['LaporanKejadian', 'Laporan kejadian', 'Tanggal kejadian'],
     ['SuratPerjanjian', 'Surat perjanjian', 'Tanggal perjanjian'],
     [SURAT_TAB, '', 'Tanggal surat'],
+    [CATATAN_TAB, 'Catatan perkembangan kasus', 'Tanggal'],
     ['Survei', 'Survei kepuasan', 'Waktu masuk']
   ];
   var layanan = {}, urutan = [], bulan = {};
@@ -757,6 +782,131 @@ function pasangPemicuBackup() {
 function infoBackup_() {
   var p = PropertiesService.getScriptProperties();
   return { ok: true, terakhir: p.getProperty('BACKUP_TERAKHIR') || '', jumlah: Number(p.getProperty('BACKUP_JUMLAH') || 0) };
+}
+
+/* ---------------- Catatan perkembangan & pemantauan kasus ---------------- */
+// Setiap laporan kejadian (KJ-) bisa diberi catatan perkembangan bertanggal dan jadwal pantau berikutnya.
+var STATUS_KASUS = ['Dalam pendampingan', 'Dirujuk/alih tangan', 'Selesai'];
+
+function hariIni_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'); }
+function tambahHari_(ymd, n) {
+  var p = ymd.split('-'), d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + n);
+  return Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
+}
+
+function pemantauan_(semua) {
+  var kej = tabel_('LaporanKejadian'), cat = tabel_(CATATAN_TAB), riwayat = {};
+  cat.rows.forEach(function (r) {
+    var no = String(sel_(cat, r, 'Nomor kasus') || '').toUpperCase();
+    if (!no) return;
+    (riwayat[no] = riwayat[no] || []).push({
+      id: teks_(sel_(cat, r, 'ID')), tanggal: tglKey_(sel_(cat, r, 'Tanggal')), catatan: teks_(sel_(cat, r, 'Catatan perkembangan')),
+      rencana: teks_(sel_(cat, r, 'Rencana tindak lanjut')), status: teks_(sel_(cat, r, 'Status kasus')), oleh: teks_(sel_(cat, r, 'Diinput oleh'))
+    });
+  });
+  var today = hariIni_(), minggu = tambahHari_(today, 7), items = [], terlambat = 0, segera = 0, aktif = 0;
+  kej.rows.forEach(function (r) {
+    var no = String(r[0] || '').trim().toUpperCase();
+    if (!no) return;
+    var st = String(sel_(kej, r, 'Status') || 'Dalam pendampingan');
+    var pantau = tglKey_(sel_(kej, r, 'Pantau berikutnya'));
+    if (st !== 'Selesai') {
+      aktif++;
+      if (pantau && pantau < today) terlambat++;
+      else if (pantau && pantau <= minggu) segera++;
+    }
+    if (!semua && st === 'Selesai') return;
+    items.push({
+      nomor: no, tanggal: tglKey_(sel_(kej, r, 'Tanggal kejadian')), nama: teks_(sel_(kej, r, 'Nama siswa')), kelas: teks_(sel_(kej, r, 'Kelas')),
+      kategori: teks_(sel_(kej, r, 'Kategori')), status: st, pantau: st === 'Selesai' ? '' : pantau,
+      deskripsi: teks_(sel_(kej, r, 'Deskripsi kejadian')), tindak: teks_(sel_(kej, r, 'Tindak lanjut guru BK')),
+      oleh: teks_(sel_(kej, r, 'Diinput oleh')),
+      riwayat: (riwayat[no] || []).sort(function (a, b) { return a.tanggal < b.tanggal ? -1 : 1; })
+    });
+  });
+  // Yang paling mendesak di atas: terlambat, lalu tanggal pantau terdekat, lalu yang belum dijadwalkan.
+  items.sort(function (a, b) {
+    var pa = a.pantau || '9999', pb = b.pantau || '9999';
+    if (a.status === 'Selesai' && b.status !== 'Selesai') return 1;
+    if (b.status === 'Selesai' && a.status !== 'Selesai') return -1;
+    return pa < pb ? -1 : pa > pb ? 1 : (a.tanggal < b.tanggal ? 1 : -1);
+  });
+  return { ok: true, items: items.slice(0, 150), hariIni: today, terlambat: terlambat, segera: segera, aktif: aktif, pilihanStatus: STATUS_KASUS };
+}
+
+function tambahCatatan_(u, d) {
+  var nomor = String(d.nomor || '').trim().toUpperCase();
+  if (wajib_(d, ['nomor', 'tanggal', 'catatan'])) return { ok: false, error: 'Isi tanggal dan catatan perkembangan.' };
+  if (STATUS_KASUS.indexOf(d.status) < 0) return { ok: false, error: 'Status tidak valid.' };
+  var pantau = /^\d{4}-\d{2}-\d{2}$/.test(d.pantau || '') && d.status !== 'Selesai' ? d.pantau : '';
+  var kej = tabel_('LaporanKejadian'), r = -1;
+  for (var i = 0; i < kej.rows.length; i++) if (String(kej.rows[i][0]).trim().toUpperCase() === nomor) { r = i; break; }
+  if (r < 0) return { ok: false, error: 'Laporan ' + nomor + ' tidak ditemukan.' };
+  var row = kej.rows[r];
+  var id = tulisBaris_(CATATAN_TAB, {
+    'Nomor kasus': nomor, 'Tanggal': clean_(d.tanggal), 'Nama siswa': String(sel_(kej, row, 'Nama siswa')), 'Kelas': String(sel_(kej, row, 'Kelas')),
+    'Catatan perkembangan': clean_(d.catatan), 'Rencana tindak lanjut': clean_(d.rencana), 'Pantau berikutnya': pantau,
+    'Status kasus': d.status, 'Diinput oleh': u.nama
+  }, 'CP');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var t = tabel_('LaporanKejadian'), rr = -1;
+    for (var j = 0; j < t.rows.length; j++) if (String(t.rows[j][0]).trim().toUpperCase() === nomor) { rr = j; break; }
+    if (rr >= 0) {
+      var iS = kol_(t, 'Status'), iP = kol_(t, 'Pantau berikutnya');
+      if (iS >= 0) t.sh.getRange(rr + 2, iS + 1).setValue(d.status);
+      if (iP >= 0) t.sh.getRange(rr + 2, iP + 1).setNumberFormat('@').setValue(pantau);
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: true, id: id };
+}
+
+// Email pengingat setiap Senin pagi ke pemilik sheet: kasus yang jadwal pantaunya lewat atau minggu ini.
+// Isi email hanya nomor kasus, kelas, kategori, dan inisial siswa.
+function inisial_(n) {
+  return String(n || '').trim().split(/\s+/).filter(String).map(function (w) { return w.charAt(0).toUpperCase() + '.'; }).join(' ');
+}
+function pengingatPemantauan() {
+  var p = pemantauan_(false), batas = tambahHari_(p.hariIni, 7);
+  var due = p.items.filter(function (x) { return x.pantau && x.pantau <= batas; });
+  if (!due.length) return 'tidak ada';
+  var baris = due.map(function (x) {
+    return (x.pantau < p.hariIni ? '[TERLAMBAT] ' : '') + x.pantau + '  ' + x.nomor + '  ' + inisial_(x.nama) + ' (' + x.kelas + ')  ' + x.kategori;
+  });
+  MailApp.sendEmail(Session.getEffectiveUser().getEmail(), '[Web BK] ' + due.length + ' kasus perlu dipantau minggu ini',
+    'Kasus yang jadwal pemantauannya sudah lewat atau jatuh dalam 7 hari ke depan:\n\n' + baris.join('\n') +
+    '\n\nBuka dashboard guru BK > Pemantauan untuk menulis catatan perkembangan:\nhttps://farel26.github.io/web-bk-labschool-ciracas/guru.html');
+  return due.length + ' kasus';
+}
+// Jalankan SEKALI dari editor: memasang pengingat setiap Senin pukul 06.00.
+function pasangPemicuPengingat() {
+  ScriptApp.getProjectTriggers().forEach(function (tr) {
+    if (tr.getHandlerFunction() === 'pengingatPemantauan') ScriptApp.deleteTrigger(tr);
+  });
+  ScriptApp.newTrigger('pengingatPemantauan').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(6).create();
+  return 'terpasang';
+}
+
+/* ---------------- Laporan bulanan ---------------- */
+function laporanBulanan_(bulan) {
+  if (!/^\d{4}-\d{2}$/.test(bulan)) bulan = Utilities.formatDate(new Date(), TZ, 'yyyy-MM');
+  var p = bulan.split('-'), akhir = new Date(Number(p[0]), Number(p[1]), 0).getDate();
+  var dari = bulan + '-01', sampai = bulan + '-' + ('0' + akhir).slice(-2);
+  var st = statistik_(dari, sampai);
+  var kej = tabel_('LaporanKejadian'), kasus = [];
+  kej.rows.forEach(function (r) {
+    var tg = tglKey_(sel_(kej, r, 'Tanggal kejadian'));
+    if (!r[0] || tg < dari || tg > sampai) return;
+    kasus.push({ nomor: teks_(r[0]), tanggal: tg, nama: teks_(sel_(kej, r, 'Nama siswa')), kelas: teks_(sel_(kej, r, 'Kelas')),
+                 kategori: teks_(sel_(kej, r, 'Kategori')), status: teks_(sel_(kej, r, 'Status')) });
+  });
+  kasus.sort(function (a, b) { return a.tanggal < b.tanggal ? -1 : 1; });
+  var pm = pemantauan_(false);
+  return { ok: true, bulan: bulan, dari: dari, sampai: sampai, statistik: st, kasus: kasus,
+           kasusAktif: pm.aktif, terlambat: pm.terlambat };
 }
 
 /* ---------------- Arsip scan dokumen ---------------- */

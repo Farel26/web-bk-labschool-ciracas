@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261029h">
+<link rel="stylesheet" href="assets/css/style.css?v=20261029i">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -56,6 +56,7 @@
 
       <div class="dash-tabs" role="tablist" aria-label="Menu dashboard">
         <button type="button" class="dash-tab" role="tab" id="t-inbox" data-tab="inbox" aria-controls="tab-inbox" aria-selected="true">Kotak masuk <span class="badge" id="badge-inbox" hidden></span></button>
+        <button type="button" class="dash-tab" role="tab" id="t-pantau" data-tab="pantau" aria-controls="tab-pantau" aria-selected="false" tabindex="-1">Pemantauan <span class="badge" id="badge-pantau" hidden></span></button>
         <button type="button" class="dash-tab" role="tab" id="t-siswa" data-tab="siswa" aria-controls="tab-siswa" aria-selected="false" tabindex="-1">Profil siswa</button>
         <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="false" tabindex="-1">Laporan kejadian</button>
         <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
@@ -82,6 +83,16 @@
       </div>
 
       <!-- Profil siswa -->
+      <!-- Pemantauan kasus -->
+      <div id="tab-pantau" class="dash-panel" role="tabpanel" aria-labelledby="t-pantau" hidden>
+        <div class="pantau-ringkas" id="pantau-ringkas"></div>
+        <div class="bar-aksi">
+          <label class="check"><input type="checkbox" id="pantau-semua"> Tampilkan juga kasus yang sudah selesai</label>
+          <button type="button" id="pantau-muat" class="btn-mini">Muat ulang</button>
+        </div>
+        <div id="pantau-list" aria-live="polite"></div>
+      </div>
+
       <div id="tab-siswa" class="dash-panel" role="tabpanel" aria-labelledby="t-siswa" hidden>
         <form id="form-profil" class="card-form" role="search" novalidate>
           <h2 class="dash-h">Profil siswa</h2>
@@ -111,6 +122,7 @@
           </div>
           <div class="field"><label for="k-deskripsi">Deskripsi kejadian</label><textarea id="k-deskripsi" rows="5" required></textarea><span class="hint">Tulis fakta: apa yang terjadi, di mana, siapa saja yang terlibat.</span></div>
           <div class="field"><label for="k-tindak">Tindak lanjut guru BK</label><textarea id="k-tindak" rows="4" required></textarea></div>
+          <div class="field" style="max-width: 320px"><label for="k-pantau">Jadwal pemantauan berikutnya (opsional)</label><input id="k-pantau" type="date"><span class="hint">Kasus akan muncul di menu Pemantauan saat jadwalnya dekat.</span></div>
           <div class="field"><label for="k-scan">Lampiran scan atau foto (opsional)</label><input id="k-scan" type="file" accept="application/pdf,image/*" multiple><span class="hint">Boleh diisi sekarang atau nanti lewat menu Arsip scan. Beberapa foto otomatis digabung menjadi satu PDF dan disambungkan ke nomor dokumen ini.</span></div>
           <button type="submit" class="btn-solid">Simpan laporan</button>
           <p class="form-status" id="kejadian-status" role="status" aria-live="polite"></p>
@@ -196,6 +208,18 @@
           <button type="button" id="st-cetak" class="btn-mini" style="min-height: 46px">Cetak</button>
         </form>
         <p class="form-status" id="statistik-status" role="status" aria-live="polite"></p>
+        <form id="form-bulanan" class="card-form" novalidate style="margin: 8px 0 24px">
+          <h2 class="dash-h">Laporan bulanan untuk kepala sekolah</h2>
+          <p class="muted" style="margin: 0">Rekap layanan, kasus, dan pemantauan satu bulan, siap dicetak dengan kop sekolah dan kolom tanda tangan.</p>
+          <div class="g2" style="gap: 16px">
+            <div class="field"><label for="lb-bulan">Bulan</label><input id="lb-bulan" type="month" required></div>
+            <div class="field"><label for="lb-kepsek">Nama kepala sekolah (opsional)</label><input id="lb-kepsek" type="text" placeholder="Kosongkan bila ingin ditulis tangan"></div>
+          </div>
+          <div class="field"><label for="lb-catatan">Catatan dan rencana bulan depan (opsional)</label><textarea id="lb-catatan" rows="3"></textarea></div>
+          <label class="check"><input type="checkbox" id="lb-nama"> Tampilkan nama lengkap siswa (bawaan: hanya inisial)</label>
+          <div class="tombol-baris"><button type="submit" class="btn-solid">Siapkan dan cetak</button></div>
+          <p class="form-status" id="bulanan-status" role="status" aria-live="polite"></p>
+        </form>
         <div id="statistik-isi"></div>
       </div>
 
@@ -252,8 +276,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261029h"></script>
-<script src="assets/js/main.js?v=20261029h"></script>
-<script src="assets/js/guru.js?v=20261029h"></script>
+<script src="assets/js/config.js?v=20261029i"></script>
+<script src="assets/js/main.js?v=20261029i"></script>
+<script src="assets/js/guru.js?v=20261029i"></script>
 </body>
 </html>
