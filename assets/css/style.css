@@ -115,7 +115,7 @@ form[hidden]{display:none !important}
 
 /* ===== Arsip & kaldik ===== */
 .back-link{display:flex;width:max-content;align-items:center;min-height:44px;margin-bottom:12px;font-weight:700;font-size:15px;text-decoration:none}
-.arsip-cover{display:block;width:100%;height:auto;max-height:460px;object-fit:cover;border-radius:24px;margin-top:28px}
+.arsip-cover{display:block;width:auto;max-width:100%;height:auto;max-height:600px;margin:28px auto 0;border-radius:24px}
 .meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 0;padding:0}
 .meta-grid div{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:14px 16px}
 .meta-grid dt{font-size:13px;font-weight:700;color:#4A5578;margin:0 0 4px}
@@ -139,7 +139,7 @@ form[hidden]{display:none !important}
 .table-wrap td{padding:12px 14px;border-top:1px solid #ECE8DA;color:#3B4568}
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .photo-grid figure{margin:0;display:flex;flex-direction:column;gap:6px}
-.photo-grid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;display:block;background:#E7ECFA}
+.photo-grid img{width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:14px;display:block;background:#EEF0F6}
 .photo-grid figcaption{font-size:13px;color:#4A5578}
 .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .stat{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:4px}
