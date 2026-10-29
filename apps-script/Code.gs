@@ -55,6 +55,12 @@ var CEK = {
 
 /* ---------------- Terima isian formulir ---------------- */
 function doPost(e) {
+  // Permintaan dari dashboard guru BK dikirim sebagai JSON.
+  var raw = e && e.postData && e.postData.contents;
+  if (raw && raw.charAt(0) === '{') {
+    try { return json_(guruApi_(JSON.parse(raw))); }
+    catch (err) { return json_({ ok: false, error: 'Permintaan tidak valid.' }); }
+  }
   var p = (e && e.parameter) || {};
   if (p.website) return json_({ ok: true });          // jebakan bot
   var map = FORMS[p.form];
@@ -288,6 +294,150 @@ function parseKaldik_(g) {
   });
   months.sort(function (x, y) { return x.key - y.key; });
   return months;
+}
+
+
+/* ================= Dashboard guru BK (login) ================= */
+// Akun ada di tab "AkunGuruBK": Username | Nama | Salt | Hash password | Aktif | Terakhir masuk.
+// Password tidak pernah disimpan apa adanya, hanya hash-nya.
+var AKUN_TAB = 'AkunGuruBK';
+var SESI_DETIK = 6 * 60 * 60;          // sesi login berlaku 6 jam
+var MAKS_GAGAL = 5;                    // 5x salah password -> dikunci 15 menit
+var KUNCI_DETIK = 15 * 60;
+
+var KEJADIAN_KATEGORI = ['Pelanggaran ringan', 'Pelanggaran sedang', 'Pelanggaran berat', 'Konflik antarsiswa', 'Perundungan', 'Masalah pribadi/emosi', 'Masalah belajar', 'Lainnya'];
+
+function guruApi_(q) {
+  if (q.action === 'login') return login_(String(q.username || ''), String(q.password || ''));
+  var u = sesi_(q.token);
+  if (!u) return { ok: false, auth: false, error: 'Sesi berakhir. Silakan masuk lagi.' };
+  switch (q.action) {
+    case 'logout': CacheService.getScriptCache().remove('tok_' + q.token); return { ok: true };
+    case 'cekSesi': return { ok: true, nama: u.nama, username: u.username, kategori: KEJADIAN_KATEGORI };
+    case 'simpanKejadian': return simpanKejadian_(u, q.data || {});
+    case 'simpanPerjanjian': return simpanPerjanjian_(u, q.data || {});
+    case 'daftar': return daftar_(String(q.jenis || ''));
+    case 'gantiPassword': return gantiPassword_(u, String(q.lama || ''), String(q.baru || ''));
+  }
+  return { ok: false, error: 'Aksi tidak dikenal.' };
+}
+
+function hash_(salt, pw) {
+  function hex(bytes) { return bytes.map(function (b) { return ('0' + ((b + 256) % 256).toString(16)).slice(-2); }).join(''); }
+  var h = hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + pw, Utilities.Charset.UTF_8));
+  for (var i = 0; i < 300; i++) h = hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + salt, Utilities.Charset.UTF_8));
+  return h;
+}
+
+function akun_(username) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(AKUN_TAB);
+  var v = sh.getDataRange().getDisplayValues();
+  for (var r = 1; r < v.length; r++) {
+    if (String(v[r][0]).trim().toLowerCase() === username) {
+      return { row: r + 1, username: username, nama: v[r][1], salt: v[r][2], hash: v[r][3], aktif: String(v[r][4]).trim().toUpperCase() === 'YA', sh: sh };
+    }
+  }
+  return null;
+}
+
+function login_(username, password) {
+  username = username.trim().toLowerCase();
+  var cache = CacheService.getScriptCache();
+  var kFail = 'fail_' + username;
+  var gagal = Number(cache.get(kFail) || 0);
+  if (gagal >= MAKS_GAGAL) return { ok: false, error: 'Terlalu banyak percobaan. Coba lagi dalam 15 menit.' };
+  var a = username ? akun_(username) : null;
+  if (!a || !a.aktif || !password || hash_(a.salt, password) !== a.hash) {
+    cache.put(kFail, String(gagal + 1), KUNCI_DETIK);
+    Utilities.sleep(600);
+    return { ok: false, error: 'Username atau password salah.' };
+  }
+  cache.remove(kFail);
+  var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  cache.put('tok_' + token, JSON.stringify({ username: a.username, nama: a.nama }), SESI_DETIK);
+  a.sh.getRange(a.row, 6).setValue(Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'));
+  return { ok: true, token: token, nama: a.nama, username: a.username, kategori: KEJADIAN_KATEGORI };
+}
+
+function sesi_(token) {
+  if (!token || !/^[a-f0-9]{64}$/.test(String(token))) return null;
+  var s = CacheService.getScriptCache().get('tok_' + token);
+  return s ? JSON.parse(s) : null;
+}
+
+function gantiPassword_(u, lama, baru) {
+  var a = akun_(u.username);
+  if (!a || hash_(a.salt, lama) !== a.hash) return { ok: false, error: 'Password lama salah.' };
+  if (baru.length < 8) return { ok: false, error: 'Password baru minimal 8 karakter.' };
+  var salt = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+  a.sh.getRange(a.row, 3, 1, 2).setNumberFormat('@').setValues([[salt, hash_(salt, baru)]]);
+  return { ok: true };
+}
+
+function nextId_(sh, prefix) {
+  var today = Utilities.formatDate(new Date(), TZ, 'yyyyMMdd');
+  var n = 0, ids = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
+  ids.forEach(function (r) { if (String(r[0]).indexOf(prefix + '-' + today) === 0) n++; });
+  return prefix + '-' + today + '-' + ('00' + (n + 1)).slice(-3);
+}
+
+function tulisBaris_(tab, nilai) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab);
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+    nilai['ID'] = nextId_(sh, tab === 'LaporanKejadian' ? 'KJ' : 'SP');
+    nilai['Waktu input'] = new Date();
+    sh.appendRow(headers.map(function (h) { return nilai.hasOwnProperty(h) ? nilai[h] : ''; }));
+    return nilai['ID'];
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function wajib_(d, keys) {
+  for (var i = 0; i < keys.length; i++) if (!String(d[keys[i]] || '').trim()) return keys[i];
+  return '';
+}
+
+function simpanKejadian_(u, d) {
+  var kurang = wajib_(d, ['tanggal', 'nama', 'kelas', 'deskripsi', 'tindakLanjut']);
+  if (kurang) return { ok: false, error: 'Kolom wajib belum diisi.' };
+  var id = tulisBaris_('LaporanKejadian', {
+    'Tanggal kejadian': clean_(d.tanggal), 'Nama siswa': clean_(d.nama), 'Kelas': clean_(d.kelas),
+    'Kategori': KEJADIAN_KATEGORI.indexOf(d.kategori) >= 0 ? d.kategori : 'Lainnya',
+    'Deskripsi kejadian': clean_(d.deskripsi), 'Tindak lanjut guru BK': clean_(d.tindakLanjut),
+    'Status': ['Dalam pendampingan', 'Selesai', 'Dirujuk/alih tangan'].indexOf(d.status) >= 0 ? d.status : 'Dalam pendampingan',
+    'Diinput oleh': u.nama
+  });
+  return { ok: true, id: id };
+}
+
+function simpanPerjanjian_(u, d) {
+  var kurang = wajib_(d, ['tanggal', 'nama', 'kelas', 'poin']);
+  if (kurang) return { ok: false, error: 'Kolom wajib belum diisi.' };
+  if (d.setuju !== true) return { ok: false, error: 'Persetujuan siswa belum dicentang.' };
+  var poin = String(d.poin).split(/\n+/).map(function (s) { return s.trim(); }).filter(String);
+  var id = tulisBaris_('SuratPerjanjian', {
+    'Tanggal perjanjian': clean_(d.tanggal), 'Nama siswa': clean_(d.nama), 'Kelas': clean_(d.kelas),
+    'Nama orang tua/wali': clean_(d.ortu), 'Poin kesepakatan': clean_(poin.join('\n')),
+    'Disetujui siswa': 'YA', 'Diinput oleh': u.nama
+  });
+  return { ok: true, id: id, guru: u.nama };
+}
+
+// 15 data terbaru untuk ditampilkan di dashboard (hanya untuk guru yang login).
+function daftar_(jenis) {
+  var tab = jenis === 'perjanjian' ? 'SuratPerjanjian' : 'LaporanKejadian';
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab);
+  if (sh.getLastRow() < 2) return { ok: true, rows: [] };
+  var v = sh.getDataRange().getDisplayValues();
+  var h = v[0];
+  var rows = v.slice(1).filter(function (r) { return r[0]; }).slice(-15).reverse().map(function (r) {
+    var o = {}; h.forEach(function (k, i) { o[k] = r[i]; }); return o;
+  });
+  return { ok: true, rows: rows };
 }
 
 /* ---------------- Email pemberitahuan ---------------- */

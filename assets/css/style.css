@@ -178,3 +178,38 @@ form[hidden]{display:none !important}
 }
 .kaldik-grid[data-f="kegiatan"] li.libur,.kaldik-grid[data-f="libur"] li.kegiatan{display:none}
 #kaldik-terdekat-wrap[hidden]{display:none}
+
+/* ===== Dashboard guru BK ===== */
+.muted{font-size:15px;color:#4A5578}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.guru-login{max-width:520px;margin:0 auto}
+.guru-login form{margin-top:28px}
+.dash-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.dash-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:28px 0 20px;border-bottom:1.5px solid #E4E2D8}
+.dash-tab{min-height:48px;padding:0 18px;border:0;border-bottom:3px solid transparent;background:transparent;font:inherit;font-weight:600;font-size:15px;color:#4A5578;cursor:pointer;margin-bottom:-1.5px}
+.dash-tab[aria-selected="true"]{color:#1D3FAE;border-bottom-color:#1D3FAE}
+.dash-panel[hidden]{display:none}
+.dash-h{margin:0;font-family:Rubik,sans-serif;font-weight:800;font-size:22px;color:#12204F}
+.g3f{display:grid;grid-template-columns:1fr 1.4fr 0.8fr;gap:16px}
+.btn-mini{min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid #CFD5E6;background:#FFFFFF;color:#1D3FAE;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+#surat-cetak{display:none}
+@media (max-width: 700px){.g3f{grid-template-columns:1fr}}
+@media print{
+  @page{size:A4;margin:18mm 20mm}
+  body.mode-cetak *{visibility:hidden}
+  body.mode-cetak #surat-cetak,body.mode-cetak #surat-cetak *{visibility:visible}
+  body.mode-cetak #surat-cetak{display:block;position:absolute;left:0;top:0;width:100%;color:#000;font-family:'Times New Roman',serif;font-size:12pt;line-height:1.6}
+  #surat-cetak .kop{display:flex;align-items:center;gap:16px;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:18px}
+  #surat-cetak .kop img{height:60px}
+  #surat-cetak .kop div{display:flex;flex-direction:column;font-size:10pt}
+  #surat-cetak .kop strong{font-size:15pt;letter-spacing:1px}
+  #surat-cetak .surat-judul{text-align:center;font-size:14pt;text-decoration:underline;margin:0}
+  #surat-cetak .surat-no{text-align:center;margin:2px 0 16px;font-size:10pt}
+  #surat-cetak p{margin:8px 0}
+  #surat-cetak .surat-identitas td{padding:2px 12px 2px 0}
+  #surat-cetak ol{margin:6px 0 6px 0;padding-left:22px}
+  #surat-cetak .surat-tgl{text-align:right;margin-top:20px}
+  #surat-cetak .ttd{display:grid;grid-template-columns:1fr 1fr;gap:28px 40px;margin-top:10px;text-align:center}
+  #surat-cetak .ttd div{display:flex;flex-direction:column;justify-content:space-between;min-height:120px}
+  #surat-cetak .garis{border-top:1px solid #000;padding-top:4px;margin:0 16px}
+}
