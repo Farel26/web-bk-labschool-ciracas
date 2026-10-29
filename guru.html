@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261029g">
+<link rel="stylesheet" href="assets/css/style.css?v=20261029h">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -170,8 +170,8 @@
       <div id="tab-scan" class="dash-panel" role="tabpanel" aria-labelledby="t-scan" hidden>
         <form id="form-scan" class="card-form" novalidate>
           <h2 class="dash-h">Unggah scan dokumen</h2>
-          <p class="muted" style="margin: 0">Cukup masukkan nomor dokumen (tercetak di bawah judul surat atau laporan). Nama, kelas, tanggal, dan jenis dokumen terisi otomatis. Untuk dokumen baru, lampirkan scan langsung saat menyimpan laporan atau surat.</p>
-          <div class="field"><label for="sc-nomor">Nomor dokumen</label><input id="sc-nomor" type="text" autocapitalize="characters" spellcheck="false" autocomplete="off" placeholder="mis. SP-20261029-001" required style="font-family: Rubik, sans-serif; font-size: 18px; letter-spacing: 1px; text-transform: uppercase"><span class="hint" id="sc-info" aria-live="polite">Contoh nomor: KJ-… laporan kejadian, SP-… surat perjanjian, PG-/RJ-/HV-… surat lain.</span></div>
+          <p class="muted" style="margin: 0">Cukup pilih nomor dokumen dari daftar. Nama, kelas, tanggal, dan jenis dokumen terisi otomatis. Untuk dokumen baru, lampirkan scan langsung saat menyimpan laporan atau surat.</p>
+          <div class="field"><label for="sc-nomor">Nomor dokumen</label><select id="sc-nomor" required><option value="">Memuat daftar nomor…</option></select><span class="hint" id="sc-info" aria-live="polite">Pilih laporan atau surat yang akan dilampiri scan. Yang terbaru ada di atas.</span></div>
           <div class="field"><label for="sc-file">File scan atau foto</label><input id="sc-file" type="file" accept="application/pdf,image/*" multiple required><span class="hint">PDF, JPG, atau PNG, maksimal 10 MB. Beberapa foto otomatis digabung menjadi satu PDF.</span></div>
           <ul id="sc-pilihan" class="file-list" hidden></ul>
           <div class="field"><label for="sc-ket">Keterangan (opsional)</label><input id="sc-ket" type="text" placeholder="mis. sudah ditandatangani orang tua"></div>
@@ -252,8 +252,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261029g"></script>
-<script src="assets/js/main.js?v=20261029g"></script>
-<script src="assets/js/guru.js?v=20261029g"></script>
+<script src="assets/js/config.js?v=20261029h"></script>
+<script src="assets/js/main.js?v=20261029h"></script>
+<script src="assets/js/guru.js?v=20261029h"></script>
 </body>
 </html>

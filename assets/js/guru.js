@@ -99,6 +99,7 @@
     if (nama === "statistik" && !dimuat.statistik) muatStatistik();
     if (nama === "akun") muatBackup();
     if (nama === "scan" && !dimuat.scan) muatScan();
+    if (nama === "scan" && !dimuat.nomor) muatNomor();
   }
 
   /* ---------- Login ---------- */
@@ -420,11 +421,10 @@
   function ambilFile(id) { return Array.prototype.slice.call(($(id) || {}).files || []); }
 
   function keScan(nomor) {
+    dimuat.nomor = false;
     pilihTab("scan");
-    $("sc-nomor").value = nomor || "";
-    cekNomor();
     status($("scan-status"), "");
-    $("sc-file").focus();
+    muatNomor(nomor).then(function () { $("sc-file").focus(); });
   }
 
   function bacaBase64(blob) {
@@ -520,6 +520,7 @@
 
   // Setelah laporan/surat tersimpan: lampirkan scan ke nomornya (jika ada file).
   function lampirkan(nomor, files, st) {
+    dimuat.nomor = false;
     if (!files.length) return;
     return unggahUntuk(nomor, files, "", st).then(function () {
       status(st, "Tersimpan dengan nomor " + nomor + ", scan terlampir.", "ok");
@@ -529,21 +530,41 @@
     });
   }
 
-  var timerNomor = null, nomorValid = null;
-  function cekNomor() {
-    var v = $("sc-nomor").value.trim().toUpperCase(), info = $("sc-info");
-    nomorValid = null;
-    if (!POLA_NOMOR.test(v)) { info.textContent = "Contoh nomor: KJ-… laporan kejadian, SP-… surat perjanjian, PG-/RJ-/HV-… surat lain."; info.className = "hint"; return; }
-    info.textContent = "Mencari " + v + "…"; info.className = "hint";
-    api("cariNomor", { nomor: v }).then(function (d) {
-      if ($("sc-nomor").value.trim().toUpperCase() !== v) return;
-      if (!d.ok) { info.textContent = d.error; info.className = "hint hint-err"; return; }
-      nomorValid = v;
-      info.textContent = "✓ " + d.jenis + " · " + d.nama + " (" + d.kelas + ") · " + tglPanjang(d.tanggal) + (d.scan ? " · sudah ada " + d.scan + " scan" : "");
-      info.className = "hint hint-ok";
-    }).catch(function () { info.textContent = "Tidak bisa memeriksa nomor. Coba lagi."; info.className = "hint hint-err"; });
+  // Dropdown nomor dokumen: dikelompokkan per jenis, terbaru di atas.
+  var dataNomor = [], janjiNomor = null;
+  var URUT_JENIS = ["Laporan kejadian", "Surat perjanjian", "Surat panggilan orang tua", "Surat rujukan", "Berita acara home visit"];
+  function muatNomor(pilih) {
+    var sel = $("sc-nomor"), lama = pilih || sel.value;
+    if (dimuat.nomor && janjiNomor) return janjiNomor.then(function () { if (lama) { sel.value = lama; infoNomor(); } });
+    sel.innerHTML = '<option value="">Memuat daftar nomor…</option>';
+    janjiNomor = api("daftarNomor").then(function (d) {
+      dataNomor = (d && d.items) || [];
+      dimuat.nomor = true;
+      if (!dataNomor.length) { sel.innerHTML = '<option value="">Belum ada laporan atau surat</option>'; infoNomor(); return; }
+      var grup = {};
+      dataNomor.forEach(function (x) { (grup[x.jenis] = grup[x.jenis] || []).push(x); });
+      var urut = URUT_JENIS.filter(function (j) { return grup[j]; }).concat(Object.keys(grup).filter(function (j) { return URUT_JENIS.indexOf(j) < 0; }));
+      sel.innerHTML = '<option value="">Pilih nomor dokumen</option>' + urut.map(function (j) {
+        return '<optgroup label="' + esc(j) + '">' + grup[j].map(function (x) {
+          return '<option value="' + esc(x.nomor) + '">' + esc(x.nomor + " · " + x.nama + " (" + x.kelas + ")" + (x.scan ? " · ✓ " + x.scan + " scan" : "")) + "</option>";
+        }).join("") + "</optgroup>";
+      }).join("");
+      if (lama) sel.value = lama;
+      infoNomor();
+    }).catch(function (err) {
+      dimuat.nomor = false;
+      if (err.message !== "auth") sel.innerHTML = '<option value="">Gagal memuat daftar. Buka ulang menu ini.</option>';
+    });
+    return janjiNomor;
   }
-  $("sc-nomor").addEventListener("input", function () { clearTimeout(timerNomor); timerNomor = setTimeout(cekNomor, 450); });
+  function infoNomor() {
+    var v = $("sc-nomor").value, info = $("sc-info");
+    var x = dataNomor.filter(function (d) { return d.nomor === v; })[0];
+    if (!x) { info.textContent = "Pilih laporan atau surat yang akan dilampiri scan. Yang terbaru ada di atas."; info.className = "hint"; return; }
+    info.textContent = "✓ " + x.jenis + " · " + x.nama + " (" + x.kelas + ") · " + (x.tanggal ? tglPanjang(x.tanggal) : "-") + (x.scan ? " · sudah ada " + x.scan + " scan" : " · belum ada scan");
+    info.className = "hint hint-ok";
+  }
+  $("sc-nomor").addEventListener("change", infoNomor);
 
   var ukuranTeks = function (b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; };
   $("sc-file").addEventListener("change", function () {
@@ -559,12 +580,13 @@
     e.preventDefault();
     var f = this, st = $("scan-status"), btn = f.querySelector("button[type=submit]");
     var bad = tandaiWajib(f);
-    if (bad) { status(st, bad.type === "file" ? "Pilih file yang akan diunggah." : "Isi nomor dokumen.", "err"); bad.focus(); return; }
-    var nomor = $("sc-nomor").value.trim().toUpperCase();
-    if (!POLA_NOMOR.test(nomor)) { status(st, "Format nomor seperti SP-20261029-001.", "err"); $("sc-nomor").focus(); return; }
+    if (bad) { status(st, bad.type === "file" ? "Pilih file yang akan diunggah." : "Pilih nomor dokumen.", "err"); bad.focus(); return; }
+    var nomor = $("sc-nomor").value;
+    if (!POLA_NOMOR.test(nomor)) { status(st, "Pilih nomor dokumen dari daftar.", "err"); $("sc-nomor").focus(); return; }
     sibuk(btn, true, "Mengunggah…");
     unggahUntuk(nomor, ambilFile("sc-file"), $("sc-ket").value.trim(), st).then(function (ids) {
-      f.reset(); $("sc-pilihan").hidden = true; $("sc-pilihan").innerHTML = ""; cekNomor();
+      f.reset(); $("sc-pilihan").hidden = true; $("sc-pilihan").innerHTML = "";
+      dimuat.nomor = false; muatNomor(nomor);
       status(st, "Tersimpan untuk " + nomor + " (" + ids.join(", ") + ").", "ok");
       $("cari-scan").value = nomor; muatScan();
     }).catch(function (err) {

@@ -327,6 +327,7 @@ function guruApi_(q) {
     case 'infoBackup': return infoBackup_();
     case 'unggahScan': return unggahScan_(u, q.data || {});
     case 'cariNomor': return cariNomor_(String(q.nomor || ''));
+    case 'daftarNomor': return daftarNomor_();
     case 'daftarScan': return daftarScan_(String(q.cari || ''));
     case 'lihatScan': return lihatScan_(String(q.id || ''));
     case 'hapusScan': return hapusScan_(u, String(q.id || ''));
@@ -797,6 +798,25 @@ function cariNomor_(nomor) {
     }
   }
   return { ok: false, error: 'Nomor ' + nomor + ' tidak ditemukan. Periksa lagi nomor di surat atau laporan.' };
+}
+
+// Semua nomor dokumen (terbaru dulu) untuk pilihan dropdown di menu Arsip scan.
+function daftarNomor_() {
+  var scan = scanPerNomor_(), out = [];
+  NOMOR_SUMBER.forEach(function (s) {
+    var t = tabel_(s.tab);
+    t.rows.forEach(function (row) {
+      var nomor = String(row[0] || '').trim().toUpperCase();
+      if (!nomor) return;
+      var jenis = s.jenisKol ? String(sel_(t, row, s.jenisKol)) : s.jenis;
+      var w = sel_(t, row, 'Waktu input');
+      out.push({ nomor: nomor, jenis: JENIS_SURAT_SCAN[jenis] || jenis, nama: teks_(sel_(t, row, 'Nama siswa')),
+                 kelas: teks_(sel_(t, row, 'Kelas')), tanggal: tglKey_(sel_(t, row, s.tgl)),
+                 urut: isDate_(w) ? w.getTime() : 0, scan: scan[nomor] || 0 });
+    });
+  });
+  out.sort(function (a, b) { return b.urut - a.urut || (a.nomor < b.nomor ? 1 : -1); });
+  return { ok: true, items: out.slice(0, 500) };
 }
 
 function unggahScan_(u, d) {
