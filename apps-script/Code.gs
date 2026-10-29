@@ -316,8 +316,15 @@ function guruApi_(q) {
     case 'cekSesi': return { ok: true, nama: u.nama, username: u.username, kategori: KEJADIAN_KATEGORI };
     case 'simpanKejadian': return simpanKejadian_(u, q.data || {});
     case 'simpanPerjanjian': return simpanPerjanjian_(u, q.data || {});
+    case 'simpanSurat': return simpanSurat_(u, q.data || {});
     case 'daftar': return daftar_(String(q.jenis || ''));
     case 'gantiPassword': return gantiPassword_(u, String(q.lama || ''), String(q.baru || ''));
+    case 'profil': return profil_(String(q.nama || ''));
+    case 'namaSiswa': return namaSiswa_();
+    case 'inbox': return inbox_(String(q.jenis || ''), q.semua === true);
+    case 'perbarui': return perbarui_(u, String(q.jenis || ''), String(q.ref || ''), q.data || {});
+    case 'statistik': return statistik_(String(q.dari || ''), String(q.sampai || ''));
+    case 'infoBackup': return infoBackup_();
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -381,13 +388,13 @@ function nextId_(sh, prefix) {
   return prefix + '-' + today + '-' + ('00' + (n + 1)).slice(-3);
 }
 
-function tulisBaris_(tab, nilai) {
+function tulisBaris_(tab, nilai, prefix) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab);
     var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
-    nilai['ID'] = nextId_(sh, tab === 'LaporanKejadian' ? 'KJ' : 'SP');
+    nilai['ID'] = nextId_(sh, prefix || (tab === 'LaporanKejadian' ? 'KJ' : 'SP'));
     nilai['Waktu input'] = new Date();
     sh.appendRow(headers.map(function (h) { return nilai.hasOwnProperty(h) ? nilai[h] : ''; }));
     return nilai['ID'];
@@ -429,7 +436,7 @@ function simpanPerjanjian_(u, d) {
 
 // 15 data terbaru untuk ditampilkan di dashboard (hanya untuk guru yang login).
 function daftar_(jenis) {
-  var tab = jenis === 'perjanjian' ? 'SuratPerjanjian' : 'LaporanKejadian';
+  var tab = jenis === 'perjanjian' ? 'SuratPerjanjian' : jenis === 'surat' ? SURAT_TAB : 'LaporanKejadian';
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab);
   if (sh.getLastRow() < 2) return { ok: true, rows: [] };
   var v = sh.getDataRange().getDisplayValues();
@@ -438,6 +445,299 @@ function daftar_(jenis) {
     var o = {}; h.forEach(function (k, i) { o[k] = r[i]; }); return o;
   });
   return { ok: true, rows: rows };
+}
+
+/* ---------------- Surat lain: panggilan, rujukan, home visit ---------------- */
+var SURAT_TAB = 'SuratLain';
+var SURAT_JENIS = {
+  panggilan: { nama: 'Surat panggilan orang tua', prefix: 'PG',
+    isian: [['hariTanggal', 'Hari/tanggal pertemuan'], ['waktu', 'Waktu'], ['tempat', 'Tempat'], ['keperluan', 'Keperluan']] },
+  rujukan: { nama: 'Surat rujukan (alih tangan kasus)', prefix: 'RJ',
+    isian: [['tujuan', 'Dirujuk kepada'], ['masalah', 'Permasalahan'], ['upaya', 'Upaya yang sudah dilakukan'], ['alasan', 'Alasan rujukan']] },
+  homevisit: { nama: 'Berita acara home visit', prefix: 'HV',
+    isian: [['alamat', 'Alamat yang dikunjungi'], ['ditemui', 'Pihak yang ditemui'], ['hasil', 'Hasil kunjungan'], ['kesepakatan', 'Kesepakatan/tindak lanjut']] }
+};
+
+function simpanSurat_(u, d) {
+  var j = SURAT_JENIS[d.jenis];
+  if (!j) return { ok: false, error: 'Jenis surat tidak dikenal.' };
+  var kurang = wajib_(d, ['tanggal', 'nama', 'kelas'].concat(j.isian.map(function (f) { return f[0]; })));
+  if (kurang) return { ok: false, error: 'Kolom wajib belum diisi.' };
+  var rinci = { jenis: d.jenis }, baris = [];
+  j.isian.forEach(function (f) { rinci[f[0]] = String(d[f[0]]).trim().slice(0, MAX_LEN); baris.push(f[1] + ': ' + rinci[f[0]]); });
+  var id = tulisBaris_(SURAT_TAB, {
+    'Jenis surat': j.nama, 'Tanggal surat': clean_(d.tanggal), 'Nama siswa': clean_(d.nama), 'Kelas': clean_(d.kelas),
+    'Nama orang tua/wali': clean_(d.ortu), 'Rincian': clean_(baris.join('\n')), 'Diinput oleh': u.nama,
+    'Data cetak (jangan diubah)': JSON.stringify(rinci)
+  }, j.prefix);
+  return { ok: true, id: id, guru: u.nama };
+}
+
+/* ---------------- Bantuan baca sheet ---------------- */
+function tabel_(tab) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tab);
+  if (!sh || sh.getLastRow() < 2) return { h: [], rows: [], sh: sh };
+  var v = sh.getDataRange().getValues();
+  return { h: v[0].map(function (x) { return String(x).trim(); }), rows: v.slice(1), sh: sh };
+}
+function kol_(t, nama) { return t.h.indexOf(nama); }
+function sel_(t, r, nama) { var i = t.h.indexOf(nama); return i < 0 ? '' : r[i]; }
+function teks_(v) {
+  if (isDate_(v)) return Utilities.formatDate(v, TZ, 'd MMM yyyy HH:mm');
+  return String(v == null ? '' : v).replace(/^'/, '');
+}
+// Tanggal apa pun -> yyyy-MM-dd (untuk urut & filter).
+function tglKey_(v) {
+  if (isDate_(v)) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+  var s = String(v || '').trim(), m;
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return m[0];
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  return '';
+}
+function norm_(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+
+/* ---------------- Profil siswa ---------------- */
+// Satu nama -> semua catatan tentang siswa itu dari beberapa tab.
+var PROFIL_SUMBER = [
+  { tab: 'LaporanKejadian', jenis: 'Laporan kejadian', nama: 'Nama siswa', tgl: 'Tanggal kejadian', judul: 'Kategori',
+    isi: ['Deskripsi kejadian', 'Tindak lanjut guru BK', 'Catatan tambahan'], status: 'Status', oleh: 'Diinput oleh' },
+  { tab: 'SuratPerjanjian', jenis: 'Surat perjanjian', nama: 'Nama siswa', tgl: 'Tanggal perjanjian',
+    isi: ['Poin kesepakatan', 'Nama orang tua/wali', 'Catatan tambahan'], oleh: 'Diinput oleh' },
+  { tab: SURAT_TAB, jenisKol: 'Jenis surat', nama: 'Nama siswa', tgl: 'Tanggal surat', isi: ['Rincian', 'Nama orang tua/wali'], oleh: 'Diinput oleh' },
+  { tab: 'Konseling', jenis: 'Permintaan konseling', nama: 'Nama', tgl: 'Waktu masuk', judul: 'Topik',
+    isi: ['Cerita singkat', 'Catatan tindak lanjut'], status: 'Status', oleh: 'Ditangani oleh' },
+  { tab: 'JanjiOrangTua', jenis: 'Janji temu orang tua', nama: 'Nama siswa', tgl: 'Waktu masuk', judul: 'Keperluan',
+    isi: ['Nama orang tua/wali', 'Catatan guru BK'], status: 'Status' }
+];
+
+function cocok_(nama, q) { var n = ' ' + norm_(nama) + ' '; return n.indexOf(' ' + q) >= 0; }
+
+function profil_(cari) {
+  var q = norm_(cari);
+  if (q.length < 3) return { ok: false, error: 'Ketik minimal 3 huruf nama siswa.' };
+  var items = [], siswa = {};
+  PROFIL_SUMBER.forEach(function (s) {
+    var t = tabel_(s.tab);
+    t.rows.forEach(function (r) {
+      var nama = String(sel_(t, r, s.nama) || '').trim();
+      if (!nama || !cocok_(nama, q)) return;
+      var kelas = String(sel_(t, r, 'Kelas') || '').trim();
+      siswa[norm_(nama) + '|' + kelas.toUpperCase()] = { nama: nama, kelas: kelas };
+      items.push({
+        sumber: s.tab, jenis: s.jenisKol ? String(sel_(t, r, s.jenisKol)) : s.jenis, id: teks_(sel_(t, r, 'ID')),
+        tanggal: tglKey_(sel_(t, r, s.tgl)), nama: nama, kelas: kelas, judul: s.judul ? teks_(sel_(t, r, s.judul)) : '',
+        status: s.status ? teks_(sel_(t, r, s.status)) : '', oleh: s.oleh ? teks_(sel_(t, r, s.oleh)) : '',
+        isi: s.isi.map(function (k) { return { label: k, teks: teks_(sel_(t, r, k)) }; }).filter(function (x) { return x.teks; })
+      });
+    });
+  });
+  // Laporan perundungan tidak punya kolom nama; cari nama di kolom "Siapa yang terlibat".
+  if (q.length >= 4) {
+    var t = tabel_('LaporanPerundungan');
+    t.rows.forEach(function (r) {
+      if (!cocok_(sel_(t, r, 'Siapa yang terlibat'), q)) return;
+      items.push({
+        sumber: 'LaporanPerundungan', jenis: 'Disebut dalam laporan perundungan', id: teks_(sel_(t, r, 'Kode')),
+        tanggal: tglKey_(sel_(t, r, 'Waktu masuk')), nama: '', kelas: '', judul: teks_(sel_(t, r, 'Jenis perundungan')),
+        status: teks_(sel_(t, r, 'Status')), oleh: teks_(sel_(t, r, 'Ditangani oleh')),
+        isi: ['Siapa yang terlibat', 'Apa yang terjadi', 'Tindak lanjut (internal)'].map(function (k) { return { label: k, teks: teks_(sel_(t, r, k)) }; })
+          .filter(function (x) { return x.teks; })
+      });
+    });
+  }
+  items.sort(function (a, b) { return a.tanggal < b.tanggal ? 1 : a.tanggal > b.tanggal ? -1 : 0; });
+  return { ok: true, siswa: Object.keys(siswa).map(function (k) { return siswa[k]; }), items: items.slice(0, 200) };
+}
+
+function namaSiswa_() {
+  var set = {};
+  PROFIL_SUMBER.forEach(function (s) {
+    var t = tabel_(s.tab), i = kol_(t, s.nama);
+    if (i < 0) return;
+    t.rows.forEach(function (r) { var n = String(r[i] || '').trim(); if (n) set[norm_(n)] = n; });
+  });
+  return { ok: true, nama: Object.keys(set).map(function (k) { return set[k]; }).sort().slice(0, 2000) };
+}
+
+/* ---------------- Kotak masuk: curhat, laporan, konseling, janji ---------------- */
+var INBOX = {
+  curhat: { tab: 'Curhat', status: ['Baru', 'Dibaca', 'Dibalas', 'Selesai'], judul: 'Topik',
+    balas: 'Balasan untuk siswa (tampil di web)', catatan: 'Catatan internal guru BK',
+    tampil: ['Kode', 'Jenjang kelas (opsional)', 'Topik', 'Isi curhat', 'Ingin dihubungi guru BK?', 'Nama/kontak (jika ingin dihubungi)'] },
+  laporan: { tab: 'LaporanPerundungan', status: ['Baru', 'Ditangani', 'Selesai'], judul: 'Jenis perundungan',
+    balas: 'Balasan untuk pelapor (tampil di web)', catatan: 'Tindak lanjut (internal)', oleh: 'Ditangani oleh',
+    tampil: ['Kode', 'Pelapor sebagai', 'Kelas pelapor (opsional)', 'Jenis perundungan', 'Apa yang terjadi', 'Tempat', 'Kapan terjadi', 'Siapa yang terlibat', 'Masih berlangsung?', 'Nama/kontak pelapor (opsional)'] },
+  konseling: { tab: 'Konseling', status: ['Baru', 'Dijadwalkan', 'Selesai'], judul: 'Topik',
+    catatan: 'Catatan tindak lanjut', oleh: 'Ditangani oleh',
+    tampil: ['Nama', 'Kelas', 'Topik', 'Waktu yang diinginkan', 'Cerita singkat'] },
+  janji: { tab: 'JanjiOrangTua', status: ['Baru', 'Dijadwalkan', 'Selesai'], judul: 'Keperluan',
+    catatan: 'Catatan guru BK',
+    tampil: ['Nama orang tua/wali', 'Nama siswa', 'Kelas', 'Nomor WhatsApp', 'Keperluan', 'Waktu yang diinginkan'] }
+};
+
+function stamp_(v) { return isDate_(v) ? String(v.getTime()) : String(v); }
+
+function hitungBaru_() {
+  var out = {};
+  Object.keys(INBOX).forEach(function (k) {
+    var t = tabel_(INBOX[k].tab), i = kol_(t, 'Status');
+    out[k] = t.rows.filter(function (r) { return r[0] !== '' && (i < 0 || !String(r[i]).trim() || String(r[i]).trim() === 'Baru'); }).length;
+  });
+  return out;
+}
+
+function inbox_(jenis, semua) {
+  var c = INBOX[jenis];
+  if (!c) return { ok: false, error: 'Kotak masuk tidak dikenal.' };
+  var t = tabel_(c.tab), iS = kol_(t, 'Status'), list = [];
+  for (var r = t.rows.length - 1; r >= 0 && list.length < 60; r--) {
+    var row = t.rows[r];
+    if (row[0] === '') continue;
+    var st = iS >= 0 ? String(row[iS] || '').trim() || 'Baru' : 'Baru';
+    if (!semua && st === 'Selesai') continue;
+    list.push({
+      ref: (r + 2) + '|' + stamp_(row[0]), waktu: teks_(row[0]), status: st, judul: teks_(sel_(t, row, c.judul)),
+      isi: c.tampil.map(function (k) { return { label: k, teks: teks_(sel_(t, row, k)) }; }).filter(function (x) { return x.teks; }),
+      balasan: c.balas ? teks_(sel_(t, row, c.balas)) : null, catatan: teks_(sel_(t, row, c.catatan)),
+      oleh: c.oleh ? teks_(sel_(t, row, c.oleh)) : ''
+    });
+  }
+  return { ok: true, items: list, pilihanStatus: c.status, adaBalasan: !!c.balas, baru: hitungBaru_() };
+}
+
+function perbarui_(u, jenis, ref, d) {
+  var c = INBOX[jenis];
+  if (!c) return { ok: false, error: 'Kotak masuk tidak dikenal.' };
+  if (c.status.indexOf(d.status) < 0) return { ok: false, error: 'Status tidak valid.' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var t = tabel_(c.tab), p = ref.split('|'), r = Number(p[0]) - 2;
+    // Baris bisa bergeser kalau ada yang dihapus: pastikan cocok lewat waktu masuk.
+    if (!t.rows[r] || stamp_(t.rows[r][0]) !== p[1]) {
+      r = -1;
+      for (var i = 0; i < t.rows.length; i++) if (stamp_(t.rows[i][0]) === p[1]) { r = i; break; }
+      if (r < 0) return { ok: false, error: 'Data tidak ditemukan. Muat ulang kotak masuk.' };
+    }
+    var row = r + 2;
+    function tulis(kolom, nilai) { var i = kol_(t, kolom); if (i >= 0) t.sh.getRange(row, i + 1).setValue(nilai); }
+    tulis('Status', d.status);
+    if (c.balas && d.balasan != null) tulis(c.balas, clean_(d.balasan));
+    if (d.catatan != null) tulis(c.catatan, clean_(d.catatan));
+    if (c.oleh) tulis(c.oleh, u.nama);
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ---------------- Statistik ---------------- */
+function awalTahunAjaran_() {
+  var now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  return (m >= 6 ? y : y - 1) + '-07-01';
+}
+
+function statistik_(dari, sampai) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dari)) dari = awalTahunAjaran_();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sampai)) sampai = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  function dalam(k) { return k && k >= dari && k <= sampai; }
+  var SUMBER = [
+    ['Konseling', 'Konseling individu (permintaan web)', 'Waktu masuk'],
+    ['Curhat', 'Curhat anonim', 'Waktu masuk'],
+    ['LaporanPerundungan', 'Laporan perundungan', 'Waktu masuk'],
+    ['JanjiOrangTua', 'Janji temu orang tua', 'Waktu masuk'],
+    ['LaporanKejadian', 'Laporan kejadian', 'Tanggal kejadian'],
+    ['SuratPerjanjian', 'Surat perjanjian', 'Tanggal perjanjian'],
+    [SURAT_TAB, '', 'Tanggal surat'],
+    ['Survei', 'Survei kepuasan', 'Waktu masuk']
+  ];
+  var layanan = {}, urutan = [], bulan = {};
+  function tambah(label, key) {
+    if (!(label in layanan)) { layanan[label] = 0; urutan.push(label); }
+    layanan[label]++;
+    var b = key.slice(0, 7); bulan[b] = (bulan[b] || 0) + 1;
+  }
+  SUMBER.forEach(function (s) {
+    var t = tabel_(s[0]);
+    if (s[1]) { layanan[s[1]] = 0; urutan.push(s[1]); }
+    t.rows.forEach(function (r) {
+      var k = tglKey_(sel_(t, r, s[2]));
+      if (!dalam(k)) return;
+      tambah(s[1] || String(sel_(t, r, 'Jenis surat') || 'Surat lain'), k);
+    });
+  });
+
+  var kej = tabel_('LaporanKejadian'), kategori = {}, tingkat = {}, statusKej = {};
+  KEJADIAN_KATEGORI.forEach(function (k) { kategori[k] = 0; });
+  kej.rows.forEach(function (r) {
+    if (!dalam(tglKey_(sel_(kej, r, 'Tanggal kejadian')))) return;
+    var k = String(sel_(kej, r, 'Kategori') || 'Lainnya'); kategori[k] = (kategori[k] || 0) + 1;
+    var m = String(sel_(kej, r, 'Kelas')).match(/[789]/); var tk = m ? 'Kelas ' + m[0] : 'Tidak diketahui';
+    tingkat[tk] = (tingkat[tk] || 0) + 1;
+    var st = String(sel_(kej, r, 'Status') || '-'); statusKej[st] = (statusKej[st] || 0) + 1;
+  });
+
+  var lap = tabel_('LaporanPerundungan'), jenisLap = {};
+  lap.rows.forEach(function (r) {
+    if (!dalam(tglKey_(sel_(lap, r, 'Waktu masuk')))) return;
+    String(sel_(lap, r, 'Jenis perundungan') || 'Tidak disebut').split(/\s*,\s*/).forEach(function (j) { if (j) jenisLap[j] = (jenisLap[j] || 0) + 1; });
+  });
+
+  var sv = tabel_('Survei'), n = 0, t1 = 0, t2 = 0, ya = 0;
+  sv.rows.forEach(function (r) {
+    if (!dalam(tglKey_(sel_(sv, r, 'Waktu masuk')))) return;
+    n++; t1 += Number(sel_(sv, r, 'Seberapa terbantu (1-5)')) || 0; t2 += Number(sel_(sv, r, 'Seberapa nyaman (1-5)')) || 0;
+    if (String(sel_(sv, r, 'Mau datang lagi?')).trim() === 'Ya') ya++;
+  });
+
+  function arr(o, urut) { return (urut || Object.keys(o)).map(function (k) { return { label: k, n: o[k] || 0 }; }); }
+  var bulanArr = Object.keys(bulan).sort().map(function (k) { return { label: k, n: bulan[k] }; });
+  return {
+    ok: true, dari: dari, sampai: sampai,
+    layanan: arr(layanan, urutan), perBulan: bulanArr,
+    kategori: arr(kategori).sort(function (a, b) { return b.n - a.n; }),
+    tingkat: arr(tingkat).sort(function (a, b) { return a.label < b.label ? -1 : 1; }),
+    statusKejadian: arr(statusKej), jenisPerundungan: arr(jenisLap).sort(function (a, b) { return b.n - a.n; }),
+    survei: { n: n, terbantu: n ? Math.round(t1 / n * 10) / 10 : 0, nyaman: n ? Math.round(t2 / n * 10) / 10 : 0, kembaliPersen: n ? Math.round(ya / n * 100) : 0 },
+    baru: hitungBaru_()
+  };
+}
+
+/* ---------------- Backup otomatis ---------------- */
+// Salinan seluruh sheet ke folder "Backup Data Web BK" di Drive pemilik, setiap Minggu malam.
+// 8 salinan terbaru disimpan; yang lebih lama dipindah ke Sampah.
+var BACKUP_FOLDER = 'Backup Data Web BK';
+var BACKUP_SIMPAN = 8;
+
+function backupMingguan() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var it = DriveApp.getFoldersByName(BACKUP_FOLDER);
+  var folder = it.hasNext() ? it.next() : DriveApp.createFolder(BACKUP_FOLDER);
+  var waktu = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmm');
+  var nama = 'Backup ' + ss.getName() + ' ' + waktu;
+  DriveApp.getFileById(ss.getId()).makeCopy(nama, folder);
+  var files = [], fi = folder.getFiles();
+  while (fi.hasNext()) { var f = fi.next(); if (f.getName().indexOf('Backup ') === 0) files.push(f); }
+  files.sort(function (a, b) { return b.getDateCreated() - a.getDateCreated(); });
+  files.slice(BACKUP_SIMPAN).forEach(function (f) { f.setTrashed(true); });
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('BACKUP_TERAKHIR', Utilities.formatDate(new Date(), TZ, 'd MMM yyyy HH:mm'));
+  props.setProperty('BACKUP_JUMLAH', String(Math.min(files.length, BACKUP_SIMPAN)));
+  return nama;
+}
+
+// Jalankan SEKALI dari editor: memasang pemicu mingguan lalu membuat backup pertama.
+function pasangPemicuBackup() {
+  ScriptApp.getProjectTriggers().forEach(function (tr) {
+    if (tr.getHandlerFunction() === 'backupMingguan') ScriptApp.deleteTrigger(tr);
+  });
+  ScriptApp.newTrigger('backupMingguan').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(21).create();
+  return backupMingguan();
+}
+
+function infoBackup_() {
+  var p = PropertiesService.getScriptProperties();
+  return { ok: true, terakhir: p.getProperty('BACKUP_TERAKHIR') || '', jumlah: Number(p.getProperty('BACKUP_JUMLAH') || 0) };
 }
 
 /* ---------------- Email pemberitahuan ---------------- */

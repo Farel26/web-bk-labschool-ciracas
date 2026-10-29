@@ -31,15 +31,15 @@
     </a>
     <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
   </header>
-  <main style="max-width: 960px; margin: 0 auto; padding: 24px 0 88px">
+  <main style="max-width: 1040px; margin: 0 auto; padding: 24px 0 88px">
     <section id="panel-login" class="guru-login">
       <span class="eyebrow">Ruang guru BK</span>
       <h1 class="h2" style="margin-top: 12px">Masuk ke dashboard</h1>
       <p class="lead" style="margin-top: 14px">Khusus guru Bimbingan dan Konseling. Data yang dicatat di sini bersifat rahasia dan hanya tersimpan di Google Sheet BK.</p>
-      <form id="form-login" novalidate style="background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+      <form id="form-login" class="card-form" novalidate>
         <div class="field"><label for="l-user">Username</label><input id="l-user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
         <div class="field"><label for="l-pass">Password</label><input id="l-pass" type="password" autocomplete="current-password" required></div>
-        <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; padding: 0 28px">Masuk</button>
+        <button type="submit" class="btn-solid">Masuk</button>
         <p class="form-status" id="login-status" role="status" aria-live="polite"></p>
       </form>
       <p class="muted" style="margin-top: 16px">Lupa password? Minta guru BK pengelola web untuk mengatur ulang akun Anda.</p>
@@ -51,22 +51,57 @@
           <span class="eyebrow">Dashboard guru BK</span>
           <h1 class="h2" style="margin-top: 8px; font-size: 32px">Halo, <span id="nama-guru"></span></h1>
         </div>
-        <button type="button" id="btn-keluar" class="btn-ghost" style="min-height: 44px; padding: 0 20px; border-radius: 999px; border: 2px solid #1D3FAE; background: transparent; color: #1D3FAE; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">Keluar</button>
+        <button type="button" id="btn-keluar" class="btn-line">Keluar</button>
       </div>
 
       <div class="dash-tabs" role="tablist" aria-label="Menu dashboard">
-        <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="true">Laporan kejadian</button>
+        <button type="button" class="dash-tab" role="tab" id="t-inbox" data-tab="inbox" aria-controls="tab-inbox" aria-selected="true">Kotak masuk <span class="badge" id="badge-inbox" hidden></span></button>
+        <button type="button" class="dash-tab" role="tab" id="t-siswa" data-tab="siswa" aria-controls="tab-siswa" aria-selected="false" tabindex="-1">Profil siswa</button>
+        <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="false" tabindex="-1">Laporan kejadian</button>
         <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
+        <button type="button" class="dash-tab" role="tab" id="t-surat" data-tab="surat" aria-controls="tab-surat" aria-selected="false" tabindex="-1">Surat lain</button>
+        <button type="button" class="dash-tab" role="tab" id="t-statistik" data-tab="statistik" aria-controls="tab-statistik" aria-selected="false" tabindex="-1">Statistik</button>
         <button type="button" class="dash-tab" role="tab" id="t-riwayat" data-tab="riwayat" aria-controls="tab-riwayat" aria-selected="false" tabindex="-1">Riwayat</button>
         <button type="button" class="dash-tab" role="tab" id="t-akun" data-tab="akun" aria-controls="tab-akun" aria-selected="false" tabindex="-1">Akun</button>
       </div>
 
-      <div id="tab-kejadian" class="dash-panel" role="tabpanel" aria-labelledby="t-kejadian">
-        <form id="form-kejadian" novalidate style="background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+      <!-- Kotak masuk -->
+      <div id="tab-inbox" class="dash-panel" role="tabpanel" aria-labelledby="t-inbox">
+        <div class="seg" role="group" aria-label="Pilih kotak masuk">
+          <button type="button" class="seg-btn" data-jenis="curhat" aria-pressed="true">Curhat <span class="badge" id="b-curhat" hidden></span></button>
+          <button type="button" class="seg-btn" data-jenis="laporan" aria-pressed="false">Laporan perundungan <span class="badge" id="b-laporan" hidden></span></button>
+          <button type="button" class="seg-btn" data-jenis="konseling" aria-pressed="false">Permintaan konseling <span class="badge" id="b-konseling" hidden></span></button>
+          <button type="button" class="seg-btn" data-jenis="janji" aria-pressed="false">Janji orang tua <span class="badge" id="b-janji" hidden></span></button>
+        </div>
+        <div class="bar-aksi">
+          <label class="check"><input type="checkbox" id="inbox-semua"> Tampilkan juga yang sudah selesai</label>
+          <button type="button" id="inbox-muat" class="btn-mini">Muat ulang</button>
+        </div>
+        <div id="inbox-list" aria-live="polite"></div>
+      </div>
+
+      <!-- Profil siswa -->
+      <div id="tab-siswa" class="dash-panel" role="tabpanel" aria-labelledby="t-siswa" hidden>
+        <form id="form-profil" class="card-form" role="search" novalidate>
+          <h2 class="dash-h">Profil siswa</h2>
+          <p class="muted" style="margin: 0">Semua catatan tentang satu siswa: laporan kejadian, surat perjanjian, surat lain, permintaan konseling, janji orang tua, dan laporan perundungan yang menyebut namanya. Curhat anonim tidak ikut karena tidak memakai nama.</p>
+          <div class="cari-baris">
+            <div class="field" style="flex: 1"><label for="cari-nama">Nama siswa</label><input id="cari-nama" type="search" list="dl-siswa" autocomplete="off" required><span class="hint">Minimal 3 huruf. Boleh nama depan saja.</span></div>
+            <button type="submit" class="btn-solid">Cari</button>
+          </div>
+          <datalist id="dl-siswa"></datalist>
+          <p class="form-status" id="profil-status" role="status" aria-live="polite"></p>
+        </form>
+        <div id="profil-hasil"></div>
+      </div>
+
+      <!-- Laporan kejadian -->
+      <div id="tab-kejadian" class="dash-panel" role="tabpanel" aria-labelledby="t-kejadian" hidden>
+        <form id="form-kejadian" class="card-form" novalidate>
           <h2 class="dash-h">Laporan kejadian</h2>
           <div class="g3f">
             <div class="field"><label for="k-tanggal">Tanggal kejadian</label><input id="k-tanggal" type="date" required></div>
-            <div class="field"><label for="k-nama">Nama siswa</label><input id="k-nama" type="text" required></div>
+            <div class="field"><label for="k-nama">Nama siswa</label><input id="k-nama" type="text" list="dl-siswa" required></div>
             <div class="field"><label for="k-kelas">Kelas</label><input id="k-kelas" type="text" placeholder="mis. 8B" required></div>
           </div>
           <div class="g2" style="gap: 16px">
@@ -75,32 +110,72 @@
           </div>
           <div class="field"><label for="k-deskripsi">Deskripsi kejadian</label><textarea id="k-deskripsi" rows="5" required></textarea><span class="hint">Tulis fakta: apa yang terjadi, di mana, siapa saja yang terlibat.</span></div>
           <div class="field"><label for="k-tindak">Tindak lanjut guru BK</label><textarea id="k-tindak" rows="4" required></textarea></div>
-          <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; padding: 0 28px">Simpan laporan</button>
+          <button type="submit" class="btn-solid">Simpan laporan</button>
           <p class="form-status" id="kejadian-status" role="status" aria-live="polite"></p>
         </form>
       </div>
 
+      <!-- Surat perjanjian -->
       <div id="tab-perjanjian" class="dash-panel" role="tabpanel" aria-labelledby="t-perjanjian" hidden>
-        <form id="form-perjanjian" novalidate style="background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+        <form id="form-perjanjian" class="card-form" novalidate>
           <h2 class="dash-h">Surat perjanjian siswa</h2>
           <div class="g3f">
             <div class="field"><label for="p-tanggal">Tanggal</label><input id="p-tanggal" type="date" required></div>
-            <div class="field"><label for="p-nama">Nama siswa</label><input id="p-nama" type="text" required></div>
+            <div class="field"><label for="p-nama">Nama siswa</label><input id="p-nama" type="text" list="dl-siswa" required></div>
             <div class="field"><label for="p-kelas">Kelas</label><input id="p-kelas" type="text" placeholder="mis. 8B" required></div>
           </div>
           <div class="field"><label for="p-ortu">Nama orang tua/wali (opsional)</label><input id="p-ortu" type="text"></div>
           <div class="field"><label for="p-poin">Poin kesepakatan</label><textarea id="p-poin" rows="6" required></textarea><span class="hint">Satu poin per baris. Contoh: "Datang ke sekolah sebelum pukul 06.50."</span></div>
           <label class="check"><input type="checkbox" id="p-setuju" required> Siswa sudah membaca, memahami, dan menyetujui seluruh poin kesepakatan.</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 12px">
-            <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; padding: 0 28px">Simpan perjanjian</button>
-            <button type="button" id="btn-cetak-baru" hidden style="min-height: 52px; padding: 0 24px; border-radius: 999px; border: 2px solid #1D3FAE; background: transparent; color: #1D3FAE; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Cetak surat</button>
+          <div class="tombol-baris">
+            <button type="submit" class="btn-solid">Simpan perjanjian</button>
+            <button type="button" id="btn-cetak-baru" class="btn-line" hidden>Cetak surat</button>
           </div>
           <p class="form-status" id="perjanjian-status" role="status" aria-live="polite"></p>
         </form>
       </div>
 
+      <!-- Surat lain -->
+      <div id="tab-surat" class="dash-panel" role="tabpanel" aria-labelledby="t-surat" hidden>
+        <form id="form-surat" class="card-form" novalidate>
+          <h2 class="dash-h">Surat lain</h2>
+          <fieldset class="seg" style="border: 0; padding: 0; margin: 0">
+            <legend class="sr-only">Jenis surat</legend>
+            <label class="seg-radio"><input type="radio" name="sl-jenis" value="panggilan" checked> Panggilan orang tua</label>
+            <label class="seg-radio"><input type="radio" name="sl-jenis" value="rujukan"> Rujukan (alih tangan kasus)</label>
+            <label class="seg-radio"><input type="radio" name="sl-jenis" value="homevisit"> Berita acara home visit</label>
+          </fieldset>
+          <div class="g3f">
+            <div class="field"><label for="sl-tanggal" id="sl-tanggal-label">Tanggal surat</label><input id="sl-tanggal" type="date" required></div>
+            <div class="field"><label for="sl-nama">Nama siswa</label><input id="sl-nama" type="text" list="dl-siswa" required></div>
+            <div class="field"><label for="sl-kelas">Kelas</label><input id="sl-kelas" type="text" placeholder="mis. 8B" required></div>
+          </div>
+          <div class="field"><label for="sl-ortu">Nama orang tua/wali <span id="sl-ortu-ops">(opsional)</span></label><input id="sl-ortu" type="text"></div>
+          <div id="sl-isian" style="display: flex; flex-direction: column; gap: 18px"></div>
+          <div class="tombol-baris">
+            <button type="submit" class="btn-solid">Simpan surat</button>
+            <button type="button" id="btn-cetak-surat" class="btn-line" hidden>Cetak surat</button>
+          </div>
+          <p class="form-status" id="surat-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <!-- Statistik -->
+      <div id="tab-statistik" class="dash-panel" role="tabpanel" aria-labelledby="t-statistik" hidden>
+        <form id="form-statistik" class="filter-baris" novalidate>
+          <div class="field"><label for="st-dari">Dari</label><input id="st-dari" type="date"></div>
+          <div class="field"><label for="st-sampai">Sampai</label><input id="st-sampai" type="date"></div>
+          <button type="submit" class="btn-mini" style="min-height: 46px">Tampilkan</button>
+          <button type="button" id="st-salin" class="btn-mini" style="min-height: 46px">Salin ringkasan</button>
+          <button type="button" id="st-cetak" class="btn-mini" style="min-height: 46px">Cetak</button>
+        </form>
+        <p class="form-status" id="statistik-status" role="status" aria-live="polite"></p>
+        <div id="statistik-isi"></div>
+      </div>
+
+      <!-- Riwayat -->
       <div id="tab-riwayat" class="dash-panel" role="tabpanel" aria-labelledby="t-riwayat" hidden>
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+        <div class="bar-aksi">
           <p class="muted" style="margin: 0">15 data terbaru. Data lengkap ada di Google Sheet BK.</p>
           <button type="button" id="btn-muat-ulang" class="btn-mini">Muat ulang</button>
         </div>
@@ -108,17 +183,25 @@
         <div id="riwayat-kejadian"></div>
         <h2 class="dash-h" style="margin-top: 28px">Surat perjanjian</h2>
         <div id="riwayat-perjanjian"></div>
+        <h2 class="dash-h" style="margin-top: 28px">Surat lain</h2>
+        <div id="riwayat-surat"></div>
       </div>
 
+      <!-- Akun -->
       <div id="tab-akun" class="dash-panel" role="tabpanel" aria-labelledby="t-akun" hidden>
-        <form id="form-password" novalidate style="background: #FFFFFF; border: 1px solid #ECE8DA; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
+        <form id="form-password" class="card-form" novalidate>
           <h2 class="dash-h">Ganti password</h2>
           <div class="field"><label for="pw-lama">Password lama</label><input id="pw-lama" type="password" autocomplete="current-password" required></div>
           <div class="field"><label for="pw-baru">Password baru</label><input id="pw-baru" type="password" autocomplete="new-password" minlength="8" required><span class="hint">Minimal 8 karakter.</span></div>
           <div class="field"><label for="pw-ulang">Ulangi password baru</label><input id="pw-ulang" type="password" autocomplete="new-password" required></div>
-          <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; padding: 0 28px">Simpan password</button>
+          <button type="submit" class="btn-solid">Simpan password</button>
           <p class="form-status" id="password-status" role="status" aria-live="polite"></p>
         </form>
+        <div class="card-form" style="margin-top: 20px">
+          <h2 class="dash-h">Cadangan data</h2>
+          <p id="info-backup" class="muted" style="margin: 0">Memuat…</p>
+          <p class="muted" style="margin: 0">Salinan seluruh Google Sheet BK dibuat otomatis setiap Minggu malam ke folder "Backup Data Web BK" di Google Drive pengelola. Delapan salinan terbaru disimpan.</p>
+        </div>
       </div>
     </section>
 
@@ -127,25 +210,12 @@
         <img src="assets/img/logo-labschool-ciracas.webp" alt="">
         <div><strong>SMP LABSCHOOL CIRACAS</strong><span>Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750 · Telp. 0822 8000 3416</span><span>smplabsciracas@labschool.sch.id</span></div>
       </header>
-      <h2 class="surat-judul">SURAT PERJANJIAN SISWA</h2>
-      <p class="surat-no" id="s-id"></p>
-      <p>Yang bertanda tangan di bawah ini:</p>
-      <table class="surat-identitas"><tr><td>Nama</td><td>: <span id="s-nama"></span></td></tr><tr><td>Kelas</td><td>: <span id="s-kelas"></span></td></tr></table>
-      <p>dengan kesadaran sendiri dan tanpa paksaan dari pihak mana pun, menyatakan bersedia untuk:</p>
-      <ol id="s-poin"></ol>
-      <p>Apabila saya tidak menepati perjanjian ini, saya bersedia mengikuti pembinaan lanjutan sesuai tata tertib SMP Labschool Ciracas.</p>
-      <p class="surat-tgl" id="s-tanggal"></p>
-      <div class="ttd">
-        <div><span>Siswa,</span><span class="garis" id="s-ttd-siswa"></span></div>
-        <div><span>Orang tua/wali,</span><span class="garis" id="s-ttd-ortu"></span></div>
-        <div><span>Guru BK,</span><span class="garis" id="s-ttd-guru"></span></div>
-        <div><span>Mengetahui,<br>Wakil Kepala Sekolah Bidang Kesiswaan</span><span class="garis">Drs. Dedi Hadi Rizki</span></div>
-      </div>
+      <div id="surat-isi"></div>
     </section>
   </main>
 </div>
 <footer style="background: #12204F; color: #DCE3F8">
-  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750</div>
+  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750 · <a href="privasi.html" style="color: #DCE3F8">Kebijakan privasi</a></div>
 </footer>
 </div>
 

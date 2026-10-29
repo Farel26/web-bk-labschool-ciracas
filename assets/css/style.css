@@ -305,3 +305,83 @@ form[hidden]{display:none !important}
   .step-stk-body{margin-left:-20px;padding-left:32px;border-radius:var(--r-md)}
 }
 @media (prefers-reduced-motion: reduce){.btn-stk{transition:none}.btn-stk:hover{transform:none}}
+/* ===== Dashboard guru BK: tambahan ===== */
+.card-form{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:18px}
+.btn-solid{min-height:52px;border:0;border-radius:999px;background:#1D3FAE;color:#FFFFFF;font:inherit;font-weight:700;font-size:16px;cursor:pointer;padding:0 28px}
+.btn-solid:disabled{opacity:.6;cursor:progress}
+.btn-line{min-height:48px;padding:0 22px;border-radius:999px;border:2px solid #1D3FAE;background:transparent;color:#1D3FAE;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.btn-solid:focus-visible,.btn-line:focus-visible,.btn-mini:focus-visible,.dash-tab:focus-visible,.seg-btn:focus-visible,.inbox-item summary:focus-visible{outline:3px solid #B9C8F2;outline-offset:2px}
+.tombol-baris{display:flex;flex-wrap:wrap;gap:12px}
+.bar-aksi{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}
+.dash-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+.dash-tab{white-space:nowrap;flex:none}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#A1260D;color:#FFFFFF;font-size:12px;font-weight:700;margin-left:6px}
+.badge[hidden]{display:none}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg-btn,.seg-radio{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #CFD5E6;background:#FFFFFF;color:#12204F;font:inherit;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.seg-btn[aria-pressed="true"],.seg-radio:has(input:checked){background:#12204F;border-color:#12204F;color:#FFFFFF}
+.seg-radio input{accent-color:#FFFFFF;margin:0}
+.kosong{background:#FFFFFF;border:1px dashed #CFD5E6;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:6px;color:#4A5578;font-size:15px}
+.kosong strong{color:#12204F;font-size:16px}
+.inbox-item{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:18px;margin-bottom:10px}
+.inbox-item[data-baru] {border-left:4px solid #1D3FAE}
+.inbox-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:16px 20px;min-height:44px}
+.inbox-item summary::-webkit-details-marker{display:none}
+.inbox-item[open] summary{border-bottom:1px solid #ECE8DA}
+.inbox-judul{font-weight:700;color:#12204F;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inbox-waktu{font-size:13px;color:#4A5578;white-space:nowrap}
+.inbox-item .isian,.inbox-item .inbox-form{padding:16px 20px}
+.inbox-form{display:flex;flex-direction:column;gap:14px;border-top:1px solid #ECE8DA;background:#FBFAF5;border-radius:0 0 18px 18px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#ECEFF7;color:#12204F;white-space:nowrap}
+.pill-baru{background:#1D3FAE;color:#FFFFFF}
+.pill-selesai{background:#E3F1E8;color:#17603B}
+.isian{display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:6px 16px;margin:0;font-size:15px}
+.isian dt{color:#4A5578;font-weight:600}
+.isian dd{margin:0;color:#12204F;white-space:pre-wrap;overflow-wrap:anywhere}
+.cari-baris{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.cari-baris .btn-solid{margin-top:27px}
+.profil-ringkas{margin:20px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#12204F;color:#FFFFFF;border-radius:999px;padding:6px 14px;font-weight:700;font-size:14px}
+.hitung{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:#4A5578}
+.hitung strong{color:#12204F;font-size:16px}
+.timeline{list-style:none;padding:0;margin:16px 0 0;display:flex;flex-direction:column;gap:12px}
+.timeline li{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:18px;padding:18px 20px}
+.tl-head{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.tl-tgl{font-weight:700;color:#12204F}
+.tl-jenis{font-weight:700;color:#1D3FAE}
+.tl-id{font-size:13px;color:#4A5578}
+.tl-sub{margin:6px 0 12px;font-size:14px;color:#4A5578}
+.filter-baris{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:8px}
+.stat-periode{font-size:14px;color:#4A5578;margin:8px 0 16px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.tile{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:4px}
+.tile-n{font-family:Rubik,sans-serif;font-weight:800;font-size:32px;color:#12204F;line-height:1.1}
+.tile-l{font-size:13px;color:#4A5578;line-height:1.4}
+.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.stat-blok{background:#FFFFFF;border:1px solid #ECE8DA;border-radius:18px;padding:20px;min-width:0}
+.stat-blok h3{margin:0 0 14px;font-size:16px;color:#12204F}
+.sbars{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.sbars li{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 32px;gap:10px;align-items:center;font-size:14px}
+.sbar-label{color:#12204F;overflow-wrap:anywhere}
+.sbar-track{height:12px;background:#F1F0EA;border-radius:4px;overflow:hidden}
+.sbar-fill{display:block;height:100%;background:#1D3FAE;border-radius:0 4px 4px 0}
+.sbar-n{text-align:right;font-weight:700;color:#12204F;font-variant-numeric:tabular-nums}
+@media (max-width: 760px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat-grid{grid-template-columns:minmax(0,1fr)}
+  .card-form{padding:22px}
+  .isian{grid-template-columns:1fr;gap:2px}
+  .isian dd{margin-bottom:8px}
+  .inbox-item summary{grid-template-columns:auto 1fr;padding:14px 16px}
+  .inbox-waktu{grid-column:1/-1}
+  .cari-baris .btn-solid{margin-top:0;width:100%}
+}
+@media print{
+  #surat-cetak h3{font-size:12pt;margin:12px 0 2px}
+  #surat-cetak .pre{white-space:pre-wrap;margin:0 0 6px}
+  body.mode-cetak-stat header,body.mode-cetak-stat footer,body.mode-cetak-stat .dash-top,body.mode-cetak-stat .dash-tabs,body.mode-cetak-stat .filter-baris,body.mode-cetak-stat #statistik-status{display:none!important}
+  body.mode-cetak-stat .stat-grid{grid-template-columns:1fr 1fr}
+  body.mode-cetak-stat .stat-blok,body.mode-cetak-stat .tile{break-inside:avoid}
+  body.mode-cetak-stat .sbar-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
