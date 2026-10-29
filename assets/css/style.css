@@ -313,7 +313,7 @@ form[hidden]{display:none !important}
 .btn-solid:focus-visible,.btn-line:focus-visible,.btn-mini:focus-visible,.dash-tab:focus-visible,.seg-btn:focus-visible,.inbox-item summary:focus-visible{outline:3px solid #B9C8F2;outline-offset:2px}
 .tombol-baris{display:flex;flex-wrap:wrap;gap:12px}
 .bar-aksi{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}
-.dash-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+.dash-tabs{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .dash-tab{white-space:nowrap;flex:none}
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#A1260D;color:#FFFFFF;font-size:12px;font-weight:700;margin-left:6px}
 .badge[hidden]{display:none}
