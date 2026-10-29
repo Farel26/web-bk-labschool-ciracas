@@ -326,6 +326,7 @@ function guruApi_(q) {
     case 'statistik': return statistik_(String(q.dari || ''), String(q.sampai || ''));
     case 'infoBackup': return infoBackup_();
     case 'unggahScan': return unggahScan_(u, q.data || {});
+    case 'cariNomor': return cariNomor_(String(q.nomor || ''));
     case 'daftarScan': return daftarScan_(String(q.cari || ''));
     case 'lihatScan': return lihatScan_(String(q.id || ''));
     case 'hapusScan': return hapusScan_(u, String(q.id || ''));
@@ -775,16 +776,41 @@ function scanPerNomor_() {
   return out;
 }
 
+// Nomor unik (KJ-/SP-/PG-/RJ-/HV-...) -> jenis, nama, kelas, tanggal dari tab asalnya.
+var NOMOR_SUMBER = [
+  { tab: 'LaporanKejadian', jenis: 'Laporan kejadian', tgl: 'Tanggal kejadian' },
+  { tab: 'SuratPerjanjian', jenis: 'Surat perjanjian', tgl: 'Tanggal perjanjian' },
+  { tab: SURAT_TAB, jenisKol: 'Jenis surat', tgl: 'Tanggal surat' }
+];
+var JENIS_SURAT_SCAN = { 'Surat rujukan (alih tangan kasus)': 'Surat rujukan' };
+
+function cariNomor_(nomor) {
+  nomor = String(nomor || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}-\d{8}-\d{3}$/.test(nomor)) return { ok: false, error: 'Format nomor seperti SP-20261029-001.' };
+  for (var i = 0; i < NOMOR_SUMBER.length; i++) {
+    var s = NOMOR_SUMBER[i], t = tabel_(s.tab);
+    for (var r = 0; r < t.rows.length; r++) {
+      if (String(t.rows[r][0]).trim().toUpperCase() !== nomor) continue;
+      var row = t.rows[r], jenis = s.jenisKol ? String(sel_(t, row, s.jenisKol)) : s.jenis;
+      return { ok: true, nomor: nomor, jenis: JENIS_SURAT_SCAN[jenis] || jenis, nama: teks_(sel_(t, row, 'Nama siswa')),
+               kelas: teks_(sel_(t, row, 'Kelas')), tanggal: tglKey_(sel_(t, row, s.tgl)), scan: scanPerNomor_()[nomor] || 0 };
+    }
+  }
+  return { ok: false, error: 'Nomor ' + nomor + ' tidak ditemukan. Periksa lagi nomor di surat atau laporan.' };
+}
+
 function unggahScan_(u, d) {
-  if (SCAN_JENIS.indexOf(d.jenis) < 0) return { ok: false, error: 'Jenis dokumen tidak dikenal.' };
-  if (wajib_(d, ['tanggal', 'nama', 'kelas'])) return { ok: false, error: 'Kolom wajib belum diisi.' };
+  var rec = cariNomor_(d.nomor);
+  if (!rec.ok) return rec;
+  d.jenis = SCAN_JENIS.indexOf(rec.jenis) >= 0 ? rec.jenis : 'Lainnya';
+  d.nama = rec.nama; d.kelas = rec.kelas; d.tanggal = rec.tanggal; d.nomor = rec.nomor;
   var f = d.file || {}, ext = SCAN_MIME[f.type];
   if (!ext) return { ok: false, error: 'Format file harus PDF, JPG, PNG, atau WEBP.' };
   var bytes;
   try { bytes = Utilities.base64Decode(String(f.data || '')); } catch (err) { return { ok: false, error: 'File rusak. Coba pilih ulang.' }; }
   if (!bytes.length) return { ok: false, error: 'File kosong.' };
   if (bytes.length > SCAN_MAKS) return { ok: false, error: 'Ukuran file maksimal 10 MB.' };
-  var nomor = String(d.nomor || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 30);
+  var nomor = d.nomor;
   var file = folderScan_().createFile(Utilities.newBlob(bytes, f.type, 'upload.' + ext));
   var id = tulisBaris_(SCAN_TAB, {
     'Jenis dokumen': d.jenis, 'Nomor terkait': nomor, 'Tanggal dokumen': clean_(d.tanggal),
@@ -793,7 +819,7 @@ function unggahScan_(u, d) {
     'Link file (khusus pengelola)': file.getUrl(), 'File ID (jangan diubah)': file.getId(), 'Diunggah oleh': u.nama
   }, 'SC');
   var aman = function (s) { return String(s || '').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); };
-  file.setName([id, aman(d.nama), aman(d.kelas), aman(d.jenis)].join(' - ') + '.' + ext);
+  file.setName([nomor, aman(d.nama), aman(d.kelas), aman(d.jenis), id].join(' - ') + '.' + ext);
   file.setDescription('Diunggah lewat dashboard guru BK oleh ' + u.nama + (nomor ? ' · terkait ' + nomor : ''));
   return { ok: true, id: id };
 }

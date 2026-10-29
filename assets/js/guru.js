@@ -70,7 +70,7 @@
     if (sel.options.length <= 1 && sesi.kategori) {
       sesi.kategori.forEach(function (k) { var o = document.createElement("option"); o.textContent = k; sel.appendChild(o); });
     }
-    ["k-tanggal", "p-tanggal", "sl-tanggal", "sc-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
+    ["k-tanggal", "p-tanggal", "sl-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
     pilihTab("inbox");
     muatNamaSiswa();
   }
@@ -260,6 +260,7 @@
     var f = this, st = $("kejadian-status"), btn = f.querySelector("button[type=submit]");
     var bad = tandaiWajib(f);
     if (bad) { status(st, "Lengkapi kolom yang wajib diisi.", "err"); bad.focus(); return; }
+    var lampiran = ambilFile("k-scan");
     sibuk(btn, true, "Menyimpan…"); status(st, "");
     api("simpanKejadian", { data: {
       tanggal: $("k-tanggal").value, nama: $("k-nama").value, kelas: $("k-kelas").value, kategori: $("k-kategori").value,
@@ -268,6 +269,7 @@
         if (!d.ok) { status(st, d.error || "Gagal menyimpan.", "err"); return; }
         f.reset(); $("k-tanggal").value = hariIni(); dimuat.statistik = false;
         status(st, "Tersimpan dengan nomor " + d.id + ".", "ok");
+        return lampirkan(d.id, lampiran, st);
       })
       .catch(gagalKoneksi(st, "Gagal menyimpan karena koneksi. Data belum terkirim, coba lagi."))
       .finally(function () { sibuk(btn, false); });
@@ -333,6 +335,7 @@
     if (bad) { status(st, bad.type === "checkbox" ? "Centang persetujuan siswa terlebih dahulu." : "Lengkapi kolom yang wajib diisi.", "err"); bad.focus(); return; }
     var data = { tanggal: $("p-tanggal").value, nama: $("p-nama").value, kelas: $("p-kelas").value, ortu: $("p-ortu").value,
       poin: $("p-poin").value, setuju: $("p-setuju").checked };
+    var lampiran = ambilFile("p-scan");
     sibuk(btn, true, "Menyimpan…"); status(st, "");
     api("simpanPerjanjian", { data: data })
       .then(function (d) {
@@ -341,13 +344,14 @@
         f.reset(); $("p-tanggal").value = hariIni(); dimuat.statistik = false;
         status(st, "Tersimpan dengan nomor " + d.id + ".", "ok");
         $("btn-cetak-baru").hidden = false; $("btn-scan-perjanjian").hidden = false;
+        return lampirkan(d.id, lampiran, st);
       })
       .catch(gagalKoneksi(st, "Gagal menyimpan karena koneksi. Data belum terkirim, coba lagi."))
       .finally(function () { sibuk(btn, false); });
   });
   $("btn-cetak-baru").addEventListener("click", function () { siapkanSurat("perjanjian", suratTerakhir[1]); cetak(); });
   $("btn-scan-perjanjian").addEventListener("click", function () {
-    var d = suratTerakhir[1]; keScan({ jenis: "Surat perjanjian", nomor: d.id, tanggal: d.tanggal, nama: d.nama, kelas: d.kelas });
+    keScan(suratTerakhir[1].id);
   });
 
   /* ---------- Surat lain ---------- */
@@ -389,36 +393,37 @@
     if (bad) { status(st, "Lengkapi kolom yang wajib diisi.", "err"); bad.focus(); return; }
     var data = { jenis: jenisSurat(), tanggal: $("sl-tanggal").value, nama: $("sl-nama").value, kelas: $("sl-kelas").value, ortu: $("sl-ortu").value };
     $("sl-isian").querySelectorAll("[data-k]").forEach(function (el) { data[el.dataset.k] = el.value; });
+    var lampiran = ambilFile("sl-scan");
     sibuk(btn, true, "Menyimpan…"); status(st, "");
     api("simpanSurat", { data: data }).then(function (d) {
       if (!d.ok) { status(st, d.error || "Gagal menyimpan.", "err"); return; }
       data.id = d.id; data.guru = d.guru; suratLainTerakhir = data; dimuat.statistik = false;
-      ["sl-nama", "sl-kelas", "sl-ortu"].forEach(function (id) { $(id).value = ""; });
+      ["sl-nama", "sl-kelas", "sl-ortu", "sl-scan"].forEach(function (id) { $(id).value = ""; });
       $("sl-isian").querySelectorAll("[data-k]").forEach(function (el) { el.value = ""; });
       status(st, "Tersimpan dengan nomor " + d.id + ".", "ok");
       $("btn-cetak-surat").hidden = false; $("btn-scan-surat").hidden = false;
+      return lampirkan(d.id, lampiran, st);
     }).catch(gagalKoneksi(st, "Gagal menyimpan karena koneksi. Data belum terkirim, coba lagi.")).finally(function () { sibuk(btn, false); });
   });
   $("btn-cetak-surat").addEventListener("click", function () { siapkanSurat(suratLainTerakhir.jenis, suratLainTerakhir); cetak(); });
   $("btn-scan-surat").addEventListener("click", function () {
-    var d = suratLainTerakhir;
-    keScan({ jenis: JENIS_SCAN_SURAT[d.jenis], nomor: d.id, tanggal: d.tanggal, nama: d.nama, kelas: d.kelas });
+    keScan(suratLainTerakhir.id);
   });
 
   /* ---------- Arsip scan ---------- */
-  var JENIS_SCAN_SURAT = { panggilan: "Surat panggilan orang tua", rujukan: "Surat rujukan", homevisit: "Berita acara home visit" };
-  var JENIS_SCAN_LABEL = { "Surat panggilan orang tua": "Surat panggilan orang tua", "Surat rujukan (alih tangan kasus)": "Surat rujukan", "Berita acara home visit": "Berita acara home visit" };
+  // Setiap scan disambungkan ke satu nomor dokumen (KJ-/SP-/PG-/RJ-/HV-...).
+  // Beberapa foto digabung menjadi satu PDF sebelum diunggah.
   var MAKS_FILE = 10 * 1024 * 1024;
+  var POLA_NOMOR = /^[A-Z]{2}-\d{8}-\d{3}$/;
   var dataScan = [];
 
-  function keScan(d) {
+  function ambilFile(id) { return Array.prototype.slice.call(($(id) || {}).files || []); }
+
+  function keScan(nomor) {
     pilihTab("scan");
-    $("sc-jenis").value = d.jenis || "Lainnya";
-    $("sc-nomor").value = d.nomor || "";
-    $("sc-tanggal").value = d.tanggal || hariIni();
-    $("sc-nama").value = d.nama || "";
-    $("sc-kelas").value = d.kelas || "";
-    status($("scan-status"), "Data surat sudah terisi. Pilih file hasil scan.", "");
+    $("sc-nomor").value = nomor || "";
+    cekNomor();
+    status($("scan-status"), "");
     $("sc-file").focus();
   }
 
@@ -431,76 +436,140 @@
     });
   }
 
-  // Foto dari HP biasanya besar: perkecil ke sisi terpanjang 2200 px dalam format JPG.
+  // Foto dari HP biasanya besar: perkecil ke sisi terpanjang 2000 px, format JPG.
   function perkecilFoto(file) {
     return new Promise(function (ok, gagal) {
       var img = new Image(), url = URL.createObjectURL(file);
       img.onload = function () {
-        var skala = Math.min(1, 2200 / Math.max(img.naturalWidth, img.naturalHeight));
+        var skala = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
         var c = document.createElement("canvas");
         c.width = Math.round(img.naturalWidth * skala); c.height = Math.round(img.naturalHeight * skala);
         var g = c.getContext("2d"); g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
-        c.toBlob(function (b) { b ? ok(b) : gagal(new Error("foto")); }, "image/jpeg", 0.85);
+        c.toBlob(function (b) { b ? ok({ blob: b, w: c.width, h: c.height }) : gagal(new Error("foto")); }, "image/jpeg", 0.82);
       };
       img.onerror = function () { URL.revokeObjectURL(url); gagal(new Error("foto")); };
       img.src = url;
     });
   }
 
-  function siapkanFile(file) {
-    var nama = file.name || "dokumen";
-    if (file.type === "application/pdf") {
-      if (file.size > MAKS_FILE) return Promise.reject(new Error(nama + " lebih dari 10 MB. Perkecil dulu, misalnya dengan scan ulang di resolusi lebih rendah."));
-      return bacaBase64(file).then(function (b64) { return { name: nama, type: "application/pdf", data: b64 }; });
-    }
-    if (!/^image\//.test(file.type)) return Promise.reject(new Error(nama + " bukan PDF atau foto."));
-    var kecil = (file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp") && file.size < 1.5 * 1024 * 1024;
-    return (kecil ? Promise.resolve(file) : perkecilFoto(file))
-      .catch(function () { throw new Error(nama + " tidak bisa dibaca. Simpan sebagai JPG lalu coba lagi."); })
-      .then(function (blob) {
-        if (blob.size > MAKS_FILE) throw new Error(nama + " lebih dari 10 MB.");
-        var type = blob.type || file.type;
-        return bacaBase64(blob).then(function (b64) { return { name: kecil ? nama : nama.replace(/\.[^.]+$/, "") + ".jpg", type: type, data: b64 }; });
-      });
+  var jsPdfSiap = null;
+  function muatJsPdf() {
+    if (window.jspdf) return Promise.resolve();
+    if (jsPdfSiap) return jsPdfSiap;
+    jsPdfSiap = new Promise(function (ok, gagal) {
+      var sc = document.createElement("script");
+      sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      sc.onload = function () { ok(); };
+      sc.onerror = function () { jsPdfSiap = null; gagal(new Error("Penggabung PDF gagal dimuat. Periksa koneksi lalu coba lagi.")); };
+      document.head.appendChild(sc);
+    });
+    return jsPdfSiap;
   }
+
+  // Semua foto -> satu PDF (satu foto per halaman A4). File PDF tetap apa adanya.
+  function siapkanBerkas(files) {
+    var foto = files.filter(function (f) { return /^image\//.test(f.type); });
+    var pdf = files.filter(function (f) { return f.type === "application/pdf"; });
+    var lain = files.filter(function (f) { return foto.indexOf(f) < 0 && pdf.indexOf(f) < 0; });
+    if (lain.length) return Promise.reject(new Error(lain[0].name + " bukan PDF atau foto."));
+    var besar = pdf.filter(function (f) { return f.size > MAKS_FILE; });
+    if (besar.length) return Promise.reject(new Error(besar[0].name + " lebih dari 10 MB. Scan ulang dengan resolusi lebih rendah."));
+    var hasil = pdf.map(function (f) { return bacaBase64(f).then(function (b64) { return { name: f.name, type: "application/pdf", data: b64 }; }); });
+    if (foto.length === 1 && !pdf.length) {
+      hasil.push(perkecilFoto(foto[0]).then(function (x) { return bacaBase64(x.blob); })
+        .then(function (b64) { return { name: foto[0].name.replace(/\.[^.]+$/, "") + ".jpg", type: "image/jpeg", data: b64 }; }));
+    } else if (foto.length) {
+      hasil.push(muatJsPdf().then(function () {
+        return Promise.all(foto.map(perkecilFoto));
+      }).then(function (hal) {
+        var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+        return hal.reduce(function (p, x, i) {
+          return p.then(function () { return bacaBase64(x.blob); }).then(function (b64) {
+            if (i) doc.addPage();
+            var W = 210, H = 297, m = 8, sk = Math.min((W - 2 * m) / x.w, (H - 2 * m) / x.h);
+            var w = x.w * sk, h = x.h * sk;
+            doc.addImage("data:image/jpeg;base64," + b64, "JPEG", (W - w) / 2, (H - h) / 2, w, h);
+          });
+        }, Promise.resolve()).then(function () {
+          var blob = doc.output("blob");
+          if (blob.size > MAKS_FILE) throw new Error("Gabungan foto lebih dari 10 MB. Kurangi jumlah foto lalu coba lagi.");
+          return bacaBase64(blob).then(function (b64) { return { name: "gabungan " + foto.length + " halaman.pdf", type: "application/pdf", data: b64 }; });
+        });
+      }));
+    }
+    return Promise.all(hasil).catch(function (err) {
+      throw /foto/.test(err.message) && err.message.length < 8 ? new Error("Ada foto yang tidak bisa dibaca. Simpan sebagai JPG lalu coba lagi.") : err;
+    });
+  }
+
+  // Unggah berkas untuk satu nomor. Dipakai form Arsip scan dan lampiran di setiap form.
+  function unggahUntuk(nomor, files, keterangan, st) {
+    if (!files.length) return Promise.resolve([]);
+    status(st, "Menyiapkan file…", "");
+    return siapkanBerkas(files).then(function (berkas) {
+      var ids = [];
+      return berkas.reduce(function (p, b, i) {
+        return p.then(function () {
+          status(st, berkas.length > 1 ? "Mengunggah " + (i + 1) + " dari " + berkas.length + "…" : "Mengunggah scan…", "");
+          return api("unggahScan", { data: { nomor: nomor, keterangan: keterangan || "", file: b } });
+        }).then(function (d) { if (!d.ok) throw new Error(d.error || "Gagal mengunggah."); ids.push(d.id); });
+      }, Promise.resolve()).then(function () { dimuat.scan = false; return ids; });
+    });
+  }
+
+  // Setelah laporan/surat tersimpan: lampirkan scan ke nomornya (jika ada file).
+  function lampirkan(nomor, files, st) {
+    if (!files.length) return;
+    return unggahUntuk(nomor, files, "", st).then(function () {
+      status(st, "Tersimpan dengan nomor " + nomor + ", scan terlampir.", "ok");
+    }).catch(function (err) {
+      if (err.message === "auth") throw err;
+      status(st, "Tersimpan dengan nomor " + nomor + ", tetapi scan gagal diunggah (" + (err.message === "Failed to fetch" ? "koneksi terputus" : err.message) + "). Unggah ulang lewat menu Arsip scan dengan nomor ini.", "err");
+    });
+  }
+
+  var timerNomor = null, nomorValid = null;
+  function cekNomor() {
+    var v = $("sc-nomor").value.trim().toUpperCase(), info = $("sc-info");
+    nomorValid = null;
+    if (!POLA_NOMOR.test(v)) { info.textContent = "Contoh nomor: KJ-… laporan kejadian, SP-… surat perjanjian, PG-/RJ-/HV-… surat lain."; info.className = "hint"; return; }
+    info.textContent = "Mencari " + v + "…"; info.className = "hint";
+    api("cariNomor", { nomor: v }).then(function (d) {
+      if ($("sc-nomor").value.trim().toUpperCase() !== v) return;
+      if (!d.ok) { info.textContent = d.error; info.className = "hint hint-err"; return; }
+      nomorValid = v;
+      info.textContent = "✓ " + d.jenis + " · " + d.nama + " (" + d.kelas + ") · " + tglPanjang(d.tanggal) + (d.scan ? " · sudah ada " + d.scan + " scan" : "");
+      info.className = "hint hint-ok";
+    }).catch(function () { info.textContent = "Tidak bisa memeriksa nomor. Coba lagi."; info.className = "hint hint-err"; });
+  }
+  $("sc-nomor").addEventListener("input", function () { clearTimeout(timerNomor); timerNomor = setTimeout(cekNomor, 450); });
 
   var ukuranTeks = function (b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; };
   $("sc-file").addEventListener("change", function () {
-    var files = Array.prototype.slice.call(this.files || []), ul = $("sc-pilihan");
+    var files = ambilFile("sc-file"), ul = $("sc-pilihan"), nFoto = files.filter(function (f) { return /^image\//.test(f.type); }).length;
     if (files.length && /file/.test($("scan-status").textContent)) status($("scan-status"), "");
     ul.hidden = !files.length;
     ul.innerHTML = files.map(function (f, i) {
       return "<li>" + (files.length > 1 ? "Hal. " + (i + 1) + ": " : "") + esc(f.name) + ' <span class="muted">(' + ukuranTeks(f.size) + ")</span></li>";
-    }).join("");
+    }).join("") + (nFoto > 1 ? '<li class="muted">' + nFoto + " foto akan digabung menjadi satu PDF.</li>" : "");
   });
 
   $("form-scan").addEventListener("submit", function (e) {
     e.preventDefault();
     var f = this, st = $("scan-status"), btn = f.querySelector("button[type=submit]");
     var bad = tandaiWajib(f);
-    if (bad) { status(st, bad.type === "file" ? "Pilih file yang akan diunggah." : "Lengkapi kolom yang wajib diisi.", "err"); bad.focus(); return; }
-    var files = Array.prototype.slice.call($("sc-file").files), n = files.length, berhasil = [];
-    var dasar = { jenis: $("sc-jenis").value, nomor: $("sc-nomor").value, tanggal: $("sc-tanggal").value, nama: $("sc-nama").value, kelas: $("sc-kelas").value };
+    if (bad) { status(st, bad.type === "file" ? "Pilih file yang akan diunggah." : "Isi nomor dokumen.", "err"); bad.focus(); return; }
+    var nomor = $("sc-nomor").value.trim().toUpperCase();
+    if (!POLA_NOMOR.test(nomor)) { status(st, "Format nomor seperti SP-20261029-001.", "err"); $("sc-nomor").focus(); return; }
     sibuk(btn, true, "Mengunggah…");
-    var antre = Promise.resolve();
-    files.forEach(function (file, i) {
-      antre = antre.then(function () {
-        status(st, n > 1 ? "Mengunggah " + (i + 1) + " dari " + n + "…" : "Mengunggah…", "");
-        return siapkanFile(file).then(function (siap) {
-          var data = Object.assign({}, dasar, { keterangan: [$("sc-ket").value.trim(), n > 1 ? "halaman " + (i + 1) + " dari " + n : ""].filter(Boolean).join(", "), file: siap });
-          return api("unggahScan", { data: data });
-        }).then(function (d) { if (!d.ok) throw new Error(d.error || "Gagal mengunggah."); berhasil.push(d.id); });
-      });
-    });
-    antre.then(function () {
-      f.reset(); $("sc-tanggal").value = hariIni(); $("sc-pilihan").hidden = true; $("sc-pilihan").innerHTML = "";
-      status(st, "Tersimpan: " + berhasil.join(", ") + ".", "ok");
-      dimuat.scan = false; $("cari-scan").value = dasar.nomor || ""; muatScan();
+    unggahUntuk(nomor, ambilFile("sc-file"), $("sc-ket").value.trim(), st).then(function (ids) {
+      f.reset(); $("sc-pilihan").hidden = true; $("sc-pilihan").innerHTML = ""; cekNomor();
+      status(st, "Tersimpan untuk " + nomor + " (" + ids.join(", ") + ").", "ok");
+      $("cari-scan").value = nomor; muatScan();
     }).catch(function (err) {
       if (err.message === "auth") return;
-      var pesan = err.message === "Failed to fetch" ? "Koneksi terputus saat mengunggah." : err.message;
-      status(st, (berhasil.length ? "Sebagian tersimpan (" + berhasil.join(", ") + "). " : "") + pesan + " Coba lagi untuk file yang belum terunggah.", "err");
+      status(st, (err.message === "Failed to fetch" ? "Koneksi terputus saat mengunggah." : err.message) + " Coba lagi.", "err");
     }).finally(function () { sibuk(btn, false); });
   });
 
@@ -669,9 +738,7 @@
   $("tab-riwayat").addEventListener("click", function (e) {
     var sb = e.target.closest("button[data-scan-j]");
     if (sb) {
-      var j = sb.dataset.scanJ, row = dataRiwayat[j][+sb.dataset.i];
-      var jenis = j === "kejadian" ? "Laporan kejadian" : j === "perjanjian" ? "Surat perjanjian" : (JENIS_SCAN_LABEL[row["Jenis surat"]] || "Lainnya");
-      keScan({ jenis: jenis, nomor: row["ID"], tanggal: row["Tanggal kejadian"] || row["Tanggal perjanjian"] || row["Tanggal surat"], nama: row["Nama siswa"], kelas: row["Kelas"] });
+      keScan(dataRiwayat[sb.dataset.scanJ][+sb.dataset.i]["ID"]);
       return;
     }
     var lb = e.target.closest("button[data-lihat-nomor]");

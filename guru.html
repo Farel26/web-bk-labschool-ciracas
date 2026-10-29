@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261029d">
+<link rel="stylesheet" href="assets/css/style.css?v=20261029e">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -111,6 +111,7 @@
           </div>
           <div class="field"><label for="k-deskripsi">Deskripsi kejadian</label><textarea id="k-deskripsi" rows="5" required></textarea><span class="hint">Tulis fakta: apa yang terjadi, di mana, siapa saja yang terlibat.</span></div>
           <div class="field"><label for="k-tindak">Tindak lanjut guru BK</label><textarea id="k-tindak" rows="4" required></textarea></div>
+          <div class="field"><label for="k-scan">Lampiran scan atau foto (opsional)</label><input id="k-scan" type="file" accept="application/pdf,image/*" multiple><span class="hint">Boleh diisi sekarang atau nanti lewat menu Arsip scan. Beberapa foto otomatis digabung menjadi satu PDF dan disambungkan ke nomor dokumen ini.</span></div>
           <button type="submit" class="btn-solid">Simpan laporan</button>
           <p class="form-status" id="kejadian-status" role="status" aria-live="polite"></p>
         </form>
@@ -127,6 +128,7 @@
           </div>
           <div class="field"><label for="p-ortu">Nama orang tua/wali (opsional)</label><input id="p-ortu" type="text"></div>
           <div class="field"><label for="p-poin">Poin kesepakatan</label><textarea id="p-poin" rows="6" required></textarea><span class="hint">Satu poin per baris. Contoh: "Datang ke sekolah sebelum pukul 06.50."</span></div>
+          <div class="field"><label for="p-scan">Lampiran scan atau foto (opsional)</label><input id="p-scan" type="file" accept="application/pdf,image/*" multiple><span class="hint">Boleh diisi sekarang atau nanti lewat menu Arsip scan. Beberapa foto otomatis digabung menjadi satu PDF dan disambungkan ke nomor dokumen ini.</span></div>
           <label class="check"><input type="checkbox" id="p-setuju" required> Siswa sudah membaca, memahami, dan menyetujui seluruh poin kesepakatan.</label>
           <div class="tombol-baris">
             <button type="submit" class="btn-solid">Simpan perjanjian</button>
@@ -154,6 +156,7 @@
           </div>
           <div class="field"><label for="sl-ortu">Nama orang tua/wali <span id="sl-ortu-ops">(opsional)</span></label><input id="sl-ortu" type="text"></div>
           <div id="sl-isian" style="display: flex; flex-direction: column; gap: 18px"></div>
+          <div class="field"><label for="sl-scan">Lampiran scan atau foto (opsional)</label><input id="sl-scan" type="file" accept="application/pdf,image/*" multiple><span class="hint">Boleh diisi sekarang atau nanti lewat menu Arsip scan. Beberapa foto otomatis digabung menjadi satu PDF dan disambungkan ke nomor dokumen ini.</span></div>
           <div class="tombol-baris">
             <button type="submit" class="btn-solid">Simpan surat</button>
             <button type="button" id="btn-cetak-surat" class="btn-line" hidden>Cetak surat</button>
@@ -166,20 +169,12 @@
       <!-- Arsip scan -->
       <div id="tab-scan" class="dash-panel" role="tabpanel" aria-labelledby="t-scan" hidden>
         <form id="form-scan" class="card-form" novalidate>
-          <h2 class="dash-h">Unggah dokumen scan</h2>
-          <p class="muted" style="margin: 0">Untuk surat atau laporan yang sudah ditandatangani. Unggah PDF hasil scan, atau foto langsung dengan kamera HP. File tersimpan di folder Google Drive BK yang hanya dapat diakses guru BK, dan bisa dibuka lewat dashboard ini.</p>
-          <div class="g2" style="gap: 16px">
-            <div class="field"><label for="sc-jenis">Jenis dokumen</label><select id="sc-jenis"><option>Surat perjanjian</option><option>Laporan kejadian</option><option>Surat panggilan orang tua</option><option>Surat rujukan</option><option>Berita acara home visit</option><option>Lainnya</option></select></div>
-            <div class="field"><label for="sc-nomor">Nomor terkait (opsional)</label><input id="sc-nomor" type="text" autocapitalize="characters" spellcheck="false" placeholder="mis. SP-20261029-001"><span class="hint">Nomor yang tercetak di bawah judul surat. Isi agar scan tersambung ke datanya.</span></div>
-          </div>
-          <div class="g3f">
-            <div class="field"><label for="sc-tanggal">Tanggal dokumen</label><input id="sc-tanggal" type="date" required></div>
-            <div class="field"><label for="sc-nama">Nama siswa</label><input id="sc-nama" type="text" list="dl-siswa" required></div>
-            <div class="field"><label for="sc-kelas">Kelas</label><input id="sc-kelas" type="text" placeholder="mis. 8B" required></div>
-          </div>
-          <div class="field"><label for="sc-ket">Keterangan (opsional)</label><input id="sc-ket" type="text" placeholder="mis. sudah ditandatangani orang tua"></div>
-          <div class="field"><label for="sc-file">File</label><input id="sc-file" type="file" accept="application/pdf,image/*" multiple required><span class="hint">PDF, JPG, atau PNG, maksimal 10 MB per file. Foto otomatis diperkecil. Beberapa foto akan disimpan sebagai halaman 1, 2, dan seterusnya.</span></div>
+          <h2 class="dash-h">Unggah scan dokumen</h2>
+          <p class="muted" style="margin: 0">Cukup masukkan nomor dokumen (tercetak di bawah judul surat atau laporan). Nama, kelas, tanggal, dan jenis dokumen terisi otomatis. Untuk dokumen baru, lampirkan scan langsung saat menyimpan laporan atau surat.</p>
+          <div class="field"><label for="sc-nomor">Nomor dokumen</label><input id="sc-nomor" type="text" autocapitalize="characters" spellcheck="false" autocomplete="off" placeholder="mis. SP-20261029-001" required style="font-family: Rubik, sans-serif; font-size: 18px; letter-spacing: 1px; text-transform: uppercase"><span class="hint" id="sc-info" aria-live="polite">Contoh nomor: KJ-… laporan kejadian, SP-… surat perjanjian, PG-/RJ-/HV-… surat lain.</span></div>
+          <div class="field"><label for="sc-file">File scan atau foto</label><input id="sc-file" type="file" accept="application/pdf,image/*" multiple required><span class="hint">PDF, JPG, atau PNG, maksimal 10 MB. Beberapa foto otomatis digabung menjadi satu PDF.</span></div>
           <ul id="sc-pilihan" class="file-list" hidden></ul>
+          <div class="field"><label for="sc-ket">Keterangan (opsional)</label><input id="sc-ket" type="text" placeholder="mis. sudah ditandatangani orang tua"></div>
           <button type="submit" class="btn-solid">Unggah</button>
           <p class="form-status" id="scan-status" role="status" aria-live="polite"></p>
         </form>
@@ -257,8 +252,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261029d"></script>
-<script src="assets/js/main.js?v=20261029d"></script>
-<script src="assets/js/guru.js?v=20261029d"></script>
+<script src="assets/js/config.js?v=20261029e"></script>
+<script src="assets/js/main.js?v=20261029e"></script>
+<script src="assets/js/guru.js?v=20261029e"></script>
 </body>
 </html>

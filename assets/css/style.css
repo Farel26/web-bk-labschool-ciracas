@@ -400,3 +400,5 @@ form[hidden]{display:none !important}
 .scan-viewer img{display:block;max-width:100%;height:auto;margin:0 auto;border:1px solid #ECE8DA;border-radius:8px}
 .scan-viewer iframe{display:block;width:100%;height:75vh;border:1px solid #ECE8DA;border-radius:8px;background:#F1F0EA}
 @media print{body.mode-cetak .scan-viewer{display:none}}
+.field .hint.hint-ok{color:#17603B;font-weight:600}
+.field .hint.hint-err{color:#A1260D;font-weight:600}
