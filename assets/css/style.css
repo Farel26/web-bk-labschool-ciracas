@@ -213,3 +213,55 @@ form[hidden]{display:none !important}
   #surat-cetak .ttd div{display:flex;flex-direction:column;justify-content:space-between;min-height:120px}
   #surat-cetak .garis{border-top:1px solid #000;padding-top:4px;margin:0 16px}
 }
+
+/* ===== Alur penanganan pelanggaran ===== */
+.alur-kanal{margin-top:24px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:14px 18px}
+.alur-kanal-label{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4A5578;margin-right:4px}
+.alur-kanal a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;background:#EEF1FB;font-weight:700;font-size:14px;text-decoration:none}
+.alur-kanal a:hover{background:#DDE4F8}
+.alur-kanal-text{font-size:14px;color:#3B4568}
+.alur{list-style:none;margin:40px 0 0;padding:0;display:flex;flex-direction:column;align-items:center}
+.alur>li{position:relative;width:100%}
+.alur>li+li{margin-top:44px}
+.alur>li+li::before{content:"";position:absolute;left:50%;top:-44px;height:36px;border-left:2px solid #9AA5C4;transform:translateX(-1px)}
+.alur>li+li::after{content:"";position:absolute;left:50%;top:-10px;border:6px solid transparent;border-top:8px solid #9AA5C4;border-bottom:0;transform:translateX(-6px)}
+.alur-step{max-width:600px;display:flex;gap:16px;align-items:flex-start;background:#FFFFFF;border:1px solid #ECE8DA;border-radius:20px;padding:20px 22px}
+.alur-no{flex:none;width:40px;height:40px;border-radius:999px;background:#1D3FAE;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-family:Rubik,sans-serif;font-weight:800;font-size:18px}
+.alur-step h2,.alur-branch h2{margin:0 0 6px;font-family:Rubik,sans-serif;font-weight:700;font-size:19px;line-height:1.3;color:#12204F}
+.alur-step p,.alur-branch p,.alur-branch li{margin:0;font-size:15px;line-height:1.6;color:#3B4568}
+.alur-decision{width:auto !important;display:flex;justify-content:center}
+.alur-decision span{display:inline-flex;align-items:center;min-height:52px;padding:0 26px;border-radius:999px;background:#12204F;color:#FFFFFF;font-family:Rubik,sans-serif;font-weight:700;font-size:18px;box-shadow:0 0 0 4px #E4A93A}
+.alur-branches{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:40px 0 28px}
+.alur>li.alur-branches::before{height:44px}
+.alur>li.alur-branches::after{display:none}
+.alur-bar{position:absolute;left:calc(25% - 5px);right:calc(25% - 5px);border:2px solid #9AA5C4;pointer-events:none}
+.alur-bar.top{top:0;height:30px;border-bottom:0}
+.alur-bar.bottom{bottom:0;height:28px;border-top:0}
+.alur-branch::after{content:"";position:absolute;left:50%;top:-10px;border:6px solid transparent;border-top:8px solid #9AA5C4;border-bottom:0;transform:translateX(-6px)}
+.alur-branch{position:relative;border-radius:20px;padding:22px 22px 18px;display:flex;flex-direction:column;gap:6px}
+.alur-branch.a{background:#EEF1FB;border:2px solid #1D3FAE}
+.alur-branch.b{background:#FDF1E6;border:2px solid #C2571A}
+.alur-branch ul{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.alur-tag{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;font-family:Rubik,sans-serif;font-weight:800;font-size:16px;color:#FFFFFF;margin-bottom:4px}
+.alur-branch.a .alur-tag{background:#1D3FAE}
+.alur-branch.b .alur-tag{background:#B4501A}
+.alur-branch.b h2{color:#7C3510}
+.alur-pasal{margin-top:auto !important;padding-top:8px;font-size:13px !important;color:#4A5578 !important}
+.alur-notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:48px}
+.alur-note{background:#F1F4FC;border-radius:16px;padding:18px 20px}
+.alur-note.darurat{background:#FFF4F0;border:1px solid #F4D6CB}
+.alur-note h2{margin:0 0 6px;font-family:Rubik,sans-serif;font-weight:700;font-size:17px;color:#12204F}
+.alur-note.darurat h2{color:#8A2B12}
+.alur-note p{margin:0;font-size:15px;line-height:1.6;color:#3B4568}
+.alur-note.darurat a{color:#8A2B12;font-weight:800}
+.alur-dasar{margin:28px 0 0;font-size:14px;line-height:1.6;color:#4A5578}
+.alur-cta{margin-top:24px;display:inline-flex;align-items:center;min-height:52px;padding:0 26px;border-radius:999px;background:#1D3FAE;color:#FFFFFF;font-weight:700;font-size:16px;text-decoration:none}
+@media (max-width: 700px){
+  .alur-branches{grid-template-columns:1fr;gap:16px;padding:0}
+  .alur-bar,.alur-branch::after{display:none}
+  .alur>li.alur-branches::before{height:36px}
+  .alur>li.alur-branches::after{display:block}
+  .alur-step{padding:18px}
+  .alur-no{width:36px;height:36px;font-size:16px}
+  .alur-notes{grid-template-columns:1fr}
+}
