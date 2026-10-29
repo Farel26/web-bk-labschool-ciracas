@@ -325,6 +325,10 @@ function guruApi_(q) {
     case 'perbarui': return perbarui_(u, String(q.jenis || ''), String(q.ref || ''), q.data || {});
     case 'statistik': return statistik_(String(q.dari || ''), String(q.sampai || ''));
     case 'infoBackup': return infoBackup_();
+    case 'unggahScan': return unggahScan_(u, q.data || {});
+    case 'daftarScan': return daftarScan_(String(q.cari || ''));
+    case 'lihatScan': return lihatScan_(String(q.id || ''));
+    case 'hapusScan': return hapusScan_(u, String(q.id || ''));
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -444,6 +448,8 @@ function daftar_(jenis) {
   var rows = v.slice(1).filter(function (r) { return r[0]; }).slice(-15).reverse().map(function (r) {
     var o = {}; h.forEach(function (k, i) { o[k] = r[i]; }); return o;
   });
+  var jumlahScan = scanPerNomor_();
+  rows.forEach(function (o) { o._scan = jumlahScan[String(o['ID'] || '').toUpperCase()] || 0; });
   return { ok: true, rows: rows };
 }
 
@@ -506,6 +512,8 @@ var PROFIL_SUMBER = [
   { tab: SURAT_TAB, jenisKol: 'Jenis surat', nama: 'Nama siswa', tgl: 'Tanggal surat', isi: ['Rincian', 'Nama orang tua/wali'], oleh: 'Diinput oleh' },
   { tab: 'Konseling', jenis: 'Permintaan konseling', nama: 'Nama', tgl: 'Waktu masuk', judul: 'Topik',
     isi: ['Cerita singkat', 'Catatan tindak lanjut'], status: 'Status', oleh: 'Ditangani oleh' },
+  { tab: 'ArsipScan', jenisKol: 'Jenis dokumen', jenisAwal: 'Scan: ', nama: 'Nama siswa', tgl: 'Tanggal dokumen',
+    isi: ['Nomor terkait', 'Keterangan'], oleh: 'Diunggah oleh' },
   { tab: 'JanjiOrangTua', jenis: 'Janji temu orang tua', nama: 'Nama siswa', tgl: 'Waktu masuk', judul: 'Keperluan',
     isi: ['Nama orang tua/wali', 'Catatan guru BK'], status: 'Status' }
 ];
@@ -524,7 +532,7 @@ function profil_(cari) {
       var kelas = String(sel_(t, r, 'Kelas') || '').trim();
       siswa[norm_(nama) + '|' + kelas.toUpperCase()] = { nama: nama, kelas: kelas };
       items.push({
-        sumber: s.tab, jenis: s.jenisKol ? String(sel_(t, r, s.jenisKol)) : s.jenis, id: teks_(sel_(t, r, 'ID')),
+        sumber: s.tab, jenis: s.jenisKol ? (s.jenisAwal || '') + String(sel_(t, r, s.jenisKol)) : s.jenis, id: teks_(sel_(t, r, 'ID')),
         tanggal: tglKey_(sel_(t, r, s.tgl)), nama: nama, kelas: kelas, judul: s.judul ? teks_(sel_(t, r, s.judul)) : '',
         status: s.status ? teks_(sel_(t, r, s.status)) : '', oleh: s.oleh ? teks_(sel_(t, r, s.oleh)) : '',
         isi: s.isi.map(function (k) { return { label: k, teks: teks_(sel_(t, r, k)) }; }).filter(function (x) { return x.teks; })
@@ -738,6 +746,109 @@ function pasangPemicuBackup() {
 function infoBackup_() {
   var p = PropertiesService.getScriptProperties();
   return { ok: true, terakhir: p.getProperty('BACKUP_TERAKHIR') || '', jumlah: Number(p.getProperty('BACKUP_JUMLAH') || 0) };
+}
+
+/* ---------------- Arsip scan dokumen ---------------- */
+// File hasil scan/foto disimpan di folder Drive pengelola (privat). Guru lain membukanya
+// lewat dashboard (lihatScan), jadi folder tidak perlu dibagikan.
+var SCAN_TAB = 'ArsipScan';
+var SCAN_FOLDER = 'Arsip Scan Web BK';
+var SCAN_MAKS = 10 * 1024 * 1024;
+var SCAN_JENIS = ['Surat perjanjian', 'Laporan kejadian', 'Surat panggilan orang tua', 'Surat rujukan', 'Berita acara home visit', 'Lainnya'];
+var SCAN_MIME = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+function folderScan_() {
+  var it = DriveApp.getFoldersByName(SCAN_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(SCAN_FOLDER);
+}
+
+function scanPerNomor_() {
+  var t = tabel_(SCAN_TAB), i = kol_(t, 'Nomor terkait'), out = {};
+  if (i < 0) return out;
+  t.rows.forEach(function (r) { var k = String(r[i] || '').trim().toUpperCase(); if (k) out[k] = (out[k] || 0) + 1; });
+  return out;
+}
+
+function unggahScan_(u, d) {
+  if (SCAN_JENIS.indexOf(d.jenis) < 0) return { ok: false, error: 'Jenis dokumen tidak dikenal.' };
+  if (wajib_(d, ['tanggal', 'nama', 'kelas'])) return { ok: false, error: 'Kolom wajib belum diisi.' };
+  var f = d.file || {}, ext = SCAN_MIME[f.type];
+  if (!ext) return { ok: false, error: 'Format file harus PDF, JPG, PNG, atau WEBP.' };
+  var bytes;
+  try { bytes = Utilities.base64Decode(String(f.data || '')); } catch (err) { return { ok: false, error: 'File rusak. Coba pilih ulang.' }; }
+  if (!bytes.length) return { ok: false, error: 'File kosong.' };
+  if (bytes.length > SCAN_MAKS) return { ok: false, error: 'Ukuran file maksimal 10 MB.' };
+  var nomor = String(d.nomor || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 30);
+  var file = folderScan_().createFile(Utilities.newBlob(bytes, f.type, 'upload.' + ext));
+  var id = tulisBaris_(SCAN_TAB, {
+    'Jenis dokumen': d.jenis, 'Nomor terkait': nomor, 'Tanggal dokumen': clean_(d.tanggal),
+    'Nama siswa': clean_(d.nama), 'Kelas': clean_(d.kelas), 'Keterangan': clean_(d.keterangan),
+    'Nama file asli': clean_(String(f.name || '').slice(0, 150)), 'Ukuran (KB)': Math.round(bytes.length / 1024),
+    'Link file (khusus pengelola)': file.getUrl(), 'File ID (jangan diubah)': file.getId(), 'Diunggah oleh': u.nama
+  }, 'SC');
+  var aman = function (s) { return String(s || '').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); };
+  file.setName([id, aman(d.nama), aman(d.kelas), aman(d.jenis)].join(' - ') + '.' + ext);
+  file.setDescription('Diunggah lewat dashboard guru BK oleh ' + u.nama + (nomor ? ' · terkait ' + nomor : ''));
+  return { ok: true, id: id };
+}
+
+function barisScan_(t, r) {
+  return {
+    id: teks_(sel_(t, r, 'ID')), jenis: teks_(sel_(t, r, 'Jenis dokumen')), nomor: teks_(sel_(t, r, 'Nomor terkait')),
+    tanggal: tglKey_(sel_(t, r, 'Tanggal dokumen')), nama: teks_(sel_(t, r, 'Nama siswa')), kelas: teks_(sel_(t, r, 'Kelas')),
+    keterangan: teks_(sel_(t, r, 'Keterangan')), ukuran: Number(sel_(t, r, 'Ukuran (KB)')) || 0,
+    ext: String(teks_(sel_(t, r, 'Nama file asli'))).split('.').pop().toLowerCase(),
+    oleh: teks_(sel_(t, r, 'Diunggah oleh')), waktu: teks_(sel_(t, r, 'Waktu input'))
+  };
+}
+
+// Tanpa kata kunci: 30 terbaru. Dengan kata kunci: cocokkan nama siswa atau nomor terkait.
+function daftarScan_(cari) {
+  var t = tabel_(SCAN_TAB), q = norm_(cari), nomor = String(cari || '').trim().toUpperCase(), out = [];
+  for (var r = t.rows.length - 1; r >= 0 && out.length < 60; r--) {
+    var row = t.rows[r];
+    if (!row[0]) continue;
+    if (q && !cocok_(sel_(t, row, 'Nama siswa'), q) && String(sel_(t, row, 'Nomor terkait')).toUpperCase() !== nomor && String(row[0]).toUpperCase() !== nomor) continue;
+    out.push(barisScan_(t, row));
+    if (!q && out.length >= 30) break;
+  }
+  return { ok: true, items: out, jenis: SCAN_JENIS };
+}
+
+function cariScan_(id) {
+  var t = tabel_(SCAN_TAB);
+  for (var r = 0; r < t.rows.length; r++) if (String(t.rows[r][0]).toUpperCase() === id.toUpperCase()) return { t: t, r: r };
+  return null;
+}
+
+function lihatScan_(id) {
+  var s = cariScan_(id);
+  if (!s) return { ok: false, error: 'Dokumen tidak ditemukan.' };
+  var fid = String(sel_(s.t, s.t.rows[s.r], 'File ID (jangan diubah)'));
+  try {
+    var f = DriveApp.getFileById(fid);
+    if (f.isTrashed()) return { ok: false, error: 'File sudah dihapus dari Drive.' };
+    var b = f.getBlob();
+    return { ok: true, nama: f.getName(), mime: b.getContentType(), data: Utilities.base64Encode(b.getBytes()) };
+  } catch (err) {
+    return { ok: false, error: 'File tidak dapat dibuka. Mungkin sudah dipindah atau dihapus dari Drive.' };
+  }
+}
+
+// File dipindah ke Sampah Drive (masih bisa dipulihkan 30 hari), barisnya dihapus.
+function hapusScan_(u, id) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var s = cariScan_(id);
+    if (!s) return { ok: false, error: 'Dokumen tidak ditemukan.' };
+    var fid = String(sel_(s.t, s.t.rows[s.r], 'File ID (jangan diubah)'));
+    try { DriveApp.getFileById(fid).setTrashed(true); } catch (err) {}
+    s.t.sh.deleteRow(s.r + 2);
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /* ---------------- Email pemberitahuan ---------------- */

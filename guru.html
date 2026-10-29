@@ -60,6 +60,7 @@
         <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="false" tabindex="-1">Laporan kejadian</button>
         <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
         <button type="button" class="dash-tab" role="tab" id="t-surat" data-tab="surat" aria-controls="tab-surat" aria-selected="false" tabindex="-1">Surat lain</button>
+        <button type="button" class="dash-tab" role="tab" id="t-scan" data-tab="scan" aria-controls="tab-scan" aria-selected="false" tabindex="-1">Arsip scan</button>
         <button type="button" class="dash-tab" role="tab" id="t-statistik" data-tab="statistik" aria-controls="tab-statistik" aria-selected="false" tabindex="-1">Statistik</button>
         <button type="button" class="dash-tab" role="tab" id="t-riwayat" data-tab="riwayat" aria-controls="tab-riwayat" aria-selected="false" tabindex="-1">Riwayat</button>
         <button type="button" class="dash-tab" role="tab" id="t-akun" data-tab="akun" aria-controls="tab-akun" aria-selected="false" tabindex="-1">Akun</button>
@@ -130,6 +131,7 @@
           <div class="tombol-baris">
             <button type="submit" class="btn-solid">Simpan perjanjian</button>
             <button type="button" id="btn-cetak-baru" class="btn-line" hidden>Cetak surat</button>
+            <button type="button" id="btn-scan-perjanjian" class="btn-line" hidden>Unggah hasil scan</button>
           </div>
           <p class="form-status" id="perjanjian-status" role="status" aria-live="polite"></p>
         </form>
@@ -155,9 +157,38 @@
           <div class="tombol-baris">
             <button type="submit" class="btn-solid">Simpan surat</button>
             <button type="button" id="btn-cetak-surat" class="btn-line" hidden>Cetak surat</button>
+            <button type="button" id="btn-scan-surat" class="btn-line" hidden>Unggah hasil scan</button>
           </div>
           <p class="form-status" id="surat-status" role="status" aria-live="polite"></p>
         </form>
+      </div>
+
+      <!-- Arsip scan -->
+      <div id="tab-scan" class="dash-panel" role="tabpanel" aria-labelledby="t-scan" hidden>
+        <form id="form-scan" class="card-form" novalidate>
+          <h2 class="dash-h">Unggah dokumen scan</h2>
+          <p class="muted" style="margin: 0">Untuk surat atau laporan yang sudah ditandatangani. Unggah PDF hasil scan, atau foto langsung dengan kamera HP. File tersimpan privat di Google Drive BK dan hanya bisa dibuka lewat dashboard ini.</p>
+          <div class="g2" style="gap: 16px">
+            <div class="field"><label for="sc-jenis">Jenis dokumen</label><select id="sc-jenis"><option>Surat perjanjian</option><option>Laporan kejadian</option><option>Surat panggilan orang tua</option><option>Surat rujukan</option><option>Berita acara home visit</option><option>Lainnya</option></select></div>
+            <div class="field"><label for="sc-nomor">Nomor terkait (opsional)</label><input id="sc-nomor" type="text" autocapitalize="characters" spellcheck="false" placeholder="mis. SP-20261029-001"><span class="hint">Nomor yang tercetak di bawah judul surat. Isi agar scan tersambung ke datanya.</span></div>
+          </div>
+          <div class="g3f">
+            <div class="field"><label for="sc-tanggal">Tanggal dokumen</label><input id="sc-tanggal" type="date" required></div>
+            <div class="field"><label for="sc-nama">Nama siswa</label><input id="sc-nama" type="text" list="dl-siswa" required></div>
+            <div class="field"><label for="sc-kelas">Kelas</label><input id="sc-kelas" type="text" placeholder="mis. 8B" required></div>
+          </div>
+          <div class="field"><label for="sc-ket">Keterangan (opsional)</label><input id="sc-ket" type="text" placeholder="mis. sudah ditandatangani orang tua"></div>
+          <div class="field"><label for="sc-file">File</label><input id="sc-file" type="file" accept="application/pdf,image/*" multiple required><span class="hint">PDF, JPG, atau PNG, maksimal 10 MB per file. Foto otomatis diperkecil. Beberapa foto akan disimpan sebagai halaman 1, 2, dan seterusnya.</span></div>
+          <ul id="sc-pilihan" class="file-list" hidden></ul>
+          <button type="submit" class="btn-solid">Unggah</button>
+          <p class="form-status" id="scan-status" role="status" aria-live="polite"></p>
+        </form>
+        <h2 class="dash-h" style="margin-top: 32px">Dokumen tersimpan</h2>
+        <form id="form-cari-scan" class="cari-baris" role="search" novalidate style="margin-top: 12px">
+          <div class="field" style="flex: 1"><label for="cari-scan">Cari nama siswa atau nomor</label><input id="cari-scan" type="search" list="dl-siswa" autocomplete="off"><span class="hint">Kosongkan untuk melihat 30 unggahan terbaru.</span></div>
+          <button type="submit" class="btn-solid">Cari</button>
+        </form>
+        <div id="scan-list" style="margin-top: 16px"></div>
       </div>
 
       <!-- Statistik -->
@@ -203,6 +234,13 @@
           <p class="muted" style="margin: 0">Salinan seluruh Google Sheet BK dibuat otomatis setiap Minggu malam ke folder "Backup Data Web BK" di Google Drive pengelola. Delapan salinan terbaru disimpan.</p>
         </div>
       </div>
+      <section id="scan-viewer" class="scan-viewer" hidden aria-labelledby="scan-viewer-judul">
+        <div class="scan-viewer-head">
+          <h2 class="dash-h" id="scan-viewer-judul" tabindex="-1">Dokumen</h2>
+          <div class="tombol-baris"><a id="scan-unduh" class="btn-mini" href="#" download style="display: inline-flex; align-items: center; text-decoration: none">Unduh</a><button type="button" id="scan-tutup" class="btn-mini">Tutup</button></div>
+        </div>
+        <div id="scan-viewer-isi"></div>
+      </section>
     </section>
 
     <section id="surat-cetak" aria-hidden="true">

@@ -70,7 +70,7 @@
     if (sel.options.length <= 1 && sesi.kategori) {
       sesi.kategori.forEach(function (k) { var o = document.createElement("option"); o.textContent = k; sel.appendChild(o); });
     }
-    ["k-tanggal", "p-tanggal", "sl-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
+    ["k-tanggal", "p-tanggal", "sl-tanggal", "sc-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
     pilihTab("inbox");
     muatNamaSiswa();
   }
@@ -98,6 +98,7 @@
     if (nama === "riwayat") muatRiwayat();
     if (nama === "statistik" && !dimuat.statistik) muatStatistik();
     if (nama === "akun") muatBackup();
+    if (nama === "scan" && !dimuat.scan) muatScan();
   }
 
   /* ---------- Login ---------- */
@@ -244,9 +245,14 @@
           '<span class="tl-jenis">' + esc(it.jenis) + "</span>" + (it.id ? '<span class="tl-id">' + esc(it.id) + "</span>" : "") + "</div>" +
           '<p class="tl-sub">' + [it.nama && it.nama + (it.kelas ? " (" + it.kelas + ")" : ""), it.judul, it.status && "Status: " + it.status, it.oleh && "oleh " + it.oleh]
             .filter(Boolean).map(esc).join(" · ") + "</p>" +
-          '<dl class="isian">' + it.isi.map(function (x) { return "<dt>" + esc(x.label) + "</dt><dd>" + esc(x.teks) + "</dd>"; }).join("") + "</dl></li>";
+          '<dl class="isian">' + it.isi.map(function (x) { return "<dt>" + esc(x.label) + "</dt><dd>" + esc(x.teks) + "</dd>"; }).join("") + "</dl>" +
+          (it.sumber === "ArsipScan" ? '<button type="button" class="btn-mini" data-lihat="' + esc(it.id) + '" style="margin-top:10px">Lihat scan</button>' : "") + "</li>";
       }).join("") + "</ol>";
   }
+
+  $("profil-hasil").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-lihat]"); if (b) lihatScan(b.dataset.lihat, b);
+  });
 
   /* ---------- Laporan kejadian ---------- */
   $("form-kejadian").addEventListener("submit", function (e) {
@@ -334,12 +340,15 @@
         data.id = d.id; data.guru = d.guru; suratTerakhir = ["perjanjian", data];
         f.reset(); $("p-tanggal").value = hariIni(); dimuat.statistik = false;
         status(st, "Tersimpan dengan nomor " + d.id + ".", "ok");
-        $("btn-cetak-baru").hidden = false;
+        $("btn-cetak-baru").hidden = false; $("btn-scan-perjanjian").hidden = false;
       })
       .catch(gagalKoneksi(st, "Gagal menyimpan karena koneksi. Data belum terkirim, coba lagi."))
       .finally(function () { sibuk(btn, false); });
   });
   $("btn-cetak-baru").addEventListener("click", function () { siapkanSurat("perjanjian", suratTerakhir[1]); cetak(); });
+  $("btn-scan-perjanjian").addEventListener("click", function () {
+    var d = suratTerakhir[1]; keScan({ jenis: "Surat perjanjian", nomor: d.id, tanggal: d.tanggal, nama: d.nama, kelas: d.kelas });
+  });
 
   /* ---------- Surat lain ---------- */
   var SURAT = {
@@ -368,7 +377,7 @@
     $("sl-isian").querySelectorAll("[data-k]").forEach(function (el) { if (simpan[el.dataset.k]) el.value = simpan[el.dataset.k]; });
   }
   document.querySelectorAll("input[name=sl-jenis]").forEach(function (r) {
-    r.addEventListener("change", function () { gambarIsianSurat(); $("btn-cetak-surat").hidden = true; status($("surat-status"), ""); });
+    r.addEventListener("change", function () { gambarIsianSurat(); $("btn-cetak-surat").hidden = true; $("btn-scan-surat").hidden = true; status($("surat-status"), ""); });
   });
   gambarIsianSurat();
 
@@ -387,10 +396,178 @@
       ["sl-nama", "sl-kelas", "sl-ortu"].forEach(function (id) { $(id).value = ""; });
       $("sl-isian").querySelectorAll("[data-k]").forEach(function (el) { el.value = ""; });
       status(st, "Tersimpan dengan nomor " + d.id + ".", "ok");
-      $("btn-cetak-surat").hidden = false;
+      $("btn-cetak-surat").hidden = false; $("btn-scan-surat").hidden = false;
     }).catch(gagalKoneksi(st, "Gagal menyimpan karena koneksi. Data belum terkirim, coba lagi.")).finally(function () { sibuk(btn, false); });
   });
   $("btn-cetak-surat").addEventListener("click", function () { siapkanSurat(suratLainTerakhir.jenis, suratLainTerakhir); cetak(); });
+  $("btn-scan-surat").addEventListener("click", function () {
+    var d = suratLainTerakhir;
+    keScan({ jenis: JENIS_SCAN_SURAT[d.jenis], nomor: d.id, tanggal: d.tanggal, nama: d.nama, kelas: d.kelas });
+  });
+
+  /* ---------- Arsip scan ---------- */
+  var JENIS_SCAN_SURAT = { panggilan: "Surat panggilan orang tua", rujukan: "Surat rujukan", homevisit: "Berita acara home visit" };
+  var JENIS_SCAN_LABEL = { "Surat panggilan orang tua": "Surat panggilan orang tua", "Surat rujukan (alih tangan kasus)": "Surat rujukan", "Berita acara home visit": "Berita acara home visit" };
+  var MAKS_FILE = 10 * 1024 * 1024;
+  var dataScan = [];
+
+  function keScan(d) {
+    pilihTab("scan");
+    $("sc-jenis").value = d.jenis || "Lainnya";
+    $("sc-nomor").value = d.nomor || "";
+    $("sc-tanggal").value = d.tanggal || hariIni();
+    $("sc-nama").value = d.nama || "";
+    $("sc-kelas").value = d.kelas || "";
+    status($("scan-status"), "Data surat sudah terisi. Pilih file hasil scan.", "");
+    $("sc-file").focus();
+  }
+
+  function bacaBase64(blob) {
+    return new Promise(function (ok, gagal) {
+      var r = new FileReader();
+      r.onload = function () { ok(String(r.result).split(",")[1] || ""); };
+      r.onerror = function () { gagal(new Error("baca")); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  // Foto dari HP biasanya besar: perkecil ke sisi terpanjang 2200 px dalam format JPG.
+  function perkecilFoto(file) {
+    return new Promise(function (ok, gagal) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var skala = Math.min(1, 2200 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * skala); c.height = Math.round(img.naturalHeight * skala);
+        var g = c.getContext("2d"); g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) { b ? ok(b) : gagal(new Error("foto")); }, "image/jpeg", 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); gagal(new Error("foto")); };
+      img.src = url;
+    });
+  }
+
+  function siapkanFile(file) {
+    var nama = file.name || "dokumen";
+    if (file.type === "application/pdf") {
+      if (file.size > MAKS_FILE) return Promise.reject(new Error(nama + " lebih dari 10 MB. Perkecil dulu, misalnya dengan scan ulang di resolusi lebih rendah."));
+      return bacaBase64(file).then(function (b64) { return { name: nama, type: "application/pdf", data: b64 }; });
+    }
+    if (!/^image\//.test(file.type)) return Promise.reject(new Error(nama + " bukan PDF atau foto."));
+    var kecil = (file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp") && file.size < 1.5 * 1024 * 1024;
+    return (kecil ? Promise.resolve(file) : perkecilFoto(file))
+      .catch(function () { throw new Error(nama + " tidak bisa dibaca. Simpan sebagai JPG lalu coba lagi."); })
+      .then(function (blob) {
+        if (blob.size > MAKS_FILE) throw new Error(nama + " lebih dari 10 MB.");
+        var type = blob.type || file.type;
+        return bacaBase64(blob).then(function (b64) { return { name: kecil ? nama : nama.replace(/\.[^.]+$/, "") + ".jpg", type: type, data: b64 }; });
+      });
+  }
+
+  var ukuranTeks = function (b) { return b > 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; };
+  $("sc-file").addEventListener("change", function () {
+    var files = Array.prototype.slice.call(this.files || []), ul = $("sc-pilihan");
+    if (files.length && /file/.test($("scan-status").textContent)) status($("scan-status"), "");
+    ul.hidden = !files.length;
+    ul.innerHTML = files.map(function (f, i) {
+      return "<li>" + (files.length > 1 ? "Hal. " + (i + 1) + ": " : "") + esc(f.name) + ' <span class="muted">(' + ukuranTeks(f.size) + ")</span></li>";
+    }).join("");
+  });
+
+  $("form-scan").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var f = this, st = $("scan-status"), btn = f.querySelector("button[type=submit]");
+    var bad = tandaiWajib(f);
+    if (bad) { status(st, bad.type === "file" ? "Pilih file yang akan diunggah." : "Lengkapi kolom yang wajib diisi.", "err"); bad.focus(); return; }
+    var files = Array.prototype.slice.call($("sc-file").files), n = files.length, berhasil = [];
+    var dasar = { jenis: $("sc-jenis").value, nomor: $("sc-nomor").value, tanggal: $("sc-tanggal").value, nama: $("sc-nama").value, kelas: $("sc-kelas").value };
+    sibuk(btn, true, "Mengunggah…");
+    var antre = Promise.resolve();
+    files.forEach(function (file, i) {
+      antre = antre.then(function () {
+        status(st, n > 1 ? "Mengunggah " + (i + 1) + " dari " + n + "…" : "Mengunggah…", "");
+        return siapkanFile(file).then(function (siap) {
+          var data = Object.assign({}, dasar, { keterangan: [$("sc-ket").value.trim(), n > 1 ? "halaman " + (i + 1) + " dari " + n : ""].filter(Boolean).join(", "), file: siap });
+          return api("unggahScan", { data: data });
+        }).then(function (d) { if (!d.ok) throw new Error(d.error || "Gagal mengunggah."); berhasil.push(d.id); });
+      });
+    });
+    antre.then(function () {
+      f.reset(); $("sc-tanggal").value = hariIni(); $("sc-pilihan").hidden = true; $("sc-pilihan").innerHTML = "";
+      status(st, "Tersimpan: " + berhasil.join(", ") + ".", "ok");
+      dimuat.scan = false; $("cari-scan").value = dasar.nomor || ""; muatScan();
+    }).catch(function (err) {
+      if (err.message === "auth") return;
+      var pesan = err.message === "Failed to fetch" ? "Koneksi terputus saat mengunggah." : err.message;
+      status(st, (berhasil.length ? "Sebagian tersimpan (" + berhasil.join(", ") + "). " : "") + pesan + " Coba lagi untuk file yang belum terunggah.", "err");
+    }).finally(function () { sibuk(btn, false); });
+  });
+
+  function muatScan() {
+    var box = $("scan-list"), q = $("cari-scan").value.trim();
+    box.innerHTML = '<p class="muted">Memuat…</p>';
+    api("daftarScan", { cari: q }).then(function (d) {
+      dimuat.scan = true;
+      dataScan = d.items || [];
+      if (!dataScan.length) {
+        box.innerHTML = '<div class="kosong"><strong>' + (q ? 'Tidak ada dokumen untuk "' + esc(q) + '".' : "Belum ada dokumen yang diunggah.") + "</strong><span>" +
+          (q ? "Periksa ejaan nama atau nomor." : "Unggah scan surat perjanjian atau laporan lewat formulir di atas.") + "</span></div>";
+        return;
+      }
+      box.innerHTML = '<div class="table-wrap"><table><thead><tr><th scope=col>Tanggal</th><th scope=col>Dokumen</th><th scope=col>Siswa</th><th scope=col>Oleh</th><th scope=col><span class=sr-only>Aksi</span></th></tr></thead><tbody>' +
+        dataScan.map(function (x, i) {
+          return "<tr><td>" + esc(x.tanggal ? tglPanjang(x.tanggal) : "-") + "</td><td><strong>" + esc(x.jenis) + "</strong><br><span class=muted>" + esc([x.id, x.nomor && "terkait " + x.nomor, x.keterangan].filter(Boolean).join(" · ")) + "</span></td><td>" +
+            esc(x.nama) + " (" + esc(x.kelas) + ")</td><td>" + esc(x.oleh) + '</td><td class="sel-scan"><button type="button" class="btn-mini" data-lihat="' + esc(x.id) + '">Lihat</button> <button type="button" class="btn-mini btn-hapus" data-hapus="' + esc(x.id) + '">Hapus</button></td></tr>';
+        }).join("") + "</tbody></table></div>";
+    }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
+  }
+  $("form-cari-scan").addEventListener("submit", function (e) { e.preventDefault(); muatScan(); });
+
+  var urlLihat = null;
+  function lihatScan(id, btn) {
+    sibuk(btn, true, "Membuka…");
+    api("lihatScan", { id: id }).then(function (d) {
+      if (!d.ok) { alertSingkat(btn, d.error); return; }
+      var bin = atob(d.data), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      if (urlLihat) URL.revokeObjectURL(urlLihat);
+      urlLihat = URL.createObjectURL(new Blob([arr], { type: d.mime }));
+      var v = $("scan-viewer");
+      $("scan-viewer-judul").textContent = d.nama;
+      $("scan-unduh").href = urlLihat; $("scan-unduh").setAttribute("download", d.nama);
+      $("scan-viewer-isi").innerHTML = /^image\//.test(d.mime)
+        ? '<img src="' + urlLihat + '" alt="' + esc(d.nama) + '">'
+        : '<iframe src="' + urlLihat + '" title="' + esc(d.nama) + '"></iframe><p class="muted" style="margin:8px 0 0">PDF tidak tampil? Tekan Unduh untuk membukanya.</p>';
+      v.hidden = false;
+      v.scrollIntoView({ behavior: "smooth", block: "start" });
+      $("scan-viewer-judul").focus({ preventScroll: true });
+    }).catch(function (err) { if (err.message !== "auth") alertSingkat(btn, "Gagal membuka. Coba lagi."); })
+      .finally(function () { sibuk(btn, false); });
+  }
+  function alertSingkat(btn, pesan) {
+    var p = document.createElement("span"); p.className = "form-status err"; p.setAttribute("role", "status"); p.textContent = " " + pesan;
+    btn.insertAdjacentElement("afterend", p); setTimeout(function () { p.remove(); }, 5000);
+  }
+  $("scan-tutup").addEventListener("click", function () {
+    $("scan-viewer").hidden = true; $("scan-viewer-isi").innerHTML = "";
+    if (urlLihat) { URL.revokeObjectURL(urlLihat); urlLihat = null; }
+  });
+
+  $("scan-list").addEventListener("click", function (e) {
+    var l = e.target.closest("button[data-lihat]"); if (l) { lihatScan(l.dataset.lihat, l); return; }
+    var h = e.target.closest("button[data-hapus]"); if (!h) return;
+    if (h.dataset.yakin !== "1") {
+      h.dataset.yakin = "1"; h.textContent = "Yakin hapus " + h.dataset.hapus + "?";
+      setTimeout(function () { if (h.isConnected && h.dataset.yakin === "1") { h.dataset.yakin = ""; h.textContent = "Hapus"; } }, 6000);
+      return;
+    }
+    sibuk(h, true, "Menghapus…");
+    api("hapusScan", { id: h.dataset.hapus }).then(function (d) {
+      if (!d.ok) { sibuk(h, false); h.dataset.yakin = ""; h.textContent = "Hapus"; alertSingkat(h, d.error); return; }
+      muatScan();
+    }).catch(function (err) { if (err.message !== "auth") { sibuk(h, false); h.dataset.yakin = ""; h.textContent = "Hapus"; alertSingkat(h, "Gagal menghapus."); } });
+  });
 
   /* ---------- Statistik ---------- */
   var statTerakhir = null;
@@ -464,16 +641,18 @@
   /* ---------- Riwayat ---------- */
   var dataRiwayat = { kejadian: [], perjanjian: [], surat: [] };
   var KEPALA = {
-    kejadian: "<tr><th scope=col>Tanggal</th><th scope=col>Siswa</th><th scope=col>Kategori</th><th scope=col>Status</th><th scope=col>Oleh</th></tr>",
-    perjanjian: "<tr><th scope=col>Tanggal</th><th scope=col>Siswa</th><th scope=col>Poin</th><th scope=col>Oleh</th><th scope=col><span class=sr-only>Aksi</span></th></tr>",
-    surat: "<tr><th scope=col>Tanggal</th><th scope=col>Jenis</th><th scope=col>Siswa</th><th scope=col>Oleh</th><th scope=col><span class=sr-only>Aksi</span></th></tr>"
+    kejadian: "<tr><th scope=col>Tanggal</th><th scope=col>Siswa</th><th scope=col>Kategori</th><th scope=col>Status</th><th scope=col>Oleh</th><th scope=col>Scan</th></tr>",
+    perjanjian: "<tr><th scope=col>Tanggal</th><th scope=col>Siswa</th><th scope=col>Poin</th><th scope=col>Oleh</th><th scope=col>Scan</th><th scope=col><span class=sr-only>Aksi</span></th></tr>",
+    surat: "<tr><th scope=col>Tanggal</th><th scope=col>Jenis</th><th scope=col>Siswa</th><th scope=col>Oleh</th><th scope=col>Scan</th><th scope=col><span class=sr-only>Aksi</span></th></tr>"
   };
   function barisRiwayat(j, r, i) {
     var siswa = "<td>" + esc(r["Nama siswa"]) + " (" + esc(r["Kelas"]) + ")</td>";
     var btn = '<td><button type="button" class="btn-mini" data-j="' + j + '" data-i="' + i + '">Cetak</button></td>';
-    if (j === "kejadian") return "<tr><td>" + esc(r["Tanggal kejadian"]) + "</td>" + siswa + "<td>" + esc(r["Kategori"]) + "</td><td>" + esc(r["Status"]) + "</td><td>" + esc(r["Diinput oleh"]) + "</td></tr>";
-    if (j === "perjanjian") return "<tr><td>" + esc(r["Tanggal perjanjian"]) + "</td>" + siswa + "<td>" + String(r["Poin kesepakatan"]).split("\n").length + " poin</td><td>" + esc(r["Diinput oleh"]) + "</td>" + btn + "</tr>";
-    return "<tr><td>" + esc(r["Tanggal surat"]) + "</td><td>" + esc(r["Jenis surat"]) + "</td>" + siswa + "<td>" + esc(r["Diinput oleh"]) + "</td>" + btn + "</tr>";
+    var scan = '<td class="sel-scan">' + (r._scan ? '<button type="button" class="btn-mini" data-lihat-nomor="' + esc(r["ID"]) + '">' + r._scan + " file</button> " : "") +
+      '<button type="button" class="btn-mini" data-scan-j="' + j + '" data-i="' + i + '">Unggah</button></td>';
+    if (j === "kejadian") return "<tr><td>" + esc(r["Tanggal kejadian"]) + "</td>" + siswa + "<td>" + esc(r["Kategori"]) + "</td><td>" + esc(r["Status"]) + "</td><td>" + esc(r["Diinput oleh"]) + "</td>" + scan + "</tr>";
+    if (j === "perjanjian") return "<tr><td>" + esc(r["Tanggal perjanjian"]) + "</td>" + siswa + "<td>" + String(r["Poin kesepakatan"]).split("\n").length + " poin</td><td>" + esc(r["Diinput oleh"]) + "</td>" + scan + btn + "</tr>";
+    return "<tr><td>" + esc(r["Tanggal surat"]) + "</td><td>" + esc(r["Jenis surat"]) + "</td>" + siswa + "<td>" + esc(r["Diinput oleh"]) + "</td>" + scan + btn + "</tr>";
   }
   function muatRiwayat() {
     ["kejadian", "perjanjian", "surat"].forEach(function (j) {
@@ -488,6 +667,15 @@
     });
   }
   $("tab-riwayat").addEventListener("click", function (e) {
+    var sb = e.target.closest("button[data-scan-j]");
+    if (sb) {
+      var j = sb.dataset.scanJ, row = dataRiwayat[j][+sb.dataset.i];
+      var jenis = j === "kejadian" ? "Laporan kejadian" : j === "perjanjian" ? "Surat perjanjian" : (JENIS_SCAN_LABEL[row["Jenis surat"]] || "Lainnya");
+      keScan({ jenis: jenis, nomor: row["ID"], tanggal: row["Tanggal kejadian"] || row["Tanggal perjanjian"] || row["Tanggal surat"], nama: row["Nama siswa"], kelas: row["Kelas"] });
+      return;
+    }
+    var lb = e.target.closest("button[data-lihat-nomor]");
+    if (lb) { $("cari-scan").value = lb.dataset.lihatNomor; dimuat.scan = false; pilihTab("scan"); return; }
     var b = e.target.closest("button[data-j]"); if (!b) return;
     var r = dataRiwayat[b.dataset.j][+b.dataset.i];
     if (b.dataset.j === "perjanjian") {
