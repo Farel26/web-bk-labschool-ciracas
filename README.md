@@ -51,9 +51,8 @@ Semua yang terkait web ada di folder Drive **BK SMP LABSCIRA › WEB BK (website
 
 - **Data Web BK Labschool Ciracas** (Google Sheet + Apps Script di dalamnya)
 - **Backup Data Web BK**: salinan sheet otomatis setiap Minggu malam
-- **Arsip Scan Web BK**: hasil scan/foto dokumen dari dashboard guru
-- **Kode website (salinan)**: salinan isi repo ini
-- **Catatan Web BK**: daftar tautan dan cara merawat web
+- **Arsip Scan Web BK**: hasil scan/foto dokumen dari dashboard guru (nama file diawali nomor dokumen)
+- **Catatan Web BK**: daftar tautan, arti nomor dokumen, dan cara merawat web
 
 Folder backup dan arsip scan selalu dibuat di sebelah sheet. Jika sheet dipindah, pindahkan kedua folder itu bersamanya.
 
