@@ -13,6 +13,7 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `cek.html` | Cek balasan guru BK dengan kode |
 | `survei.html` | Survei kepuasan layanan |
 | `kaldik.html` | Kalender pendidikan, otomatis dari file kaldik resmi |
+| `guru.html` | Dashboard tertutup guru BK (login): laporan kejadian & surat perjanjian |
 | `arsip.html`, `arsip-*.html` | Arsip kegiatan (tujuan, hasil, evaluasi, dokumentasi) |
 | `assets/css/style.css` | Tampilan |
 | `assets/js/config.js` | **Tempat URL Apps Script** |
@@ -45,6 +46,12 @@ Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, *
 
 - Data siswa hanya disimpan di Google Sheet, bukan di repo ini. Repo ini publik.
 - Bagikan sheet hanya kepada guru BK.
+
+## Dashboard guru BK
+
+- Akun ada di tab **AkunGuruBK** (Username, Nama, Salt, Hash password, Aktif, Terakhir masuk). Password hanya disimpan sebagai hash; ganti lewat tab **Akun** di dashboard. Isi `TIDAK` di kolom Aktif untuk menonaktifkan akun.
+- Data masuk ke tab **LaporanKejadian** dan **SuratPerjanjian**.
+- Sesi berlaku 6 jam; 5x salah password = dikunci 15 menit.
 
 ## Kode cek balasan
 
