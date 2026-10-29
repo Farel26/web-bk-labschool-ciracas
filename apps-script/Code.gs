@@ -752,7 +752,7 @@ function notify_(form, p) {
         'Pelapor sebagai : ' + (p.pelapor || '-') + '\n' +
         'Jenis           : ' + (p.jenis || '-') + '\n' +
         'Masih berlangsung: ' + (p.berlangsung || '-') + '\n\n' +
-        'Detail lengkap ada di tab "LaporanPerundungan". Mohon ditindaklanjuti hari ini sesuai SOP TPPK.\n' + url);
+        'Detail lengkap ada di tab "LaporanPerundungan". Mohon ditindaklanjuti hari ini sesuai alur penanganan sekolah.\n' + url);
     } else if (form !== 'Survei') {
       MailApp.sendEmail(to, '[Web BK] Isian baru: ' + form,
         'Ada isian baru di tab "' + form + '".\nBuka sheet: ' + url);
