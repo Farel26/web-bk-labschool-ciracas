@@ -13,7 +13,8 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `cek.html` | Cek balasan guru BK dengan kode |
 | `survei.html` | Survei kepuasan layanan |
 | `kaldik.html` | Kalender pendidikan, otomatis dari file kaldik resmi |
-| `guru.html` | Dashboard tertutup guru BK (login): laporan kejadian & surat perjanjian |
+| `guru.html` | Dashboard tertutup guru BK (login): kotak masuk, profil siswa, laporan, surat, arsip scan, statistik |
+| `privasi.html` | Kebijakan privasi |
 | `arsip.html`, `arsip-*.html` | Arsip kegiatan (tujuan, hasil, evaluasi, dokumentasi) |
 | `assets/css/style.css` | Tampilan |
 | `assets/js/config.js` | **Tempat URL Apps Script** |
@@ -33,6 +34,8 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 
 Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, **JanjiOrangTua**, dan **Survei**. Tab **Rekap** menghitung semuanya otomatis.
 
+**Setelah mengubah CSS/JS:** naikkan angka `?v=` di tautan `style.css`/`*.js` pada semua halaman agar browser tidak memakai file lama.
+
 **Setelah mengganti `Code.gs`:** Terapkan → Kelola deployment → edit (pensil) → Versi: *Versi baru* → Terapkan. URL tetap sama. Setiap isian baru juga mengirim email pemberitahuan ke pemilik sheet, tanpa isi ceritanya.
 
 ## Memperbarui isi tanpa mengedit kode
@@ -41,6 +44,18 @@ Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, *
 
 - **Agenda beranda:** gabungan kegiatan dari kaldik dan tab **Agenda** (khusus kegiatan BK). Baris dengan Tampil = `YA` yang tanggalnya belum lewat muncul di web, maksimal 4.
 - **Pengumuman:** baris pertama dengan Tampil = `YA` di tab **Pengumuman** muncul di pita biru.
+
+## Letak file di Google Drive
+
+Semua yang terkait web ada di folder Drive **BK SMP LABSCIRA › WEB BK (website)**:
+
+- **Data Web BK Labschool Ciracas** (Google Sheet + Apps Script di dalamnya)
+- **Backup Data Web BK**: salinan sheet otomatis setiap Minggu malam
+- **Arsip Scan Web BK**: hasil scan/foto dokumen dari dashboard guru
+- **Kode website (salinan)**: salinan isi repo ini
+- **Catatan Web BK**: daftar tautan dan cara merawat web
+
+Folder backup dan arsip scan selalu dibuat di sebelah sheet. Jika sheet dipindah, pindahkan kedua folder itu bersamanya.
 
 ## Privasi
 

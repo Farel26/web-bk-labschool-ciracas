@@ -711,16 +711,25 @@ function statistik_(dari, sampai) {
   };
 }
 
+/* ---------------- Folder Drive ---------------- */
+// Semua folder web (backup, arsip scan) dibuat di folder yang sama dengan sheet ini,
+// yaitu "BK SMP LABSCIRA > WEB BK (website)", supaya tidak tercecer.
+function subfolder_(nama) {
+  var parents = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId()).getParents();
+  var induk = parents.hasNext() ? parents.next() : DriveApp.getRootFolder();
+  var it = induk.getFoldersByName(nama);
+  return it.hasNext() ? it.next() : induk.createFolder(nama);
+}
+
 /* ---------------- Backup otomatis ---------------- */
-// Salinan seluruh sheet ke folder "Backup Data Web BK" di Drive pemilik, setiap Minggu malam.
+// Salinan seluruh sheet ke folder "Backup Data Web BK" (di sebelah sheet ini), setiap Minggu malam.
 // 8 salinan terbaru disimpan; yang lebih lama dipindah ke Sampah.
 var BACKUP_FOLDER = 'Backup Data Web BK';
 var BACKUP_SIMPAN = 8;
 
 function backupMingguan() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var it = DriveApp.getFoldersByName(BACKUP_FOLDER);
-  var folder = it.hasNext() ? it.next() : DriveApp.createFolder(BACKUP_FOLDER);
+  var folder = subfolder_(BACKUP_FOLDER);
   var waktu = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HHmm');
   var nama = 'Backup ' + ss.getName() + ' ' + waktu;
   DriveApp.getFileById(ss.getId()).makeCopy(nama, folder);
@@ -749,18 +758,15 @@ function infoBackup_() {
 }
 
 /* ---------------- Arsip scan dokumen ---------------- */
-// File hasil scan/foto disimpan di folder Drive pengelola (privat). Guru lain membukanya
-// lewat dashboard (lihatScan), jadi folder tidak perlu dibagikan.
+// File hasil scan/foto disimpan di folder "Arsip Scan Web BK" (di sebelah sheet ini).
+// Guru BK membukanya lewat dashboard (lihatScan) atau langsung dari folder Drive BK.
 var SCAN_TAB = 'ArsipScan';
 var SCAN_FOLDER = 'Arsip Scan Web BK';
 var SCAN_MAKS = 10 * 1024 * 1024;
 var SCAN_JENIS = ['Surat perjanjian', 'Laporan kejadian', 'Surat panggilan orang tua', 'Surat rujukan', 'Berita acara home visit', 'Lainnya'];
 var SCAN_MIME = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 
-function folderScan_() {
-  var it = DriveApp.getFoldersByName(SCAN_FOLDER);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(SCAN_FOLDER);
-}
+function folderScan_() { return subfolder_(SCAN_FOLDER); }
 
 function scanPerNomor_() {
   var t = tabel_(SCAN_TAB), i = kol_(t, 'Nomor terkait'), out = {};
