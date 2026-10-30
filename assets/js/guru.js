@@ -100,6 +100,7 @@
     if (nama === "statistik" && !dimuat.statistik) muatStatistik();
     if (nama === "akun") muatBackup();
     if (nama === "pantau") muatPantau();
+    if (nama === "minat" && !dimuat.minat) muatMinat();
     if (nama === "scan" && !dimuat.scan) muatScan();
     if (nama === "scan" && !dimuat.nomor) muatNomor();
   }
@@ -268,7 +269,8 @@
           '<p class="tl-sub">' + [it.nama && it.nama + (it.kelas ? " (" + it.kelas + ")" : ""), it.judul, it.status && "Status: " + it.status, it.oleh && "oleh " + it.oleh]
             .filter(Boolean).map(esc).join(" · ") + "</p>" +
           '<dl class="isian">' + it.isi.map(function (x) { return "<dt>" + esc(x.label) + "</dt><dd>" + esc(x.teks) + "</dd>"; }).join("") + "</dl>" +
-          (it.sumber === "ArsipScan" ? '<button type="button" class="btn-mini" data-lihat="' + esc(it.id) + '" style="margin-top:10px">Lihat scan</button>' : "") + "</li>";
+          (it.sumber === "ArsipScan" ? '<button type="button" class="btn-mini" data-lihat="' + esc(it.id) + '" style="margin-top:10px">Lihat scan</button>' : "") +
+          (it.sumber === "TesMinatKarier" ? '<a class="btn-mini" style="display:inline-flex;align-items:center;text-decoration:none;margin-top:10px" target="_blank" rel="noopener" href="tes-minat.html?kode=' + encodeURIComponent(((it.isi.filter(function (x) { return x.label === "Kode"; })[0]) || {}).teks || "") + '">Lihat hasil tes</a>' : "") + "</li>";
       }).join("") + "</ol>";
   }
 
@@ -763,6 +765,39 @@
     }).catch(function (err) { if (err.message !== "auth") { sibuk(h, false); h.dataset.yakin = ""; h.textContent = "Hapus"; alertSingkat(h, "Gagal menghapus."); } });
   });
 
+  /* ---------- Tes minat karier (RIASEC) ---------- */
+  var NAMA_TIPE = { R: ["Realistis", "#C2410C"], I: ["Investigatif", "#1D4ED8"], A: ["Artistik", "#7C3AED"], S: ["Sosial", "#15803D"], E: ["Wirausaha", "#B91C1C"], C: ["Konvensional", "#0F766E"] };
+  function hurufKode(k) {
+    return '<span class="kode-minat">' + String(k || "").split("").map(function (h) { var t = NAMA_TIPE[h]; return t ? '<b style="background:' + t[1] + '" title="' + t[0] + '">' + h + "</b>" : ""; }).join("") + "</span>";
+  }
+  function muatMinat() {
+    var box = $("minat-isi"), sel = $("minat-kelas"), kelas = sel.value;
+    box.innerHTML = '<p class="muted">Memuat…</p>';
+    api("daftarMinat", { kelas: kelas }).then(function (d) {
+      if (!d.ok) { box.innerHTML = '<p class="muted">' + esc(d.error) + "</p>"; return; }
+      dimuat.minat = true;
+      var ada = [].slice.call(sel.options).map(function (o) { return o.value; });
+      (d.kelas || []).forEach(function (k) { if (ada.indexOf(k) < 0) { var o = document.createElement("option"); o.value = k; o.textContent = k; sel.appendChild(o); } });
+      sel.value = kelas;
+      if (!d.items.length) {
+        box.innerHTML = '<div class="kosong"><strong>' + (kelas ? "Belum ada siswa kelas " + esc(kelas) + " yang mengerjakan tes." : "Belum ada siswa yang mengerjakan tes minat.") + '</strong><span>Bagikan tautan tes kepada siswa, misalnya saat layanan klasikal karier.</span></div>';
+        return;
+      }
+      var dom = {}; Object.keys(NAMA_TIPE).forEach(function (k) { dom[k] = 0; });
+      d.items.forEach(function (x) { var k = x.kodeMinat.charAt(0); if (dom[k] !== undefined) dom[k]++; });
+      box.innerHTML = '<div class="tiles tiles-3"><div class="tile"><span class="tile-n">' + d.items.length + '</span><span class="tile-l">Siswa mengerjakan tes' + (kelas ? " (kelas " + esc(kelas) + ")" : "") + "</span></div></div>" +
+        bars("Tipe minat terkuat", Object.keys(dom).map(function (k) { return { label: k + " · " + NAMA_TIPE[k][0], n: dom[k] }; }), { nol: true }) +
+        '<div class="table-wrap" style="margin-top:16px"><table><thead><tr><th scope=col>Tanggal</th><th scope=col>Siswa</th><th scope=col>Kode minat</th><th scope=col>Skor R-I-A-S-E-C</th><th scope=col>Rencana / cita-cita</th><th scope=col><span class=sr-only>Aksi</span></th></tr></thead><tbody>' +
+        d.items.map(function (x) {
+          return "<tr><td>" + esc(x.tanggal ? tglPanjang(x.tanggal) : "-") + "</td><td>" + esc(x.nama) + " (" + esc(x.kelas) + ")<br><span class=muted>" + esc([x.jk, x.usia && x.usia + " th"].filter(Boolean).join(", ")) + "</span></td><td>" + hurufKode(x.kodeMinat) + (x.seri ? '<br><span class="muted">ada skor seri</span>' : "") +
+            "</td><td>" + ["R", "I", "A", "S", "E", "C"].map(function (k) { return x.skor[k]; }).join("-") + "</td><td>" + esc([x.rencana, x.cita].filter(Boolean).join(" · ") || "-") +
+            '</td><td><a class="btn-mini" style="display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="tes-minat.html?kode=' + encodeURIComponent(x.kode) + '">Lihat hasil</a></td></tr>';
+        }).join("") + "</tbody></table></div>";
+    }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
+  }
+  $("minat-kelas").addEventListener("change", muatMinat);
+  $("minat-muat").addEventListener("click", muatMinat);
+
   /* ---------- Laporan bulanan ---------- */
   (function () { var d = new Date(); $("lb-bulan").value = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2); })();
   function inisial(n) { return String(n || "").trim().split(/\s+/).filter(String).map(function (w) { return w.charAt(0).toUpperCase() + "."; }).join(" "); }
@@ -849,6 +884,7 @@
         bars("Laporan kejadian per kategori", d.kategori) +
         bars("Laporan kejadian per tingkat kelas", d.tingkat) +
         bars("Jenis perundungan yang dilaporkan", d.jenisPerundungan) +
+        (d.minat ? bars("Tipe minat terkuat (tes minat karier)", d.minat) : "") +
         '<section class="stat-blok"><h3>Survei kepuasan</h3>' + (d.survei.n
           ? '<dl class="isian"><dt>Jumlah responden</dt><dd>' + d.survei.n + "</dd><dt>Rata-rata merasa terbantu</dt><dd>" + d.survei.terbantu.toString().replace(".", ",") + " dari 5</dd><dt>Rata-rata merasa nyaman</dt><dd>" + d.survei.nyaman.toString().replace(".", ",") + " dari 5</dd><dt>Mau datang lagi</dt><dd>" + d.survei.kembaliPersen + "%</dd></dl>"
           : '<p class="muted">Belum ada survei pada periode ini.</p>') + "</section>" +

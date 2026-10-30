@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261029i">
+<link rel="stylesheet" href="assets/css/style.css?v=20261030b">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -62,6 +62,7 @@
         <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
         <button type="button" class="dash-tab" role="tab" id="t-surat" data-tab="surat" aria-controls="tab-surat" aria-selected="false" tabindex="-1">Surat lain</button>
         <button type="button" class="dash-tab" role="tab" id="t-scan" data-tab="scan" aria-controls="tab-scan" aria-selected="false" tabindex="-1">Arsip scan</button>
+        <button type="button" class="dash-tab" role="tab" id="t-minat" data-tab="minat" aria-controls="tab-minat" aria-selected="false" tabindex="-1">Tes minat</button>
         <button type="button" class="dash-tab" role="tab" id="t-statistik" data-tab="statistik" aria-controls="tab-statistik" aria-selected="false" tabindex="-1">Statistik</button>
         <button type="button" class="dash-tab" role="tab" id="t-riwayat" data-tab="riwayat" aria-controls="tab-riwayat" aria-selected="false" tabindex="-1">Riwayat</button>
         <button type="button" class="dash-tab" role="tab" id="t-akun" data-tab="akun" aria-controls="tab-akun" aria-selected="false" tabindex="-1">Akun</button>
@@ -198,6 +199,16 @@
         <div id="scan-list" style="margin-top: 16px"></div>
       </div>
 
+      <!-- Tes minat karier -->
+      <div id="tab-minat" class="dash-panel" role="tabpanel" aria-labelledby="t-minat" hidden>
+        <div class="bar-aksi">
+          <div class="field" style="min-width: 200px"><label for="minat-kelas">Kelas</label><select id="minat-kelas"><option value="">Semua kelas</option></select></div>
+          <div class="tombol-baris"><a class="btn-mini" href="tes-minat.html" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; text-decoration: none">Buka halaman tes</a><button type="button" id="minat-muat" class="btn-mini">Muat ulang</button></div>
+        </div>
+        <p class="muted" style="margin: 0 0 14px">Bagikan tautan <strong>tes-minat.html</strong> kepada siswa. Hasilnya otomatis masuk ke tab TesMinatKarier di Google Sheet BK.</p>
+        <div id="minat-isi" aria-live="polite"></div>
+      </div>
+
       <!-- Statistik -->
       <div id="tab-statistik" class="dash-panel" role="tabpanel" aria-labelledby="t-statistik" hidden>
         <form id="form-statistik" class="filter-baris" novalidate>
@@ -276,8 +287,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261029i"></script>
-<script src="assets/js/main.js?v=20261029i"></script>
-<script src="assets/js/guru.js?v=20261029i"></script>
+<script src="assets/js/config.js?v=20261030b"></script>
+<script src="assets/js/main.js?v=20261030b"></script>
+<script src="assets/js/guru.js?v=20261030b"></script>
 </body>
 </html>

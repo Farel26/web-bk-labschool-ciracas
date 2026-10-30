@@ -101,6 +101,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'cek') return json_(cek_(String(p.kode || '').trim().toUpperCase()));
   if (p.action === 'kaldik') return json_(kaldik_());
+  if (p.action === 'hasilMinat') return json_(riasecHasil_(String(p.kode || '').trim().toUpperCase()));
   return json_(data_());
 }
 
@@ -301,7 +302,11 @@ function parseKaldik_(g) {
 // Akun ada di tab "AkunGuruBK": Username | Nama | Salt | Hash password | Aktif | Terakhir masuk.
 // Password tidak pernah disimpan apa adanya, hanya hash-nya.
 var AKUN_TAB = 'AkunGuruBK';
-var CATATAN_TAB = 'CatatanPerkembangan';   // catatan perkembangan kasus (dipakai juga di profil siswa)
+var CATATAN_TAB = 'CatatanPerkembangan';
+var RIASEC_TAB = 'TesMinatKarier';         // tes minat karier RIASEC dari halaman tes-minat.html
+var RIASEC_KUNCI = 'RIASECRACEISSRCEAIESIRACCIASERARISCERCISAE';
+var RIASEC_URUT = ['R', 'I', 'A', 'S', 'E', 'C'];
+var RIASEC_NAMA = { R: 'Realistis', I: 'Investigatif', A: 'Artistik', S: 'Sosial', E: 'Wirausaha', C: 'Konvensional' };   // catatan perkembangan kasus (dipakai juga di profil siswa)
 var SESI_DETIK = 6 * 60 * 60;          // sesi login berlaku 6 jam
 var MAKS_GAGAL = 5;                    // 5x salah password -> dikunci 15 menit
 var KUNCI_DETIK = 15 * 60;
@@ -310,6 +315,7 @@ var KEJADIAN_KATEGORI = ['Pelanggaran ringan', 'Pelanggaran sedang', 'Pelanggara
 
 function guruApi_(q) {
   if (q.action === 'login') return login_(String(q.username || ''), String(q.password || ''));
+  if (q.action === 'simpanRiasec') return riasecSimpan_(q.data || {});   // tes minat karier: publik, tanpa login
   var u = sesi_(q.token);
   if (!u) return { ok: false, auth: false, error: 'Sesi berakhir. Silakan masuk lagi.' };
   switch (q.action) {
@@ -332,6 +338,7 @@ function guruApi_(q) {
     case 'pemantauan': return pemantauan_(q.semua === true);
     case 'tambahCatatan': return tambahCatatan_(u, q.data || {});
     case 'laporanBulanan': return laporanBulanan_(String(q.bulan || ''));
+    case 'daftarMinat': return riasecDaftar_(String(q.kelas || ''));
     case 'daftarScan': return daftarScan_(String(q.cari || ''));
     case 'lihatScan': return lihatScan_(String(q.id || ''));
     case 'hapusScan': return hapusScan_(u, String(q.id || ''));
@@ -522,6 +529,8 @@ var PROFIL_SUMBER = [
     isi: ['Catatan perkembangan', 'Rencana tindak lanjut', 'Pantau berikutnya'], status: 'Status kasus', oleh: 'Diinput oleh' },
   { tab: 'ArsipScan', jenisKol: 'Jenis dokumen', jenisAwal: 'Scan: ', nama: 'Nama siswa', tgl: 'Tanggal dokumen',
     isi: ['Nomor terkait', 'Keterangan'], oleh: 'Diunggah oleh' },
+  { tab: RIASEC_TAB, jenis: 'Tes minat karier (RIASEC)', nama: 'Nama', tgl: 'Waktu masuk', judul: 'Kode minat',
+    isi: ['Kode', 'R', 'I', 'A', 'S', 'E', 'C', 'Cita-cita', 'Rencana setelah SMP'] },
   { tab: 'JanjiOrangTua', jenis: 'Janji temu orang tua', nama: 'Nama siswa', tgl: 'Waktu masuk', judul: 'Keperluan',
     isi: ['Nama orang tua/wali', 'Catatan guru BK'], status: 'Status' }
 ];
@@ -684,6 +693,7 @@ function statistik_(dari, sampai) {
     ['SuratPerjanjian', 'Surat perjanjian', 'Tanggal perjanjian'],
     [SURAT_TAB, '', 'Tanggal surat'],
     [CATATAN_TAB, 'Catatan perkembangan kasus', 'Tanggal'],
+    [RIASEC_TAB, 'Tes minat karier', 'Waktu masuk'],
     ['Survei', 'Survei kepuasan', 'Waktu masuk']
   ];
   var layanan = {}, urutan = [], bulan = {};
@@ -725,6 +735,14 @@ function statistik_(dari, sampai) {
     if (String(sel_(sv, r, 'Mau datang lagi?')).trim() === 'Ya') ya++;
   });
 
+  var tm = tabel_(RIASEC_TAB), dominan = {};
+  RIASEC_URUT.forEach(function (k) { dominan[RIASEC_NAMA[k]] = 0; });
+  tm.rows.forEach(function (r) {
+    if (!dalam(tglKey_(sel_(tm, r, 'Waktu masuk')))) return;
+    var k = String(sel_(tm, r, 'Kode minat') || '').charAt(0);
+    if (RIASEC_NAMA[k]) dominan[RIASEC_NAMA[k]]++;
+  });
+
   function arr(o, urut) { return (urut || Object.keys(o)).map(function (k) { return { label: k, n: o[k] || 0 }; }); }
   var bulanArr = Object.keys(bulan).sort().map(function (k) { return { label: k, n: bulan[k] }; });
   return {
@@ -734,6 +752,7 @@ function statistik_(dari, sampai) {
     tingkat: arr(tingkat).sort(function (a, b) { return a.label < b.label ? -1 : 1; }),
     statusKejadian: arr(statusKej), jenisPerundungan: arr(jenisLap).sort(function (a, b) { return b.n - a.n; }),
     survei: { n: n, terbantu: n ? Math.round(t1 / n * 10) / 10 : 0, nyaman: n ? Math.round(t2 / n * 10) / 10 : 0, kembaliPersen: n ? Math.round(ya / n * 100) : 0 },
+    minat: arr(dominan),
     baru: hitungBaru_()
   };
 }
@@ -907,6 +926,80 @@ function laporanBulanan_(bulan) {
   var pm = pemantauan_(false);
   return { ok: true, bulan: bulan, dari: dari, sampai: sampai, statistik: st, kasus: kasus,
            kasusAktif: pm.aktif, terlambat: pm.terlambat };
+}
+
+/* ---------------- Tes minat karier (RIASEC) ---------------- */
+// Skor dihitung ulang di server dari 42 jawaban (1 = Ya), jadi tidak bisa dimanipulasi dari browser.
+function riasecSkor_(jawaban) {
+  var skor = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+  for (var i = 0; i < 42; i++) if (jawaban.charAt(i) === '1') skor[RIASEC_KUNCI.charAt(i)]++;
+  var urut = RIASEC_URUT.slice().sort(function (a, b) { return skor[b] - skor[a] || RIASEC_URUT.indexOf(a) - RIASEC_URUT.indexOf(b); });
+  return { skor: skor, kode: urut.slice(0, 3).join(''), seri: skor[urut[2]] === skor[urut[3]] };
+}
+
+function riasecSimpan_(d) {
+  if (d.website) return { ok: true };                                  // jebakan bot
+  var kode = String(d.kode || '').toUpperCase();
+  if (!/^RM-[A-Z0-9]{6}$/.test(kode)) return { ok: false, error: 'Kode tidak valid. Muat ulang halaman lalu coba lagi.' };
+  if (d.setuju !== true) return { ok: false, error: 'Persetujuan belum diberikan.' };
+  if (wajib_(d, ['nama', 'kelas', 'jk', 'usia'])) return { ok: false, error: 'Identitas belum lengkap.' };
+  if (['Laki-laki', 'Perempuan'].indexOf(d.jk) < 0) return { ok: false, error: 'Jenis kelamin tidak valid.' };
+  var usia = Number(d.usia);
+  if (!(usia >= 9 && usia <= 20)) return { ok: false, error: 'Usia tidak valid.' };
+  var jw = String(d.jawaban || '');
+  if (!/^[01]{42}$/.test(jw)) return { ok: false, error: 'Jawaban belum lengkap.' };
+  var h = riasecSkor_(jw);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var t = tabel_(RIASEC_TAB);
+    if (kol_(t, 'Kode') >= 0 && t.rows.some(function (r) { return String(sel_(t, r, 'Kode')).toUpperCase() === kode; })) return { ok: true, kode: kode, skor: h.skor, kodeMinat: h.kode, seri: h.seri, ulang: true };
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RIASEC_TAB);
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (x) { return String(x).trim(); });
+    var nilai = {
+      'Waktu masuk': new Date(), 'Kode': kode, 'Nama': clean_(rapiNama_(d.nama)), 'Kelas': clean_(String(d.kelas).toUpperCase()),
+      'Nomor absen': clean_(d.absen), 'Jenis kelamin': d.jk, 'Usia': usia, 'Cita-cita': clean_(d.cita), 'Rencana setelah SMP': clean_(d.rencana),
+      'Persetujuan': 'YA', 'Kode minat': h.kode, 'Skor seri': h.seri ? 'YA' : '', 'Jawaban (1=Ya)': "'" + jw
+    };
+    RIASEC_URUT.forEach(function (k) { nilai[k] = h.skor[k]; });
+    sh.appendRow(headers.map(function (x) { return nilai.hasOwnProperty(x) ? nilai[x] : ''; }));
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: true, kode: kode, skor: h.skor, kodeMinat: h.kode, seri: h.seri };
+}
+
+// Untuk membuka kembali hasil dengan kode RM-XXXXXX (tanpa login).
+function riasecHasil_(kode) {
+  if (!/^RM-[A-Z0-9]{6}$/.test(kode)) return { found: false };
+  var t = tabel_(RIASEC_TAB);
+  for (var r = t.rows.length - 1; r >= 0; r--) {
+    var row = t.rows[r];
+    if (String(sel_(t, row, 'Kode')).toUpperCase() !== kode) continue;
+    var skor = {};
+    RIASEC_URUT.forEach(function (k) { skor[k] = Number(sel_(t, row, k)) || 0; });
+    var h = riasecSkor_(String(sel_(t, row, 'Jawaban (1=Ya)')).replace(/^'/, ''));
+    return { found: true, kode: kode, nama: teks_(sel_(t, row, 'Nama')), kelas: teks_(sel_(t, row, 'Kelas')),
+             tanggal: tglKey_(sel_(t, row, 'Waktu masuk')), skor: skor, kodeMinat: String(sel_(t, row, 'Kode minat')), seri: h.seri };
+  }
+  return { found: false };
+}
+
+function riasecDaftar_(kelas) {
+  var t = tabel_(RIASEC_TAB), out = [], kelasAda = {};
+  for (var r = t.rows.length - 1; r >= 0; r--) {
+    var row = t.rows[r];
+    if (!row[0]) continue;
+    var k = String(sel_(t, row, 'Kelas') || '').toUpperCase();
+    kelasAda[k] = true;
+    if (kelas && k !== kelas.toUpperCase()) continue;
+    var skor = {};
+    RIASEC_URUT.forEach(function (x) { skor[x] = Number(sel_(t, row, x)) || 0; });
+    if (out.length < 400) out.push({ kode: teks_(sel_(t, row, 'Kode')), tanggal: tglKey_(sel_(t, row, 'Waktu masuk')), nama: teks_(sel_(t, row, 'Nama')),
+      kelas: k, jk: teks_(sel_(t, row, 'Jenis kelamin')), usia: teks_(sel_(t, row, 'Usia')), cita: teks_(sel_(t, row, 'Cita-cita')),
+      rencana: teks_(sel_(t, row, 'Rencana setelah SMP')), kodeMinat: teks_(sel_(t, row, 'Kode minat')), seri: teks_(sel_(t, row, 'Skor seri')) === 'YA', skor: skor });
+  }
+  return { ok: true, items: out, kelas: Object.keys(kelasAda).filter(String).sort() };
 }
 
 /* ---------------- Arsip scan dokumen ---------------- */
