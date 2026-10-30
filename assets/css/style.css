@@ -512,3 +512,6 @@ form[hidden]{display:none !important}
 }
 .kode-minat{display:inline-flex;gap:3px}
 .kode-minat b{width:24px;height:24px;border-radius:7px;color:#FFFFFF;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+.tes-link{transition:box-shadow .15s ease, transform .15s ease}
+.tes-link:hover{box-shadow:0 0 0 3px #E4A93A}
+.tes-link:focus-visible{outline:3px solid #E4A93A;outline-offset:3px}
