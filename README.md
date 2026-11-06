@@ -14,6 +14,7 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `tes-minat.html` | Tes minat karier RIASEC (persetujuan, identitas, 42 pernyataan, halaman hasil bergambar) |
 | `survei.html` | Survei kepuasan layanan |
 | `kaldik.html` | Kalender pendidikan, otomatis dari file kaldik resmi |
+| `psb.html` | Informasi Penerimaan Siswa Baru (PSB), otomatis dari tab **Info_PSB** |
 | `guru.html` | Dashboard tertutup guru BK (login): kotak masuk, profil siswa, laporan, surat, arsip scan, statistik |
 | `privasi.html` | Kebijakan privasi |
 | `arsip.html`, `arsip-*.html` | Arsip kegiatan (tujuan, hasil, evaluasi, dokumentasi) |
@@ -47,6 +48,8 @@ Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, *
 
 - **Agenda beranda:** gabungan kegiatan dari kaldik dan tab **Agenda** (khusus kegiatan BK). Baris dengan Tampil = `YA` yang tanggalnya belum lewat muncul di web, maksimal 4.
 - **Pengumuman:** baris pertama dengan Tampil = `YA` di tab **Pengumuman** muncul di pita biru.
+
+- **Informasi PSB (`psb.html`):** otomatis dari tab **Info_PSB** di Google Sheet *Info & Agen WA PSB* (Apps Script terpisah, URL-nya di `PSB_URL` pada `config.js`). Baris dengan Aktif = `Ya` yang sudah diisi (bukan `[ISI ...]`) langsung tampil. Link per topik: `psb.html?t=biaya`, `?t=jadwal`, `?t=psikotes`, dst.
 
 ## Letak file di Google Drive
 

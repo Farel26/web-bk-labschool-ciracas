@@ -515,3 +515,39 @@ form[hidden]{display:none !important}
 .tes-link{transition:box-shadow .15s ease, transform .15s ease}
 .tes-link:hover{box-shadow:0 0 0 3px #E4A93A}
 .tes-link:focus-visible{outline:3px solid #E4A93A;outline-offset:3px}
+
+/* Menu utama: label tidak terpotong; di layar < 1100px pakai tombol menu seperti di HP */
+.nav-links a{white-space:nowrap}
+@media (max-width: 1100px){
+  .nav-links{display:none}
+  .menu-btn{display:inline-flex}
+  .nav-links.open{display:flex;position:absolute;top:100%;left:0;right:0;z-index:20;flex-direction:column;align-items:stretch;gap:4px;background:#FFFFFF;border:1px solid #ECE8DA;border-radius:16px;padding:12px;box-shadow:0 16px 40px rgba(18,32,79,.12)}
+  .nav-links.open a{min-height:44px;display:flex;align-items:center;padding:0 12px}
+  .nav-links.open a[href="#konsultasi"]{justify-content:center;margin-top:6px}
+}
+
+/* ===== Halaman Informasi PSB (psb.html) ===== */
+.psb-cari{margin-top:32px;display:flex;flex-direction:column;gap:8px}
+.psb-cari-label{font-size:14px;font-weight:700;color:var(--c-navy)}
+.psb-cari input{min-height:52px;padding:0 18px;border:1.5px solid #CFD5E6;border-radius:var(--r-sm);background:var(--c-surface);font:500 16px var(--font-body);color:var(--c-text);box-sizing:border-box;width:100%}
+.psb-cari input:focus{outline:3px solid #B9C8F2;outline-offset:0;border-color:var(--c-primary)}
+.psb-cari input:disabled{opacity:.6}
+.psb-status{margin:24px 0 0;padding:20px;border:1.5px dashed var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text-subtle);font-size:15px;line-height:1.6}
+.psb-status.is-error{border-style:solid;border-color:#F1C9BD;background:var(--c-alert-soft);color:var(--c-text-muted)}
+.psb-daftar{margin-top:24px;display:flex;flex-direction:column;gap:12px}
+.psb-item{background:var(--c-surface);border:1.5px solid var(--c-border-warm);border-radius:var(--r-md);overflow:hidden}
+.psb-item[open]{border:var(--bw-sticker) solid var(--c-primary);box-shadow:var(--sh-sticker-sm)}
+.psb-item summary{list-style:none;cursor:pointer;min-height:60px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;font-family:Rubik,sans-serif;font-weight:700;font-size:18px;line-height:1.35;color:var(--c-navy);box-sizing:border-box}
+.psb-item summary::-webkit-details-marker{display:none}
+.psb-item summary:focus-visible{outline:3px solid var(--c-gold);outline-offset:-3px}
+.psb-ikon{flex:none;color:var(--c-primary);transition:transform .2s}
+.psb-item[open] .psb-ikon{transform:rotate(180deg)}
+.psb-isi{padding:0 20px 20px;font-size:16px;line-height:1.7;color:var(--c-text-muted);overflow-wrap:anywhere}
+.psb-isi a{font-weight:700}
+.psb-bantuan{margin-top:40px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:var(--c-primary-soft);border:var(--bw-sticker) solid var(--c-primary);border-radius:var(--r-md);box-shadow:var(--sh-sticker);padding:24px}
+.psb-bantuan h2{margin:0 0 6px;font-family:Rubik,sans-serif;font-weight:800;font-size:22px;color:var(--c-navy)}
+.psb-bantuan p{margin:0;font-size:15px;line-height:1.6;color:var(--c-text-muted)}
+.psb-wa{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 20px;border-radius:var(--r-pill);background:#E6F4EC;color:var(--c-success);font-weight:700;font-size:15px;text-decoration:none;white-space:nowrap}
+.psb-wa:hover{background:#D5EDE0}
+@media (max-width: 560px){.psb-item summary{font-size:17px;padding:14px 16px}.psb-isi{padding:0 16px 18px}.psb-bantuan{padding:20px}}
+@media (prefers-reduced-motion: reduce){.psb-ikon{transition:none}}
