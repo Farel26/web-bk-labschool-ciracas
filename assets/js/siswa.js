@@ -53,7 +53,7 @@
         if (d.perluNis) { $("a-nis-wrap").hidden = false; $("a-nis").required = true; }
         if (d.dibuka === false) {
           $("a-tutup").hidden = false;
-          $("a-tutup").textContent = "Aktivasi akun belum dibuka karena sekolah masih mengumpulkan surat persetujuan orang tua. Tanyakan ke guru BK.";
+          $("a-tutup").textContent = "Aktivasi akun belum dibuka. Tanyakan ke guru BK.";
         }
       }).catch(function () { nisDicek = false; });
     }

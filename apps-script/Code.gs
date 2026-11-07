@@ -1423,8 +1423,8 @@ function dataSiswa_() {
       izin: iIzin < 0 ? null : /^(ya|y|sudah|setuju|1|true)$/i.test(String(r[iIzin]).trim()) };
   });
 }
-// UU 27/2022 Pasal 25: data pribadi anak diproses dengan persetujuan orang tua/wali.
-// Akun portal siswa hanya bisa dipakai bila kolom "Izin orang tua" di tab DataSiswa berisi YA.
+// Opsional: bila tab DataSiswa punya kolom "Izin orang tua", akun portal siswa hanya bisa dipakai bila isinya YA
+// (UU 27/2022 Pasal 25). Tanpa kolom itu, semua siswa di DataSiswa bisa mengaktifkan akun.
 function izinTercatat_(daftar) { return daftar.some(function (s) { return s.izin !== null; }); }
 
 /* ================= Portal wali kelas ================= */
@@ -1597,7 +1597,7 @@ var TARGET_BIDANG = ['Belajar', 'Pribadi', 'Sosial', 'Karier'];
 var TARGET_MAKS = 40;
 
 function siswaApi_(q) {
-  if (q.action === 'infoAktivasi') { var ds = dataSiswa_(); return { ok: true, perluNis: ds.some(function (s) { return !!s.nis; }), dibuka: ds.length > 0 && izinTercatat_(ds) }; }
+  if (q.action === 'infoAktivasi') { var ds = dataSiswa_(); return { ok: true, perluNis: ds.some(function (s) { return !!s.nis; }), dibuka: ds.length > 0 }; }
   if (q.action === 'aktivasi') return aktivasiSiswa_(q.data || {});
   if (q.action === 'login') return loginSiswa_(String(q.email || ''), String(q.pin || ''));
   var u = sesiPortal_('tsk_', q.token);
@@ -1634,7 +1634,7 @@ function aktivasiSiswa_(d) {
   if (terkunci_(kunci)) return { ok: false, error: 'Terlalu banyak percobaan. Coba lagi dalam 15 menit, atau minta bantuan guru BK.' };
 
   var daftar = dataSiswa_();
-  if (!daftar.length || !izinTercatat_(daftar)) return { ok: false, error: 'Aktivasi belum dibuka karena sekolah masih mengumpulkan izin orang tua. Tanyakan ke guru BK.' };
+  if (!daftar.length) return { ok: false, error: 'Aktivasi belum dibuka. Tanyakan ke guru BK.' };
   var cocok = daftar.filter(function (s) { return norm_(s.nama) === norm_(nama) && normKelas_(s.kelas) === kelas; });
   if (cocok.length !== 1) {
     catatGagal_(kunci);
@@ -1645,7 +1645,7 @@ function aktivasiSiswa_(d) {
     catatGagal_(kunci);
     return { ok: false, error: 'NIS belum cocok dengan data sekolah. Lihat NIS di kartu pelajar atau rapor.' };
   }
-  if (s.izin !== true) return { ok: false, error: 'Izin orang tuamu untuk portal siswa belum tercatat. Minta surat persetujuan orang tua ke guru BK, lalu coba lagi setelah dikembalikan.' };
+  if (s.izin === false) return { ok: false, error: 'Izin orang tuamu untuk portal siswa belum tercatat. Minta surat persetujuan orang tua ke guru BK, lalu coba lagi setelah dikembalikan.' };
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {

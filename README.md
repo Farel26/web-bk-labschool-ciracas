@@ -126,7 +126,7 @@ Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemi
 
 ### Tahap 3: izin orang tua, intake, sesi daring, disposisi (8 November 2026)
 
-**Wajib sebelum portal siswa dipakai:** tambahkan kolom **Izin orang tua** di tab **DataSiswa** dan isi **YA** untuk siswa yang orang tuanya sudah menandatangani surat persetujuan (Dashboard › Akun › Cetak surat persetujuan orang tua). Tanpa kolom ini aktivasi akun siswa ditutup. Dasarnya UU 27/2022 Pasal 25: data pribadi anak diproses dengan persetujuan orang tua/wali. Mengubah isian menjadi TIDAK langsung menutup akses akun itu.
+**Izin orang tua (opsional):** tanpa kolom **Izin orang tua** di tab **DataSiswa**, semua siswa yang terdaftar bisa mengaktifkan akun. Bila kolom itu ditambahkan, hanya siswa berisi **YA** yang bisa mengaktifkan dan memakai akun, dan mengubahnya menjadi TIDAK langsung menutup akses. UU 27/2022 Pasal 25 mensyaratkan persetujuan orang tua/wali untuk data pribadi anak; surat persetujuannya bisa dicetak di Dashboard › Akun.
 
 - **Intake + kesepakatan konseling:** formulir konseling di beranda dan portal siswa punya pertanyaan intake opsional dan kesepakatan konseling (sukarela, rahasia, batas kerahasiaan, catatan sesi) yang wajib dicentang. Kolom baru di tab Konseling: Harapan dari sesi, Sudah cerita ke, Seberapa mengganggu (1-5), Persetujuan asas konseling.
 - **Sesi daring:** di kotak masuk, pilih Bentuk sesi = Daring dan isi tautan Google Meet. Tombol "Gabung sesi daring" muncul untuk siswa saat status Dijadwalkan.
