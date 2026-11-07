@@ -43,7 +43,9 @@
       '<span class="jadwal-tgl" aria-hidden="true">' + d.getDate() + "<small>" + BULAN[d.getMonth()].slice(0, 3).toUpperCase() + "</small></span>" +
       '<span class="jadwal-info"><span class="jadwal-label">' + esc(judul || "Jadwal bertemu guru BK") + "</span>" +
       "<strong>" + esc(tglPanjang(j.tanggal, true)) + "</strong>" +
-      "<span>" + esc([j.jam, j.tempat].filter(Boolean).join(" · ") || "Waktu dan tempat menyusul") + "</span></span></div>";
+      "<span>" + esc((j.bentuk === "Daring" ? ["Sesi daring", j.jam] : [j.jam, j.tempat]).filter(Boolean).join(" · ") || "Waktu dan tempat menyusul") + "</span>" +
+      (j.bentuk === "Daring" && /^https:\/\/\S+$/.test(j.tautan || "") && !sudahLewat
+        ? '<a class="gabung-daring" href="' + esc(j.tautan) + '" target="_blank" rel="noopener">Gabung sesi daring</a>' : "") + "</span></div>";
   }
 
   function pesan(judul, isi) {

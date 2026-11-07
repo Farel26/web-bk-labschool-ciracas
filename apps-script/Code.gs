@@ -23,7 +23,9 @@ var KALDIK_TAB = 'Kaldik';
 var FORMS = {
   Konseling: {
     'Kode': 'kode', 'Nama': 'nama', 'Kelas': 'kelas', 'Topik': 'topik',
-    'Waktu yang diinginkan': 'waktu', 'Cerita singkat': 'cerita'
+    'Waktu yang diinginkan': 'waktu', 'Cerita singkat': 'cerita',
+    'Harapan dari sesi': 'harapan', 'Sudah cerita ke': 'sudahCerita', 'Seberapa mengganggu (1-5)': 'ganggu',
+    'Persetujuan asas konseling': 'setuju'
   },
   Curhat: {
     'Kode': 'kode', 'Jenjang kelas (opsional)': 'jenjang', 'Topik': 'topik',
@@ -60,17 +62,19 @@ var CEK_JENIS = { Curhat: 'Curhat', LaporanPerundungan: 'Laporan perundungan', K
  * saat web pertama kali dipanggil setelah Code.gs diperbarui. Data lama tidak diubah.
  * Kolom pertama setiap tab penting: "Waktu masuk" untuk kotak masuk, "ID" untuk catatan bernomor.
  */
-var SKEMA_VERSI = '2026-11-07-portal-2';
+var SKEMA_VERSI = '2026-11-08-portal-3';
 var RUJUKAN_TAB = 'RujukanWaliKelas';
 var AKUN_WALI_TAB = 'AkunWaliKelas';
 var AKUN_SISWA_TAB = 'AkunSiswa';
 var TARGET_TAB = 'TargetSiswa';
 var JURNAL_TAB = 'JurnalHarian';
 var SKEMA = {
-  Konseling: ['Kode', 'Akun siswa', 'Jadwal sesi', 'Jam sesi', 'Tempat sesi', 'Pesan untuk siswa (tampil di web)'],
+  Konseling: ['Kode', 'Akun siswa', 'Jadwal sesi', 'Jam sesi', 'Tempat sesi', 'Pesan untuk siswa (tampil di web)',
+    'Harapan dari sesi', 'Sudah cerita ke', 'Seberapa mengganggu (1-5)', 'Persetujuan asas konseling', 'Bentuk sesi', 'Tautan sesi daring', 'Ditugaskan ke'],
   RujukanWaliKelas: ['Waktu masuk', 'Kode', 'Nama wali kelas', 'Akun wali kelas', 'Nama siswa', 'Kelas', 'Alasan rujukan',
     'Tingkat urgensi', 'Yang diamati', 'Upaya wali kelas', 'Sudah dibicarakan dengan orang tua?', 'Status',
-    'Jadwal sesi', 'Jam sesi', 'Tempat sesi', 'Tanggapan untuk wali kelas (tampil di portal)', 'Catatan internal guru BK', 'Ditangani oleh'],
+    'Jadwal sesi', 'Jam sesi', 'Tempat sesi', 'Tanggapan untuk wali kelas (tampil di portal)', 'Catatan internal guru BK', 'Ditangani oleh',
+    'Bentuk sesi', 'Ditugaskan ke'],
   AkunWaliKelas: ['Email', 'Nama', 'Kelas perwalian', 'Salt', 'Hash password', 'Aktif', 'Terakhir masuk', 'Dibuat oleh', 'Waktu dibuat'],
   AkunSiswa: ['ID', 'Nama', 'Kelas', 'Email', 'Salt', 'Hash PIN', 'Aktif', 'Waktu aktivasi', 'Terakhir masuk'],
   TargetSiswa: ['ID', 'Waktu input', 'Akun siswa', 'Nama', 'Kelas', 'Target', 'Bidang', 'Tenggat', 'Selesai', 'Waktu selesai'],
@@ -215,7 +219,8 @@ function cek_(kode) {
         if (tab === 'Konseling') {
           var ambil = function (k) { var i = h.indexOf(k); return i < 0 ? '' : v[r][i]; };
           out.topik = String(ambil('Topik') || '');
-          out.jadwal = { tanggal: tglKey_(ambil('Jadwal sesi')), jam: teks_(ambil('Jam sesi')), tempat: teks_(ambil('Tempat sesi')) };
+          out.jadwal = { tanggal: tglKey_(ambil('Jadwal sesi')), jam: teks_(ambil('Jam sesi')), tempat: teks_(ambil('Tempat sesi')),
+            bentuk: teks_(ambil('Bentuk sesi')) || 'Tatap muka', tautan: out.status === 'Dijadwalkan' ? teks_(ambil('Tautan sesi daring')) : '' };
         }
         return out;
       }
@@ -438,6 +443,8 @@ function guruApi_(q) {
     case 'chatDaftar': return chatDaftar_();
     case 'chatAmbil': return chatAmbil_(String(q.akun || ''), Number(q.sejak) || 0, 'guru');
     case 'chatKirim': return chatKirim_(String(q.akun || ''), String(q.isi || ''), 'Guru BK', u.nama);
+    case 'hapusDataSiswa': return hapusDataSiswa_(String(q.id || ''));
+    case 'bersihkanAlumni': return bersihkanAlumni_(q.jalankan === true);
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -712,10 +719,11 @@ var INBOX = {
     balas: 'Balasan untuk pelapor (tampil di web)', catatan: 'Tindak lanjut (internal)', oleh: 'Ditangani oleh',
     tampil: ['Kode', 'Pelapor sebagai', 'Kelas pelapor (opsional)', 'Jenis perundungan', 'Apa yang terjadi', 'Tempat', 'Kapan terjadi', 'Siapa yang terlibat', 'Masih berlangsung?', 'Nama/kontak pelapor (opsional)'] },
   konseling: { tab: 'Konseling', status: ['Baru', 'Dijadwalkan', 'Selesai', 'Dibatalkan'], judul: 'Topik',
-    balas: 'Pesan untuk siswa (tampil di web)', catatan: 'Catatan tindak lanjut', oleh: 'Ditangani oleh', jadwal: true,
-    namaKol: 'Nama', tampil: ['Kode', 'Nama', 'Kelas', 'Topik', 'Waktu yang diinginkan', 'Cerita singkat'] },
+    balas: 'Pesan untuk siswa (tampil di web)', catatan: 'Catatan tindak lanjut', oleh: 'Ditangani oleh', jadwal: true, daring: true, tugas: true,
+    namaKol: 'Nama', tampil: ['Kode', 'Nama', 'Kelas', 'Topik', 'Waktu yang diinginkan', 'Cerita singkat',
+      'Seberapa mengganggu (1-5)', 'Harapan dari sesi', 'Sudah cerita ke', 'Persetujuan asas konseling'] },
   rujukan: { tab: RUJUKAN_TAB, status: ['Baru', 'Diterima', 'Dijadwalkan', 'Dalam pendampingan', 'Selesai'], judul: ['Nama siswa', 'Alasan rujukan'],
-    balas: 'Tanggapan untuk wali kelas (tampil di portal)', catatan: 'Catatan internal guru BK', oleh: 'Ditangani oleh', jadwal: true,
+    balas: 'Tanggapan untuk wali kelas (tampil di portal)', catatan: 'Catatan internal guru BK', oleh: 'Ditangani oleh', jadwal: true, tugas: true,
     namaKol: 'Nama siswa', urgensi: 'Tingkat urgensi',
     tampil: ['Kode', 'Nama siswa', 'Kelas', 'Alasan rujukan', 'Tingkat urgensi', 'Yang diamati', 'Upaya wali kelas', 'Sudah dibicarakan dengan orang tua?', 'Nama wali kelas'] },
   janji: { tab: 'JanjiOrangTua', status: ['Baru', 'Dijadwalkan', 'Selesai'], judul: 'Keperluan',
@@ -752,19 +760,24 @@ function inbox_(jenis, semua) {
       balasan: c.balas ? teks_(sel_(t, row, c.balas)) : null, catatan: teks_(sel_(t, row, c.catatan)),
       oleh: c.oleh ? teks_(sel_(t, row, c.oleh)) : '', kode: teks_(sel_(t, row, 'Kode'))
     };
-    if (c.jadwal) item.jadwal = { tanggal: tglKey_(sel_(t, row, 'Jadwal sesi')), jam: teks_(sel_(t, row, 'Jam sesi')), tempat: teks_(sel_(t, row, 'Tempat sesi')) };
+    if (c.jadwal) item.jadwal = { tanggal: tglKey_(sel_(t, row, 'Jadwal sesi')), jam: teks_(sel_(t, row, 'Jam sesi')), tempat: teks_(sel_(t, row, 'Tempat sesi')),
+      bentuk: teks_(sel_(t, row, 'Bentuk sesi')) || 'Tatap muka', tautan: c.daring ? teks_(sel_(t, row, 'Tautan sesi daring')) : '' };
+    if (c.tugas) item.tugas = teks_(sel_(t, row, 'Ditugaskan ke'));
     if (c.namaKol) { item.nama = teks_(sel_(t, row, c.namaKol)); item.kelas = teks_(sel_(t, row, 'Kelas')); }
     if (c.urgensi) item.urgensi = teks_(sel_(t, row, c.urgensi));
     if (jenis === 'konseling') item.akunSiswa = !!teks_(sel_(t, row, 'Akun siswa'));
     list.push(item);
   }
-  return { ok: true, items: list, pilihanStatus: c.status, adaBalasan: !!c.balas, adaJadwal: !!c.jadwal, baru: hitungBaru_() };
+  return { ok: true, items: list, pilihanStatus: c.status, adaBalasan: !!c.balas, adaJadwal: !!c.jadwal, adaDaring: !!c.daring,
+    adaTugas: !!c.tugas, guru: c.tugas ? namaGuru_() : [], baru: hitungBaru_() };
 }
 
 function perbarui_(u, jenis, ref, d) {
   var c = INBOX[jenis];
   if (!c) return { ok: false, error: 'Kotak masuk tidak dikenal.' };
   if (c.status.indexOf(d.status) < 0) return { ok: false, error: 'Status tidak valid.' };
+  if (d.jadwal && d.jadwal.bentuk === 'Daring' && d.jadwal.tautan && !/^https:\/\/\S+$/.test(String(d.jadwal.tautan).trim()))
+    return { ok: false, error: 'Tautan sesi daring harus diawali https://' };
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -785,13 +798,23 @@ function perbarui_(u, jenis, ref, d) {
     tulis('Status', d.status);
     if (c.balas && d.balasan != null) tulis(c.balas, clean_(d.balasan));
     if (d.catatan != null) tulis(c.catatan, clean_(d.catatan));
+    var rowLama = t.rows[row - 2], statusLama = teks_(sel_(t, rowLama, 'Status')), jadwalLama = tglKey_(sel_(t, rowLama, 'Jadwal sesi')) + teks_(sel_(t, rowLama, 'Jam sesi')) + teks_(sel_(t, rowLama, 'Tempat sesi'));
+    var jadwalBaru = jadwalLama;
     if (c.jadwal && d.jadwal) {
       var tg = String(d.jadwal.tanggal || '');
       tulis('Jadwal sesi', /^\d{4}-\d{2}-\d{2}$/.test(tg) ? tg : '', true);
       tulis('Jam sesi', clean_(String(d.jadwal.jam || '').slice(0, 60)), true);
       tulis('Tempat sesi', clean_(String(d.jadwal.tempat || '').slice(0, 120)), true);
+      tulis('Bentuk sesi', d.jadwal.bentuk === 'Daring' ? 'Daring' : 'Tatap muka', true);
+      if (c.daring) {
+        var link = String(d.jadwal.tautan || '').trim();
+        tulis('Tautan sesi daring', d.jadwal.bentuk === 'Daring' ? link.slice(0, 300) : '', true);
+      }
+      jadwalBaru = (/^\d{4}-\d{2}-\d{2}$/.test(tg) ? tg : '') + clean_(String(d.jadwal.jam || '').slice(0, 60)) + clean_(String(d.jadwal.tempat || '').slice(0, 120));
     }
+    if (c.tugas && d.tugas != null) tulis('Ditugaskan ke', namaGuru_().indexOf(d.tugas) >= 0 ? d.tugas : '', true);
     if (c.oleh) tulis(c.oleh, u.nama);
+    if (d.status !== statusLama || jadwalBaru !== jadwalLama) kabariPerubahan_(jenis, t, rowLama, d.status);
     return { ok: true };
   } finally {
     lock.releaseLock();
@@ -1393,12 +1416,16 @@ function normKelas_(k) {
 
 // Daftar siswa resmi dari tab DataSiswa (kolom A nama, kolom B kelas; kolom berjudul NIS/NISN dipakai bila ada).
 function dataSiswa_() {
-  var t = tabel_(SISWA_TAB), iNis = -1;
-  t.h.forEach(function (h, i) { if (iNis < 0 && /^NIS\b/i.test(h)) iNis = i; });
+  var t = tabel_(SISWA_TAB), iNis = -1, iIzin = -1;
+  t.h.forEach(function (h, i) { if (iNis < 0 && /^NIS\b/i.test(h)) iNis = i; if (iIzin < 0 && /izin orang ?tua/i.test(h)) iIzin = i; });
   return t.rows.filter(function (r) { return String(r[0] || '').trim(); }).map(function (r) {
-    return { nama: rapiNama_(r[0]), kelas: String(r[1] || '').trim().toUpperCase(), nis: iNis >= 0 ? String(r[iNis] || '').trim() : '' };
+    return { nama: rapiNama_(r[0]), kelas: String(r[1] || '').trim().toUpperCase(), nis: iNis >= 0 ? String(r[iNis] || '').trim() : '',
+      izin: iIzin < 0 ? null : /^(ya|y|sudah|setuju|1|true)$/i.test(String(r[iIzin]).trim()) };
   });
 }
+// UU 27/2022 Pasal 25: data pribadi anak diproses dengan persetujuan orang tua/wali.
+// Akun portal siswa hanya bisa dipakai bila kolom "Izin orang tua" di tab DataSiswa berisi YA.
+function izinTercatat_(daftar) { return daftar.some(function (s) { return s.izin !== null; }); }
 
 /* ================= Portal wali kelas ================= */
 // Akun dibuat guru BK di dashboard (menu Akun). Wali kelas hanya melihat rujukan miliknya sendiri,
@@ -1498,7 +1525,8 @@ function daftarRujukan_(u) {
       kode: teks_(sel_(t, row, 'Kode')), dikirim: tglKey_(row[0]), nama: teks_(sel_(t, row, 'Nama siswa')), kelas: teks_(sel_(t, row, 'Kelas')),
       alasan: teks_(sel_(t, row, 'Alasan rujukan')), urgensi: teks_(sel_(t, row, 'Tingkat urgensi')),
       status: teks_(sel_(t, row, 'Status')) || 'Baru',
-      jadwal: { tanggal: tglKey_(sel_(t, row, 'Jadwal sesi')), jam: teks_(sel_(t, row, 'Jam sesi')), tempat: teks_(sel_(t, row, 'Tempat sesi')) },
+      jadwal: { tanggal: tglKey_(sel_(t, row, 'Jadwal sesi')), jam: teks_(sel_(t, row, 'Jam sesi')), tempat: teks_(sel_(t, row, 'Tempat sesi')),
+        bentuk: teks_(sel_(t, row, 'Bentuk sesi')) || 'Tatap muka' },
       tanggapan: teks_(sel_(t, row, 'Tanggapan untuk wali kelas (tampil di portal)')), oleh: teks_(sel_(t, row, 'Ditangani oleh'))
     });
   }
@@ -1569,7 +1597,7 @@ var TARGET_BIDANG = ['Belajar', 'Pribadi', 'Sosial', 'Karier'];
 var TARGET_MAKS = 40;
 
 function siswaApi_(q) {
-  if (q.action === 'infoAktivasi') return { ok: true, perluNis: dataSiswa_().some(function (s) { return !!s.nis; }) };
+  if (q.action === 'infoAktivasi') { var ds = dataSiswa_(); return { ok: true, perluNis: ds.some(function (s) { return !!s.nis; }), dibuka: ds.length > 0 && izinTercatat_(ds) }; }
   if (q.action === 'aktivasi') return aktivasiSiswa_(q.data || {});
   if (q.action === 'login') return loginSiswa_(String(q.email || ''), String(q.pin || ''));
   var u = sesiPortal_('tsk_', q.token);
@@ -1606,7 +1634,7 @@ function aktivasiSiswa_(d) {
   if (terkunci_(kunci)) return { ok: false, error: 'Terlalu banyak percobaan. Coba lagi dalam 15 menit, atau minta bantuan guru BK.' };
 
   var daftar = dataSiswa_();
-  if (!daftar.length) return { ok: false, error: 'Aktivasi belum dibuka. Tanyakan ke guru BK.' };
+  if (!daftar.length || !izinTercatat_(daftar)) return { ok: false, error: 'Aktivasi belum dibuka karena sekolah masih mengumpulkan izin orang tua. Tanyakan ke guru BK.' };
   var cocok = daftar.filter(function (s) { return norm_(s.nama) === norm_(nama) && normKelas_(s.kelas) === kelas; });
   if (cocok.length !== 1) {
     catatGagal_(kunci);
@@ -1617,6 +1645,7 @@ function aktivasiSiswa_(d) {
     catatGagal_(kunci);
     return { ok: false, error: 'NIS belum cocok dengan data sekolah. Lihat NIS di kartu pelajar atau rapor.' };
   }
+  if (s.izin !== true) return { ok: false, error: 'Izin orang tuamu untuk portal siswa belum tercatat. Minta surat persetujuan orang tua ke guru BK, lalu coba lagi setelah dikembalikan.' };
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -1654,8 +1683,11 @@ function loginSiswa_(email, pin) {
   }
   CacheService.getScriptCache().remove(kunci);
   var u = { id: teks_(sel_(a.t, a.row, 'ID')), nama: teks_(sel_(a.t, a.row, 'Nama')), kelas: teks_(sel_(a.t, a.row, 'Kelas')) };
+  var semua = dataSiswa_(), sama = semua.filter(function (s) { return norm_(s.nama) === norm_(u.nama); });
+  // Persetujuan orang tua dicabut (kolom Izin orang tua bukan YA) atau siswa sudah tidak terdaftar: akun tidak bisa dipakai.
+  if (izinTercatat_(semua) && !sama.some(function (s) { return s.izin === true; }))
+    return { ok: false, error: 'Akunmu sedang tidak aktif karena izin orang tua belum atau tidak lagi tercatat. Hubungi guru BK.' };
   // Naik kelas: ikuti kelas terbaru di DataSiswa bila namanya hanya satu.
-  var sama = dataSiswa_().filter(function (s) { return norm_(s.nama) === norm_(u.nama); });
   if (sama.length === 1 && sama[0].kelas && normKelas_(sama[0].kelas) !== normKelas_(u.kelas)) {
     u.kelas = sama[0].kelas;
     tulisSel_(a.t, a.baris, 'Kelas', u.kelas);
@@ -1684,7 +1716,8 @@ function ringkasanSiswa_(u) {
     if (!row[0] || String(sel_(k, row, 'Akun siswa')).trim() !== u.id) continue;
     pengajuan.push({ kode: teks_(sel_(k, row, 'Kode')), dikirim: tglKey_(row[0]), topik: teks_(sel_(k, row, 'Topik')),
       waktu: teks_(sel_(k, row, 'Waktu yang diinginkan')), status: teks_(sel_(k, row, 'Status')) || 'Baru',
-      jadwal: { tanggal: tglKey_(sel_(k, row, 'Jadwal sesi')), jam: teks_(sel_(k, row, 'Jam sesi')), tempat: teks_(sel_(k, row, 'Tempat sesi')) },
+      jadwal: { tanggal: tglKey_(sel_(k, row, 'Jadwal sesi')), jam: teks_(sel_(k, row, 'Jam sesi')), tempat: teks_(sel_(k, row, 'Tempat sesi')),
+        bentuk: teks_(sel_(k, row, 'Bentuk sesi')) || 'Tatap muka', tautan: teks_(sel_(k, row, 'Tautan sesi daring')) },
       pesan: teks_(sel_(k, row, 'Pesan untuk siswa (tampil di web)')) });
   }
   var t = tabel_(TARGET_TAB), target = [];
@@ -1712,12 +1745,16 @@ function ajukanKonselingSiswa_(u, d) {
   var topik = ['Pribadi', 'Sosial / pertemanan', 'Belajar', 'Karier / pilih sekolah', 'Lainnya'];
   var waktu = ['Istirahat pertama', 'Istirahat kedua', '1 jam setelah pulang sekolah'];
   if (topik.indexOf(d.topik) < 0 || waktu.indexOf(d.waktu) < 0) return { ok: false, error: 'Pilih topik dan waktu.' };
+  if (d.setuju !== true) return { ok: false, error: 'Baca dan centang kesepakatan konseling terlebih dahulu.' };
+  var ganggu = Math.round(Number(d.ganggu));
   var kode = newCode_();
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     tulisBarisKolom_('Konseling', { 'Waktu masuk': new Date(), 'Kode': kode, 'Akun siswa': u.id, 'Nama': u.nama, 'Kelas': u.kelas,
-      'Topik': d.topik, 'Waktu yang diinginkan': d.waktu, 'Cerita singkat': clean_(d.cerita), 'Status': 'Baru' });
+      'Topik': d.topik, 'Waktu yang diinginkan': d.waktu, 'Cerita singkat': clean_(d.cerita), 'Status': 'Baru',
+      'Harapan dari sesi': clean_(String(d.harapan || '').slice(0, 500)), 'Sudah cerita ke': clean_(String(d.sudahCerita || '').slice(0, 200)),
+      'Seberapa mengganggu (1-5)': ganggu >= 1 && ganggu <= 5 ? ganggu : '', 'Persetujuan asas konseling': 'YA ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm') });
   } finally {
     lock.releaseLock();
   }
@@ -2177,6 +2214,76 @@ function chatDaftar_() {
   });
   var list = Object.keys(per).map(function (k) { return per[k]; }).sort(function (a, b) { return b.terakhir - a.terakhir; });
   return { ok: true, items: list.slice(0, 100), belum: list.reduce(function (s, c) { return s + c.belum; }, 0) };
+}
+
+/* ================= Disposisi, kabar perubahan, hapus data ================= */
+function namaGuru_() {
+  var t = tabel_(AKUN_TAB);
+  return t.rows.filter(function (r) { return String(r[0] || '').trim() && String(sel_(t, r, 'Aktif')).trim().toUpperCase() === 'YA'; })
+    .map(function (r) { return teks_(sel_(t, r, 'Nama')); }).filter(String);
+}
+
+// Saat status atau jadwal berubah: kabari siswa (bila pengajuan dari akun portal) atau wali kelas.
+// Isi email sengaja umum, tanpa nama, topik, atau isi cerita, karena email bisa dibaca anggota keluarga lain.
+function kabariPerubahan_(jenis, t, row, status) {
+  try {
+    var web = 'https://farel26.github.io/web-bk-labschool-ciracas/';
+    if (jenis === 'konseling') {
+      var akun = String(sel_(t, row, 'Akun siswa') || '');
+      var a = akun && akunSiswaAktif_('ID', akun);
+      if (!a) return;
+      var email = String(sel_(a.t, a.row, 'Email')).trim();
+      if (!emailValid_(email)) return;
+      MailApp.sendEmail(email, 'Ada kabar dari guru BK untuk pengajuanmu',
+        'Halo,\n\nGuru BK SMP Labschool Ciracas memperbarui pengajuan konselingmu (status: ' + status + ').\n' +
+        'Masuk ke Portal Siswa untuk melihat jadwal dan pesannya:\n' + web + 'siswa.html\n\nEmail ini dikirim otomatis. Jangan balas email ini; gunakan chat di Portal Siswa.');
+    } else if (jenis === 'rujukan') {
+      var ew = String(sel_(t, row, 'Akun wali kelas') || '').trim();
+      if (!emailValid_(ew)) return;
+      MailApp.sendEmail(ew, '[Web BK] Rujukan ' + teks_(sel_(t, row, 'Kode')) + ': ' + status,
+        'Guru BK memperbarui rujukan ' + teks_(sel_(t, row, 'Kode')) + ' (status: ' + status + ').\n' +
+        'Lihat jadwal dan tanggapan di Portal Wali Kelas:\n' + web + 'wali.html');
+    }
+  } catch (err) { /* email opsional */ }
+}
+
+// Hak subjek data (UU 27/2022 Pasal 8 dan 43): hapus akun portal beserta data yang dibuat lewat portal.
+// Catatan layanan BK (pengajuan, laporan, catatan sesi) tetap disimpan sebagai arsip BK, hanya diputus dari akun.
+function hapusDataSiswa_(id) {
+  if (!id) return { ok: false, error: 'Akun tidak dikenal.' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var hasil = {};
+    [[AKUN_SISWA_TAB, 'ID'], [TARGET_TAB, 'Akun siswa'], [CHECKIN_TAB, 'Akun siswa'], [CHAT_TAB, 'Akun siswa'], [FORM_ISI_TAB, 'Akun siswa']].forEach(function (x) {
+      var t = tabel_(x[0]), i = kol_(t, x[1]), n = 0;
+      if (i < 0) return;
+      for (var r = t.rows.length - 1; r >= 0; r--) {
+        if (String(t.rows[r][i]).trim() === id) { t.sh.deleteRow(r + 2); n++; }
+      }
+      hasil[x[0]] = n;
+    });
+    ['Konseling', HASIL_TAB].forEach(function (tab) {
+      var t = tabel_(tab), i = kol_(t, 'Akun siswa');
+      if (i < 0) return;
+      t.rows.forEach(function (r, k) { if (String(r[i]).trim() === id) t.sh.getRange(k + 2, i + 1).setValue(''); });
+    });
+    if (!hasil[AKUN_SISWA_TAB]) return { ok: false, error: 'Akun tidak ditemukan.' };
+    return { ok: true, terhapus: hasil };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Akun siswa yang namanya sudah tidak ada di DataSiswa (lulus/pindah). jalankan=false hanya menghitung.
+function bersihkanAlumni_(jalankan) {
+  var ada = {};
+  dataSiswa_().forEach(function (s) { ada[norm_(s.nama)] = 1; });
+  var t = tabel_(AKUN_SISWA_TAB), daftar = [];
+  t.rows.forEach(function (r) { if (r[0] && !ada[norm_(sel_(t, r, 'Nama'))]) daftar.push({ id: teks_(r[0]), nama: teks_(sel_(t, r, 'Nama')), kelas: teks_(sel_(t, r, 'Kelas')) }); });
+  if (!jalankan) return { ok: true, items: daftar };
+  daftar.forEach(function (x) { hapusDataSiswa_(x.id); });
+  return { ok: true, items: daftar, dihapus: daftar.length };
 }
 
 /* ---------------- Email pemberitahuan ---------------- */

@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261107b">
+<link rel="stylesheet" href="assets/css/style.css?v=20261108a">
 </head>
 <body>
 <main><div style="background: #FEFBF2; color: #12204F; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; box-sizing: border-box">
@@ -209,6 +209,23 @@
             <select id="f-waktu" name="waktu" required><option value="">Pilih waktu</option><option>Istirahat pertama</option><option>Istirahat kedua</option><option>1 jam setelah pulang sekolah</option></select>
           </div>
           <div class="field"><label for="f-cerita">Ceritakan singkat (boleh dikosongkan)</label><textarea id="f-cerita" name="cerita" rows="3"></textarea></div>
+          <details class="intake">
+            <summary>Bantu guru BK bersiap (opsional)</summary>
+            <div class="field"><label for="f-ganggu">Seberapa mengganggu hal ini buatmu?</label>
+              <select id="f-ganggu" name="ganggu"><option value="">Pilih</option><option value="1">1 · sedikit</option><option value="2">2</option><option value="3">3 · cukup mengganggu</option><option value="4">4</option><option value="5">5 · sangat mengganggu</option></select></div>
+            <div class="field"><label for="f-harapan">Apa yang kamu harapkan dari ngobrol nanti?</label><textarea id="f-harapan" name="harapan" rows="2" placeholder="mis. ingin lebih tenang saat ujian"></textarea></div>
+            <div class="field"><label for="f-sudah">Sudah pernah cerita ke siapa?</label><input id="f-sudah" name="sudahCerita" type="text" placeholder="mis. belum ke siapa pun, ke ibu, ke sahabat"></div>
+          </details>
+          <details class="kesepakatan">
+            <summary>Baca kesepakatan konseling</summary>
+            <ul>
+              <li><strong>Sukarela.</strong> Kamu datang karena keinginanmu sendiri dan boleh berhenti kapan saja.</li>
+              <li><strong>Rahasia.</strong> Ceritamu dijaga guru BK dan tidak dibagikan ke teman, wali kelas, atau guru lain tanpa izinmu.</li>
+              <li><strong>Batas kerahasiaan.</strong> Guru BK wajib melibatkan orang tua, pimpinan sekolah, atau pihak berwenang bila ada bahaya bagi dirimu atau orang lain, ada kekerasan atau perundungan serius, atau diwajibkan hukum. Bila memungkinkan, guru BK membicarakannya denganmu lebih dulu.</li>
+              <li><strong>Catatan.</strong> Guru BK membuat catatan sesi yang disimpan secara rahasia untuk keperluan pendampinganmu.</li>
+            </ul>
+          </details>
+          <label class="check" style="font-size: 14px"><input type="checkbox" name="setuju" value="YA" required> Aku sudah membaca dan setuju dengan kesepakatan konseling.</label>
           <button type="submit" class="btn-primary" style="min-height: 52px; border: 0; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Kirim Pengajuan</button>
           <p class="form-status" role="status" aria-live="polite"></p>
           <p style="margin: 0; display: flex; gap: 8px; font-size: 13px; line-height: 1.5; color: #4A5578">
@@ -448,7 +465,7 @@
       <p style="margin: 0; padding-top: 24px; border-top: 1px solid #2C3B6E; font-size: 13px; color: #B3BEDF">© 2026 BK SMP Labschool Ciracas · <a href="privasi.html" style="color: #B3BEDF">Kebijakan privasi</a> · <a href="guru.html" style="color: #B3BEDF">Masuk guru BK</a></p>
     </div>
   </footer>
-<script src="assets/js/config.js?v=20261107b"></script>
-<script src="assets/js/main.js?v=20261107b"></script>
+<script src="assets/js/config.js?v=20261108a"></script>
+<script src="assets/js/main.js?v=20261108a"></script>
 </body>
 </html>

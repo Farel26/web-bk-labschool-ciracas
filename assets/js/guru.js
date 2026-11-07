@@ -199,6 +199,7 @@
       if (!d.ok) { box.innerHTML = '<p class="muted">' + esc(d.error) + "</p>"; return; }
       setBadge(d.baru);
       inboxData = d.items;
+      $("inbox-saya-w").hidden = !d.adaTugas;
       if (!d.items.length) {
         box.innerHTML = '<div class="kosong"><strong>Tidak ada yang perlu ditangani.</strong><span>Semua isian di sini sudah berstatus Selesai. Centang "Tampilkan juga yang sudah selesai" untuk melihat arsipnya.</span></div>';
         return;
@@ -211,7 +212,8 @@
         return '<details class="inbox-item"' + (it.status === "Baru" || urg === "pill-darurat" ? ' data-baru="1"' : "") + ">" +
           "<summary><span class=\"pill pill-" + esc(it.status.toLowerCase().split(" ")[0]) + '">' + esc(it.status) + "</span>" +
           '<span class="inbox-judul">' + (urg ? '<span class="pill ' + urg + '" style="margin-right:8px">' + esc(it.urgensi.split(" (")[0]) + "</span>" : "") + esc(it.judul || "(tanpa judul)") +
-          (j.tanggal && it.status !== "Selesai" ? ' <span class="muted" style="font-weight:600;font-size:13px">· sesi ' + esc(tglPanjang(j.tanggal)) + "</span>" : "") +
+          (j.tanggal && it.status !== "Selesai" ? ' <span class="muted" style="font-weight:600;font-size:13px">· sesi ' + esc(tglPanjang(j.tanggal)) + (j.bentuk === "Daring" ? " (daring)" : "") + "</span>" : "") +
+          (it.tugas ? ' <span class="muted" style="font-weight:600;font-size:13px">· ' + (it.tugas === sesi.nama ? "tugas Anda" : esc(it.tugas.split(",")[0])) + "</span>" : "") +
           '</span><span class="inbox-waktu">' + esc(it.waktu) + "</span></summary>" +
           '<dl class="isian">' + it.isi.map(function (x) { return "<dt>" + esc(x.label) + "</dt><dd>" + esc(x.teks) + "</dd>"; }).join("") +
           (it.oleh ? "<dt>Ditangani oleh</dt><dd>" + esc(it.oleh) + "</dd>" : "") + "</dl>" +
@@ -220,7 +222,12 @@
           (d.adaJadwal ? '<div class="jadwal-form">' +
             '<div class="field"><label for="ib-tg-' + i + '">Tanggal sesi</label><input id="ib-tg-' + i + '" type="date" value="' + esc(j.tanggal || "") + '"></div>' +
             '<div class="field"><label for="ib-jm-' + i + '">Jam</label><input id="ib-jm-' + i + '" type="text" list="dl-jam" placeholder="mis. Istirahat kedua" value="' + esc(j.jam || "") + '"></div>' +
-            '<div class="field"><label for="ib-tp-' + i + '">Tempat</label><input id="ib-tp-' + i + '" type="text" list="dl-tempat" placeholder="mis. Ruang BK lantai 1" value="' + esc(j.tempat || "") + '"></div></div>' : "") +
+            '<div class="field"><label for="ib-tp-' + i + '">Tempat</label><input id="ib-tp-' + i + '" type="text" list="dl-tempat" placeholder="mis. Ruang BK lantai 1" value="' + esc(j.tempat || "") + '"></div>' +
+            '<div class="field"><label for="ib-bt-' + i + '">Bentuk sesi</label><select id="ib-bt-' + i + '" data-bentuk="' + i + '"><option' + (j.bentuk !== "Daring" ? " selected" : "") + '>Tatap muka</option><option' + (j.bentuk === "Daring" ? " selected" : "") + ">Daring</option></select></div>" +
+            (d.adaDaring ? '<div class="field" id="ib-lk-w-' + i + '"' + (j.bentuk === "Daring" ? "" : " hidden") + '><label for="ib-lk-' + i + '">Tautan sesi daring</label><input id="ib-lk-' + i + '" type="url" placeholder="https://meet.google.com/…" value="' + esc(j.tautan || "") + '"><span class="hint">Pakai Google Meet akun sekolah, kunci ruang, dan pastikan siswa berada di tempat yang privat.</span></div>' : "") +
+            (d.adaTugas ? '<div class="field"><label for="ib-tg2-' + i + '">Ditugaskan ke</label><select id="ib-tg2-' + i + '"><option value="">Belum ditugaskan</option>' +
+              (d.guru || []).map(function (gname) { return "<option" + (gname === it.tugas ? " selected" : "") + ">" + esc(gname) + "</option>"; }).join("") + "</select></div>" : "") +
+            "</div>" : "") +
           (d.adaBalasan ? '<div class="field"><label for="ib-bl-' + i + '">' + L.balas + '</label><textarea id="ib-bl-' + i + '" rows="3">' + esc(it.balasan) + '</textarea><span class="hint">' + petunjukBalas(it) + "</span></div>" : "") +
           '<div class="field"><label for="ib-ct-' + i + '">' + L.catatan + '</label><textarea id="ib-ct-' + i + '" rows="3">' + esc(it.catatan) + "</textarea></div>" +
           '<div class="tombol-baris"><button type="submit" class="btn-solid">Simpan</button>' +
@@ -245,6 +252,15 @@
     });
   });
   $("inbox-semua").addEventListener("change", muatInbox);
+  // Disposisi: saring tampilan tanpa memuat ulang (indeks data-i tetap sama).
+  function saringTugas() {
+    var saya = $("inbox-saya").checked && !$("inbox-saya-w").hidden;
+    document.querySelectorAll("#inbox-list details.inbox-item").forEach(function (el, i) {
+      el.hidden = saya && (inboxData[i] || {}).tugas !== sesi.nama;
+    });
+  }
+  $("inbox-saya").addEventListener("change", saringTugas);
+  new MutationObserver(saringTugas).observe($("inbox-list"), { childList: true });
   $("inbox-muat").addEventListener("click", muatInbox);
 
   $("inbox-list").addEventListener("submit", function (e) {
@@ -255,7 +271,10 @@
     if ($("ib-bl-" + i)) data.balasan = $("ib-bl-" + i).value;
     if (inboxJenis === "curhat" && data.balasan && data.balasan.trim() && data.status === "Baru") { data.status = "Dibalas"; $("ib-st-" + i).value = "Dibalas"; }
     if ($("ib-tg-" + i)) {
-      data.jadwal = { tanggal: $("ib-tg-" + i).value, jam: $("ib-jm-" + i).value.trim(), tempat: $("ib-tp-" + i).value.trim() };
+      data.jadwal = { tanggal: $("ib-tg-" + i).value, jam: $("ib-jm-" + i).value.trim(), tempat: $("ib-tp-" + i).value.trim(),
+        bentuk: $("ib-bt-" + i).value, tautan: $("ib-lk-" + i) ? $("ib-lk-" + i).value.trim() : "" };
+      if ($("ib-tg2-" + i)) data.tugas = $("ib-tg2-" + i).value;
+      if (data.jadwal.bentuk === "Daring" && data.jadwal.tautan && !/^https:\/\/\S+$/.test(data.jadwal.tautan)) { status(st, "Tautan sesi daring harus diawali https://", "err"); $("ib-lk-" + i).focus(); return; }
       // Mengisi tanggal sesi pada isian baru berarti sudah dijadwalkan.
       if (data.jadwal.tanggal && (data.status === "Baru" || data.status === "Diterima")) { data.status = "Dijadwalkan"; $("ib-st-" + i).value = "Dijadwalkan"; }
       if (data.status === "Dijadwalkan" && !data.jadwal.tanggal) { status(st, "Isi tanggal sesi untuk status Dijadwalkan.", "err"); $("ib-tg-" + i).focus(); return; }
@@ -264,6 +283,11 @@
     api("perbarui", { jenis: inboxJenis, ref: it.ref, data: data }).then(function (d) {
       if (!d.ok) { status(st, d.error || "Gagal menyimpan.", "err"); return; }
       status(st, "Tersimpan.", "ok");
+      // Simpan perubahan di data lokal agar penyaring "tugas saya" langsung benar tanpa memuat ulang.
+      if (data.tugas !== undefined) it.tugas = data.tugas;
+      if (data.jadwal) it.jadwal = data.jadwal;
+      it.status = data.status;
+      saringTugas();
       var pill = f.closest("details").querySelector(".pill");
       pill.textContent = data.status; pill.className = "pill pill-" + data.status.toLowerCase().split(" ")[0];
       f.closest("details").removeAttribute("data-baru");
@@ -274,6 +298,10 @@
   var KATEGORI_DARI = { "Sosial / pertemanan": "Konflik antarsiswa", "Masalah pertemanan/konflik": "Konflik antarsiswa", "Dugaan perundungan": "Perundungan",
     "Belajar": "Masalah belajar", "Prestasi belajar menurun": "Masalah belajar", "Kehadiran/sering terlambat": "Pelanggaran ringan",
     "Pribadi": "Masalah pribadi/emosi", "Perubahan emosi/sikap": "Masalah pribadi/emosi", "Masalah keluarga": "Masalah pribadi/emosi" };
+  $("inbox-list").addEventListener("change", function (e) {
+    var bt = e.target.closest("select[data-bentuk]"); if (!bt) return;
+    var w = $("ib-lk-w-" + bt.dataset.bentuk); if (w) w.hidden = bt.value !== "Daring";
+  });
   $("inbox-list").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-kasus]"); if (!b) return;
     var it = inboxData[+b.dataset.kasus], ambil = function (lbl) { return ((it.isi.filter(function (x) { return x.label === lbl; })[0]) || {}).teks || ""; };
@@ -1246,7 +1274,7 @@
       box.innerHTML = '<div class="table-wrap"><table><thead><tr><th scope=col>Siswa</th><th scope=col>Email</th><th scope=col>Terakhir masuk</th><th scope=col><span class=sr-only>Aksi</span></th></tr></thead><tbody>' +
         dataAkunSiswa.map(function (x, i) {
           return '<tr class="akun-baris"><td><strong>' + esc(x.nama) + "</strong> (" + esc(x.kelas) + ') <span class="status-akun' + (x.aktif ? "" : " mati") + '">' + (x.aktif ? "Aktif" : "Nonaktif") + "</span></td><td>" + esc(x.email) + "</td><td>" + esc(x.terakhir || "Belum pernah") +
-            '</td><td><button type="button" class="btn-mini" data-chat-siswa="' + i + '">Chat</button> <button type="button" class="btn-mini" data-pin="' + i + '">PIN baru</button> <button type="button" class="btn-mini' + (x.aktif ? " btn-hapus" : "") + '" data-aktif-siswa="' + i + '">' + (x.aktif ? "Nonaktifkan" : "Aktifkan") + "</button></td></tr>";
+            '</td><td><button type="button" class="btn-mini" data-chat-siswa="' + i + '">Chat</button> <button type="button" class="btn-mini" data-pin="' + i + '">PIN baru</button> <button type="button" class="btn-mini btn-hapus" data-hapus-siswa="' + i + '">Hapus akun & data</button> <button type="button" class="btn-mini' + (x.aktif ? " btn-hapus" : "") + '" data-aktif-siswa="' + i + '">' + (x.aktif ? "Nonaktifkan" : "Aktifkan") + "</button></td></tr>";
         }).join("") + "</tbody></table></div>";
     }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
   }
@@ -1254,6 +1282,22 @@
   $("akun-siswa-list").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
     if (b.dataset.chatSiswa) { var cs = dataAkunSiswa[+b.dataset.chatSiswa]; bukaChat(cs.id, cs.nama, cs.kelas); return; }
+    if (b.dataset.hapusSiswa) {
+      var hs = dataAkunSiswa[+b.dataset.hapusSiswa];
+      if (b.dataset.yakin !== "1") {
+        b.dataset.yakin = "1"; b.textContent = "Yakin? Check-in, chat, dan target ikut terhapus";
+        setTimeout(function () { if (b.isConnected) { b.dataset.yakin = ""; b.textContent = "Hapus akun & data"; } }, 8000);
+        return;
+      }
+      sibuk(b, true, "Menghapus…");
+      api("hapusDataSiswa", { id: hs.id }).then(function (d) {
+        if (!d.ok) { alertSingkat(b, d.error); sibuk(b, false); return; }
+        return muatAkunSiswa().then(function () {
+          status($("akun-siswa-status"), "Akun " + hs.nama + " beserta check-in, chat, target, dan tanda formulirnya sudah dihapus. Catatan layanan BK tetap tersimpan sebagai arsip.", "ok");
+        });
+      }).catch(function (err) { if (err.message !== "auth") { sibuk(b, false); alertSingkat(b, "Gagal. Coba lagi."); } });
+      return;
+    }
     if (b.dataset.pin) {
       var x = dataAkunSiswa[+b.dataset.pin];
       if (b.dataset.yakin !== "1") { b.dataset.yakin = "1"; b.textContent = "Yakin buat PIN baru?"; setTimeout(function () { if (b.isConnected) { b.dataset.yakin = ""; b.textContent = "PIN baru"; } }, 6000); return; }
@@ -1270,8 +1314,9 @@
       sibuk(b, true, "Menyimpan…");
       api("aktifAkunSiswa", { id: y.id, aktif: !y.aktif }).then(function (d) {
         if (!d.ok) { alertSingkat(b, d.error); return; }
-        status($("akun-siswa-status"), "Akun " + y.nama + (y.aktif ? " dinonaktifkan dan langsung keluar dari portal." : " diaktifkan lagi."), "ok");
-        return muatAkunSiswa();
+        return muatAkunSiswa().then(function () {
+          status($("akun-siswa-status"), "Akun " + y.nama + (y.aktif ? " dinonaktifkan dan langsung keluar dari portal." : " diaktifkan lagi."), "ok");
+        });
       }).catch(function (err) { if (err.message !== "auth") alertSingkat(b, "Gagal. Coba lagi."); }).finally(function () { sibuk(b, false); });
     }
   });
@@ -1552,6 +1597,51 @@
       return muatFormulir();
     }).catch(gagalKoneksi(st)).finally(function () { sibuk(btn, false); });
   });
+
+  /* ---------- Data alumni & surat izin orang tua ---------- */
+  $("btn-alumni").addEventListener("click", function () {
+    var b = this, box = $("alumni-box");
+    sibuk(b, true, "Memeriksa…");
+    api("bersihkanAlumni", { jalankan: false }).then(function (d) {
+      if (!d.items.length) { box.innerHTML = '<p class="form-status ok" style="margin:0">Semua akun siswa masih terdaftar di tab DataSiswa.</p>'; return; }
+      box.innerHTML = '<div class="sandi-sekali" style="background:#FFF4F0;border-color:#A1260D;box-shadow:4px 4px 0 #E9C9C0;color:#5B3A30"><strong style="color:#8A2B12">' + d.items.length +
+        ' akun siswa tidak lagi ada di tab DataSiswa</strong><span>' + d.items.slice(0, 30).map(function (x) { return esc(x.nama) + " (" + esc(x.kelas) + ")"; }).join(", ") + (d.items.length > 30 ? ", …" : "") +
+        '</span><span>Pastikan DataSiswa sudah diperbarui untuk tahun ajaran ini. Menghapus juga menghapus check-in, chat, dan target mereka. Catatan layanan BK tetap tersimpan.</span>' +
+        '<div class="tombol-baris"><button type="button" class="btn-mini btn-hapus" id="btn-alumni-hapus">Hapus ' + d.items.length + " akun ini</button></div></div>";
+    }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memeriksa. Coba lagi.</p>'; }).finally(function () { sibuk(b, false); });
+  });
+  $("alumni-box").addEventListener("click", function (e) {
+    var b = e.target.closest("#btn-alumni-hapus"); if (!b) return;
+    if (b.dataset.yakin !== "1") { b.dataset.yakin = "1"; b.textContent = "Yakin? Tidak bisa dibatalkan"; return; }
+    sibuk(b, true, "Menghapus…");
+    api("bersihkanAlumni", { jalankan: true }).then(function (d) {
+      $("alumni-box").innerHTML = '<p class="form-status ok" style="margin:0">' + d.dihapus + " akun alumni beserta data portalnya sudah dihapus.</p>";
+      return muatAkunSiswa();
+    }).catch(function (err) { if (err.message !== "auth") alertSingkat(b, "Gagal. Coba lagi."); });
+  });
+  TEMPLATE.izinOrtu = function () {
+    var li = function (arr) { return '<ul style="margin:4px 0 10px;padding-left:20px">' + arr.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; };
+    return judul("SURAT PERSETUJUAN ORANG TUA/WALI", "") +
+      '<p style="text-align:center;margin-top:-8px">Penggunaan Portal Siswa Bimbingan dan Konseling SMP Labschool Ciracas</p>' +
+      p("Yth. Bapak/Ibu Orang Tua/Wali Murid,") +
+      p("Unit Bimbingan dan Konseling (BK) SMP Labschool Ciracas menyediakan Portal Siswa di web BK sekolah. Sesuai Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi, pemrosesan data pribadi anak memerlukan persetujuan orang tua/wali. Mohon Bapak/Ibu membaca keterangan berikut sebelum memberi persetujuan.") +
+      "<h3>A. Layanan di Portal Siswa</h3>" + li(["Pengajuan konseling dan informasi jadwal bertemu guru BK, termasuk sesi daring bila diperlukan.",
+        "Pesan (chat) dengan guru BK.", "Check-in suasana hati harian yang bersifat sukarela.", "Target belajar dan pengatur waktu fokus.",
+        "Formulir atau angket dari guru BK (misalnya asesmen kebutuhan).", "Hasil tes atau asesmen, ditampilkan setelah dibahas bersama guru BK."]) +
+      "<h3>B. Data yang disimpan</h3>" + li(["Nama, kelas, dan NIS (untuk mencocokkan dengan data sekolah).", "Alamat email dan PIN dalam bentuk tersandi.",
+        "Isian yang ditulis anak di portal: pengajuan, chat, check-in suasana hati, target, dan tanda formulir."]) +
+      "<h3>C. Siapa yang dapat membaca</h3>" + p("Hanya guru BK SMP Labschool Ciracas. Data disimpan di Google Sheet dan Google Drive milik unit BK. Wali kelas dan guru lain tidak dapat membaca isi konseling, chat, maupun check-in.") +
+      "<h3>D. Kerahasiaan dan batasnya</h3>" + p("Guru BK menjaga kerahasiaan sesuai kode etik profesi bimbingan dan konseling. Guru BK akan menghubungi Bapak/Ibu, pimpinan sekolah, atau pihak berwenang bila ada bahaya bagi keselamatan anak atau orang lain, kekerasan atau perundungan serius, atau bila diwajibkan hukum.") +
+      "<h3>E. Lama penyimpanan dan hak Bapak/Ibu</h3>" + li(["Data portal disimpan selama anak bersekolah di SMP Labschool Ciracas dan dihapus setelah anak lulus atau pindah.",
+        "Catatan layanan BK disimpan sebagai arsip sekolah sesuai ketentuan.", "Bapak/Ibu berhak menanyakan, meminta perbaikan, menarik persetujuan kapan saja, dan meminta penghapusan data portal melalui guru BK."]) +
+      "<h3>Pernyataan</h3>" + p("Saya yang bertanda tangan di bawah ini, orang tua/wali dari:") +
+      identitas([["Nama siswa", "...................................................."], ["Kelas", "............"], ["NIS", "...................."]]) +
+      '<p style="margin-top:10px">&#9744; <strong>MENYETUJUI</strong> &nbsp;&nbsp;&nbsp; &#9744; <strong>TIDAK MENYETUJUI</strong></p>' +
+      p("anak saya menggunakan Portal Siswa BK SMP Labschool Ciracas sebagaimana dijelaskan di atas.") +
+      '<p class="surat-tgl">Jakarta, ............................................</p>' +
+      '<div class="ttd">' + ttd("Mengetahui,<br>Guru BK", "") + ttd("Orang tua/wali,", "") + "</div>";
+  };
+  $("btn-surat-izin").addEventListener("click", function () { siapkanSurat("izinOrtu", {}); cetak(); });
 
   /* ---------- Akun ---------- */
   function muatBackup() {

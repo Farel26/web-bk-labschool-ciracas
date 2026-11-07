@@ -123,3 +123,14 @@ Tab baru (dibuat otomatis seperti di atas): **CheckinEmosi**, **PesanChat**, **H
 - **Materi:** `materi.html` dibuat dari draf Buku BK Kelas 7. Bagian draf yang masih kosong ("[Isi: ...]") tidak dimasukkan. Bila buku diperbarui, minta dibuatkan ulang halamannya.
 
 Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemilik sheet, dan Apps Script hanya melayani sekitar 30 permintaan bersamaan. Portal siswa menanyakan pesan baru tiap 15 detik hanya saat kotak chat terlihat di layar (selain itu tiap 60 detik, dan berhenti saat tab disembunyikan). Bila satu kelas membuka portal bersamaan di lab komputer dan ada galat, naikkan jeda di `siswa.js` (`15000` dan `60000`).
+
+### Tahap 3: izin orang tua, intake, sesi daring, disposisi (8 November 2026)
+
+**Wajib sebelum portal siswa dipakai:** tambahkan kolom **Izin orang tua** di tab **DataSiswa** dan isi **YA** untuk siswa yang orang tuanya sudah menandatangani surat persetujuan (Dashboard › Akun › Cetak surat persetujuan orang tua). Tanpa kolom ini aktivasi akun siswa ditutup. Dasarnya UU 27/2022 Pasal 25: data pribadi anak diproses dengan persetujuan orang tua/wali. Mengubah isian menjadi TIDAK langsung menutup akses akun itu.
+
+- **Intake + kesepakatan konseling:** formulir konseling di beranda dan portal siswa punya pertanyaan intake opsional dan kesepakatan konseling (sukarela, rahasia, batas kerahasiaan, catatan sesi) yang wajib dicentang. Kolom baru di tab Konseling: Harapan dari sesi, Sudah cerita ke, Seberapa mengganggu (1-5), Persetujuan asas konseling.
+- **Sesi daring:** di kotak masuk, pilih Bentuk sesi = Daring dan isi tautan Google Meet. Tombol "Gabung sesi daring" muncul untuk siswa saat status Dijadwalkan.
+- **Disposisi:** tugaskan pengajuan konseling atau rujukan ke guru BK tertentu; centang "Hanya yang ditugaskan ke saya" untuk menyaring.
+- **Kabar perubahan:** saat status atau jadwal berubah, siswa (pemilik akun) atau wali kelas mendapat email singkat tanpa nama, topik, atau isi cerita.
+- **Hapus data:** tombol "Hapus akun & data" per siswa dan "Cek akun siswa yang sudah lulus/pindah" di menu Akun. Catatan layanan BK tetap tersimpan sebagai arsip, hanya diputus dari akun.
+- **Hasil psikotes** kini tersembunyi secara bawaan; tampilkan setelah dibahas bersama siswa.

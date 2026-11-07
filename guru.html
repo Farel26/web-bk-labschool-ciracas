@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261107b">
+<link rel="stylesheet" href="assets/css/style.css?v=20261108a">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -84,6 +84,7 @@
         </div>
         <div class="bar-aksi">
           <label class="check"><input type="checkbox" id="inbox-semua"> Tampilkan juga yang sudah selesai</label>
+          <label class="check" id="inbox-saya-w" hidden><input type="checkbox" id="inbox-saya"> Hanya yang ditugaskan ke saya</label>
           <button type="button" id="inbox-muat" class="btn-mini">Muat ulang</button>
         </div>
         <div id="inbox-list" aria-live="polite"></div>
@@ -271,11 +272,11 @@
       <div id="tab-hasil" class="dash-panel" role="tabpanel" aria-labelledby="t-hasil" hidden>
         <form id="form-hasil" class="card-form" novalidate>
           <h2 class="dash-h">Unggah hasil psikotes</h2>
-          <p class="muted" style="margin: 0">Pilih satu atau banyak file sekaligus. Bila nama file sama dengan nama siswa (mis. <strong>Ahmad Rizky Pratama.pdf</strong>), nama dan kelas terisi otomatis. Siswa melihat hasilnya di Portal Siswa bila "Tampilkan untuk siswa" dicentang.</p>
+          <p class="muted" style="margin: 0">Pilih satu atau banyak file sekaligus. Bila nama file sama dengan nama siswa (mis. <strong>Ahmad Rizky Pratama.pdf</strong>), nama dan kelas terisi otomatis. Hasil awalnya <strong>tersembunyi</strong>. Sebaiknya hasil psikotes dibahas dulu bersama siswa (dan orang tua bila perlu) supaya tidak disalahartikan sebagai label, baru setelah itu ditampilkan di Portal Siswa.</p>
           <div class="g3f">
             <div class="field"><label for="hs-jenis">Jenis tes</label><select id="hs-jenis"><option>Psikotes</option><option>Brain Assessment</option><option>Tes minat dan bakat</option><option>Lainnya</option></select></div>
             <div class="field"><label for="hs-tanggal">Tanggal tes (opsional)</label><input id="hs-tanggal" type="date"></div>
-            <div class="field" style="justify-content: flex-end"><label class="check" style="min-height: 46px; align-items: center"><input type="checkbox" id="hs-tampil" checked> Tampilkan untuk siswa</label></div>
+            <div class="field" style="justify-content: flex-end"><label class="check" style="min-height: 46px; align-items: center"><input type="checkbox" id="hs-tampil"> Tampilkan untuk siswa</label></div>
           </div>
           <div class="field"><label for="hs-catatan">Catatan untuk siswa (opsional)</label><input id="hs-catatan" type="text" maxlength="500" placeholder="mis. Datang ke ruang BK untuk membahas hasilnya bersama orang tua."></div>
           <div class="field"><label for="hs-file">File hasil (PDF atau foto)</label><input id="hs-file" type="file" accept="application/pdf,image/*" multiple><span class="hint">Maksimal 10 MB per file. Foto dikirim apa adanya per file.</span></div>
@@ -388,12 +389,17 @@
         <form id="form-akun-siswa" class="card-form" novalidate style="margin-top: 20px" role="search">
           <h2 class="dash-h">Akun siswa</h2>
           <p class="muted" style="margin: 0">Siswa mengaktifkan akunnya sendiri di <a href="siswa.html" target="_blank" rel="noopener">Portal Siswa</a> dengan nama, kelas, dan NIS yang cocok dengan tab DataSiswa. Bila siswa lupa PIN, buat PIN baru di sini lalu sampaikan langsung kepadanya.</p>
+          <div class="materi-penting" style="margin: 0">
+            <strong>Izin orang tua (UU 27/2022 Pasal 25).</strong> Akun hanya bisa diaktifkan dan dipakai bila kolom <strong>Izin orang tua</strong> di tab DataSiswa berisi <strong>YA</strong>. Cetak surat persetujuan, bagikan lewat wali kelas, lalu isi kolom itu sesuai surat yang kembali. Bila orang tua menarik persetujuan, ubah menjadi TIDAK: akun langsung tidak bisa dipakai.
+            <div class="tombol-baris" style="margin-top: 10px"><button type="button" class="btn-mini" id="btn-surat-izin">Cetak surat persetujuan orang tua</button><button type="button" class="btn-mini" id="btn-alumni">Cek akun siswa yang sudah lulus/pindah</button></div>
+          </div>
           <div class="cari-baris">
             <div class="field" style="flex: 1"><label for="as-cari">Cari nama atau kelas</label><input id="as-cari" type="search" list="dl-siswa" autocomplete="off"><span class="hint">Kosongkan untuk melihat semua akun.</span></div>
             <button type="submit" class="btn-solid">Cari</button>
           </div>
           <p class="form-status" id="akun-siswa-status" role="status" aria-live="polite"></p>
           <div class="sandi-sekali" id="siswa-sandi" hidden aria-live="polite"></div>
+          <div id="alumni-box" aria-live="polite"></div>
           <div id="akun-siswa-list"></div>
         </form>
         <form id="form-password" class="card-form" novalidate style="margin-top: 20px">
@@ -433,8 +439,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261107b"></script>
-<script src="assets/js/main.js?v=20261107b"></script>
-<script src="assets/js/guru.js?v=20261107b"></script>
+<script src="assets/js/config.js?v=20261108a"></script>
+<script src="assets/js/main.js?v=20261108a"></script>
+<script src="assets/js/guru.js?v=20261108a"></script>
 </body>
 </html>

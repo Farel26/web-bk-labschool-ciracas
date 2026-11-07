@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261107b">
+<link rel="stylesheet" href="assets/css/style.css?v=20261108a">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -52,7 +52,8 @@
 
       <form id="form-aktivasi" class="card-form" novalidate hidden>
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp" id="a-hp">
-        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3B4568">Cukup sekali. Tulis nama dan kelasmu persis seperti di kartu pelajar, supaya sistem bisa mencocokkan dengan data sekolah.</p>
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3B4568">Cukup sekali. Tulis nama dan kelasmu persis seperti di kartu pelajar, supaya sistem bisa mencocokkan dengan data sekolah. Akun hanya bisa diaktifkan bila <strong>orang tuamu sudah mengisi surat persetujuan</strong> dari guru BK.</p>
+        <p class="form-status err" id="a-tutup" hidden></p>
         <div class="g-nama-kelas">
           <div class="field"><label for="a-nama">Nama lengkap</label><input id="a-nama" type="text" autocomplete="name" required></div>
           <div class="field"><label for="a-kelas">Kelas</label><input id="a-kelas" type="text" placeholder="mis. 7A" required></div>
@@ -120,6 +121,23 @@
             <div class="field"><label for="k-waktu">Waktu yang kamu inginkan</label>
               <select id="k-waktu" required><option value="">Pilih waktu</option><option>Istirahat pertama</option><option>Istirahat kedua</option><option>1 jam setelah pulang sekolah</option></select></div>
             <div class="field"><label for="k-cerita">Ceritakan singkat (boleh dikosongkan)</label><textarea id="k-cerita" rows="3"></textarea></div>
+            <details class="intake">
+              <summary>Bantu guru BK bersiap (opsional)</summary>
+              <div class="field"><label for="k-ganggu">Seberapa mengganggu hal ini buatmu?</label>
+                <select id="k-ganggu"><option value="">Pilih</option><option value="1">1 · sedikit</option><option value="2">2</option><option value="3">3 · cukup mengganggu</option><option value="4">4</option><option value="5">5 · sangat mengganggu</option></select></div>
+              <div class="field"><label for="k-harapan">Apa yang kamu harapkan dari ngobrol nanti?</label><textarea id="k-harapan" rows="2" placeholder="mis. ingin lebih tenang saat ujian"></textarea></div>
+              <div class="field"><label for="k-sudah">Sudah pernah cerita ke siapa?</label><input id="k-sudah" type="text" placeholder="mis. belum ke siapa pun, ke ibu, ke sahabat"></div>
+            </details>
+            <details class="kesepakatan">
+              <summary>Baca kesepakatan konseling</summary>
+              <ul>
+                <li><strong>Sukarela.</strong> Kamu datang karena keinginanmu sendiri dan boleh berhenti kapan saja.</li>
+                <li><strong>Rahasia.</strong> Ceritamu dijaga guru BK dan tidak dibagikan ke teman, wali kelas, atau guru lain tanpa izinmu.</li>
+                <li><strong>Batas kerahasiaan.</strong> Guru BK wajib melibatkan orang tua, pimpinan sekolah, atau pihak berwenang bila ada bahaya bagi dirimu atau orang lain, ada kekerasan atau perundungan serius, atau diwajibkan hukum. Bila memungkinkan, guru BK membicarakannya denganmu lebih dulu.</li>
+                <li><strong>Catatan.</strong> Guru BK membuat catatan sesi yang disimpan secara rahasia untuk keperluan pendampinganmu.</li>
+              </ul>
+            </details>
+            <label class="check" style="font-size: 14px"><input type="checkbox" id="k-setuju" required> Aku sudah membaca dan setuju dengan kesepakatan konseling.</label>
             <div class="tombol-baris"><button type="submit" class="btn-solid">Kirim pengajuan</button></div>
             <p class="form-status" id="ajuan-status" role="status" aria-live="polite"></p>
           </form>
@@ -164,7 +182,7 @@
               <button type="submit" class="btn-solid">Kirim</button>
             </form>
             <p class="form-status" id="chat-status" role="status" aria-live="polite"></p>
-            <p class="muted" style="margin: 0; font-size: 13px">Guru BK membalas di jam sekolah. Pesan diperbarui otomatis selama halaman ini terbuka.</p>
+            <p class="muted" style="margin: 0; font-size: 13px">Guru BK membalas di jam sekolah. Pesan diperbarui otomatis selama halaman ini terbuka. Chat ini mengikuti <a href="#form-ajuan">kesepakatan konseling</a>, termasuk batas kerahasiaannya, dan bukan layanan darurat.</p>
           </section>
 
           <section class="card-form pomodoro" style="padding: 24px" aria-labelledby="h-fokus">
@@ -217,8 +235,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261107b"></script>
-<script src="assets/js/jadwal.js?v=20261107b"></script>
-<script src="assets/js/siswa.js?v=20261107b"></script>
+<script src="assets/js/config.js?v=20261108a"></script>
+<script src="assets/js/jadwal.js?v=20261108a"></script>
+<script src="assets/js/siswa.js?v=20261108a"></script>
 </body>
 </html>

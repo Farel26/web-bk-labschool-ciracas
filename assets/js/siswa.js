@@ -48,7 +48,14 @@
     (m === "masuk" ? $("m-email") : $("a-nama")).focus();
     if (m === "aktivasi" && !nisDicek && URL_API) {
       nisDicek = true;
-      api("infoAktivasi").then(function (d) { if (d.ok && d.perluNis) { $("a-nis-wrap").hidden = false; $("a-nis").required = true; } }).catch(function () { nisDicek = false; });
+      api("infoAktivasi").then(function (d) {
+        if (!d.ok) return;
+        if (d.perluNis) { $("a-nis-wrap").hidden = false; $("a-nis").required = true; }
+        if (d.dibuka === false) {
+          $("a-tutup").hidden = false;
+          $("a-tutup").textContent = "Aktivasi akun belum dibuka karena sekolah masih mengumpulkan surat persetujuan orang tua. Tanyakan ke guru BK.";
+        }
+      }).catch(function () { nisDicek = false; });
     }
   }
   document.querySelectorAll("#panel-masuk .seg-btn").forEach(function (b) { b.addEventListener("click", function () { pilihMode(b.dataset.mode); }); });
@@ -154,9 +161,10 @@
     e.preventDefault();
     var f = this, st = $("ajuan-status"), btn = f.querySelector("button[type=submit]");
     var bad = tandaiWajib(f);
-    if (bad) { status(st, "Pilih topik dan waktu dulu, ya.", "err"); bad.focus(); return; }
+    if (bad) { status(st, bad.type === "checkbox" ? "Baca dan centang kesepakatan konseling dulu, ya." : "Pilih topik dan waktu dulu, ya.", "err"); bad.focus(); return; }
     sibuk(btn, true, "Mengirim…"); status(st, "");
-    api("ajukanKonseling", { data: { topik: $("k-topik").value, waktu: $("k-waktu").value, cerita: $("k-cerita").value } }).then(function (d) {
+    api("ajukanKonseling", { data: { topik: $("k-topik").value, waktu: $("k-waktu").value, cerita: $("k-cerita").value,
+      ganggu: $("k-ganggu").value, harapan: $("k-harapan").value, sudahCerita: $("k-sudah").value, setuju: $("k-setuju").checked } }).then(function (d) {
       if (!d.ok) { status(st, d.error || "Belum terkirim.", "err"); return; }
       f.reset();
       status(st, "Terkirim! Jadwalmu akan muncul di bawah setelah guru BK menentukannya.", "ok");
