@@ -657,3 +657,134 @@ form[hidden]{display:none !important}
 @media (max-width: 420px){.g-nama-kelas{grid-template-columns:minmax(0,1fr)}}
 .card-form[hidden],.field[hidden],.kartu-stk[hidden]{display:none}
 @media (max-width: 560px){.inbox-judul{white-space:normal;overflow:visible;line-height:1.5}.inbox-judul .pill{margin-bottom:2px}}
+
+/* ===== Portal siswa tahap 2: check-in, formulir, hasil, chat ===== */
+.wajah{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.wajah label{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;border:1.5px solid #CFD5E6;background:var(--c-surface);color:var(--c-navy);cursor:pointer;text-align:center;font-size:12px;font-weight:700;line-height:1.25;min-height:44px}
+.wajah input{position:absolute;opacity:0;width:1px;height:1px}
+.wajah label:hover{border-color:var(--c-primary)}
+.wajah label:has(input:checked){background:var(--c-primary);border-color:var(--c-primary);color:#FFFFFF;box-shadow:var(--sh-sticker-sm)}
+.wajah label:has(input:focus-visible){outline:3px solid var(--c-gold);outline-offset:2px}
+.chip-pilih{display:flex;flex-wrap:wrap;gap:8px}
+.chip-pilih button{min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid #CFD5E6;background:#FFFFFF;color:var(--c-navy);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.chip-pilih button[aria-pressed="true"]{background:var(--c-primary-soft);border-color:var(--c-primary);color:var(--c-primary)}
+.dukungan{background:var(--c-gold-soft);border-radius:var(--r-md);padding:16px 18px;display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.6;color:#5C3D07}
+.dukungan[hidden]{display:none}
+.dukungan strong{color:#5C3D07;font-size:16px}
+.ci-batang{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;align-items:end;height:84px;margin-top:8px}
+.ci-batang span{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.ci-batang i{display:block;width:100%;max-width:18px;border-radius:6px 6px 3px 3px;background:var(--c-primary);min-height:4px}
+.ci-batang i.ci-kosong{background:#E4E2D8}
+.ci-batang b{font-size:11px;font-weight:600;color:var(--c-text-subtle)}
+.hasil-btn{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:48px;padding:0 16px;border:0;border-radius:14px;background:var(--c-primary-soft);color:var(--c-primary);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
+.hasil-btn:hover{background:#DDE4F8}
+.hasil-aksi{white-space:nowrap;font-size:14px}
+.chat-isi{height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:#F4F5F9;border:1px solid var(--c-border-warm);overscroll-behavior:contain}
+.chat-isi:focus-visible{outline:3px solid #B9C8F2}
+.chat-kosong{margin:auto!important;text-align:center;font-size:14px;max-width:260px}
+.gelembung{max-width:85%;align-self:flex-start;background:#FFFFFF;border:1px solid var(--c-border-warm);border-radius:16px 16px 16px 4px;padding:8px 12px}
+.gelembung.aku{align-self:flex-end;background:var(--c-primary);border-color:var(--c-primary);color:#FFFFFF;border-radius:16px 16px 4px 16px}
+.gelembung p{margin:0;font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.gelembung span{display:block;margin-top:2px;font-size:11px;color:var(--c-text-subtle)}
+.gelembung.aku span{color:#DCE3F8;text-align:right}
+.chat-kirim{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.chat-kirim textarea{font:inherit;font-size:15px;color:var(--c-navy);border:1.5px solid #CFD5E6;border-radius:12px;padding:10px 12px;resize:vertical;min-height:48px;max-height:160px}
+.chat-kirim textarea:focus{outline:3px solid #B9C8F2;border-color:var(--c-primary)}
+.chat-kirim .btn-solid{min-height:48px;padding:0 20px}
+@media (max-width: 560px){
+  .wajah{gap:6px}
+  .wajah label{padding:10px 2px;font-size:11px}
+  .wajah svg{width:32px;height:32px}
+  .chat-isi{height:280px}
+}
+
+/* ===== Dashboard guru tahap 2: chat, check-in, hasil psikotes, formulir ===== */
+.chat-guru{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px;align-items:start}
+.chat-daftar{background:#FFFFFF;border:1px solid var(--c-border-warm);border-radius:20px;max-height:560px;overflow-y:auto;padding:6px}
+.chat-item{width:100%;display:flex;flex-direction:column;gap:4px;padding:12px;border:0;border-radius:14px;background:transparent;text-align:left;font:inherit;cursor:pointer;color:var(--c-navy)}
+.chat-item:hover{background:#F4F5F9}
+.chat-item.aktif{background:var(--c-primary-soft)}
+.chat-item-atas,.chat-item-bawah{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.chat-item-bawah span:first-child{font-size:13px;color:var(--c-text-subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.chat-ruang{background:#FFFFFF;border:1px solid var(--c-border-warm);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chat-kepala{display:flex;align-items:center;gap:10px}
+#chat-kembali{display:none}
+.chat-ruang .chat-isi{height:420px}
+.skor-strip{display:inline-flex;gap:3px}
+.skor-strip i{width:24px;height:24px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;font-weight:800;font-family:Rubik,sans-serif}
+.skor-strip .s1{background:#A1260D;color:#FFFFFF}
+.skor-strip .s2{background:#F6D3C8;color:#7A1F0B}
+.skor-strip .s3{background:#ECEFF7;color:#12204F}
+.skor-strip .s4{background:#DDE4F8;color:#1D3FAE}
+.skor-strip .s5{background:#1D3FAE;color:#FFFFFF}
+.daftar-ajuan>li.li-darurat{border-left:4px solid #A1260D}
+.in-tabel{font:inherit;font-size:14px;width:100%;min-width:120px;min-height:40px;padding:6px 10px;border:1.5px solid #CFD5E6;border-radius:10px;color:var(--c-navy)}
+.in-tabel:focus{outline:3px solid #B9C8F2;border-color:var(--c-primary)}
+@media (max-width: 760px){
+  .chat-guru{grid-template-columns:minmax(0,1fr)}
+  .chat-guru .chat-ruang{display:none}
+  .chat-guru.buka .chat-ruang{display:flex}
+  .chat-guru.buka .chat-daftar{display:none}
+  #chat-kembali{display:inline-flex;align-items:center}
+  .chat-ruang .chat-isi{height:360px}
+}
+
+/* ===== Materi BK kelas 7 (materi.html) ===== */
+.materi{max-width:880px;margin:0 auto;padding:24px 0 88px}
+.materi-nav{margin:28px 0 8px}
+.materi-nav ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.materi-nav a{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border-radius:var(--r-md);background:var(--c-surface);border:1.5px solid var(--c-border-warm);text-decoration:none;color:var(--c-navy);font-weight:700;font-size:15px;line-height:1.3}
+.materi-nav a:hover{border-color:var(--c-primary)}
+.materi-nav a[aria-current="page"]{background:var(--c-primary-soft);border:var(--bw-sticker) solid var(--c-primary);box-shadow:var(--sh-sticker-sm)}
+.materi-no{flex:none;width:36px;height:36px;border-radius:50%;background:#FFFFFF;border:3px solid var(--c-primary);color:var(--c-primary);display:inline-flex;align-items:center;justify-content:center;font-family:Rubik,sans-serif;font-weight:800;font-size:16px}
+.materi-no.besar{width:72px;height:72px;font-size:32px;border-width:4px;box-shadow:var(--sh-sticker-sm)}
+.materi-bab{margin-top:40px;padding-top:8px}
+.materi-js .materi-bab{margin-top:24px}
+.materi-bab[hidden]{display:none}
+.materi-bab-kepala{display:flex;gap:20px;align-items:flex-start;margin-bottom:8px}
+.materi-bab-kepala h2{margin:6px 0 8px;font-family:Rubik,sans-serif;font-weight:800;font-size:32px;line-height:1.15;color:var(--c-navy)}
+.materi-bab-kepala h2:focus{outline:none}
+.materi-isi h3{margin:36px 0 10px;font-family:Rubik,sans-serif;font-weight:800;font-size:22px;color:var(--c-navy)}
+.materi-isi h4{margin:22px 0 8px;font-size:17px;font-weight:700;color:var(--c-primary)}
+.materi-isi p,.materi-isi li{font-size:16px;line-height:1.75;color:var(--c-text-muted);max-width:var(--w-text)}
+.materi-isi p{margin:0 0 12px}
+.materi-isi ul,.materi-isi ol{margin:0 0 14px;padding-left:22px}
+.materi-isi li{margin-bottom:6px}
+.materi-isi strong{color:var(--c-navy)}
+.materi-tabel{margin:8px 0 18px}
+.materi-tabel table{font-size:15px}
+.materi-tabel td{vertical-align:top;line-height:1.55}
+.materi-kotak{background:var(--c-primary-soft);border-radius:var(--r-md);padding:16px 20px;margin:12px 0 16px}
+.materi-kotak strong{display:block;margin-bottom:6px;color:var(--c-primary);font-size:15px}
+.materi-kotak p:last-child,.materi-kotak ul:last-child{margin-bottom:0}
+.materi-dua{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.materi-dua .materi-kotak{margin:0}
+.materi-penting{background:var(--c-gold-soft);border-left:4px solid var(--c-gold);border-radius:14px;padding:14px 18px;margin:12px 0 18px;font-size:15px;line-height:1.7;color:#5C3D07}
+.materi-penting a{font-weight:700}
+.materi-kunci{margin:4px 0 18px;background:#FFFFFF;border:1px solid var(--c-border-warm);border-radius:14px;padding:12px 16px}
+.materi-kunci summary{cursor:pointer;font-weight:700;color:var(--c-primary);min-height:28px}
+.materi-kunci p{margin:10px 0 0}
+.materi-refleksi{margin-top:40px;background:var(--c-surface);border:var(--bw-sticker) solid var(--c-primary);box-shadow:var(--sh-sticker);border-radius:24px;padding:24px}
+.materi-refleksi-kepala{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.materi-refleksi h3{margin:0;font-family:Rubik,sans-serif;font-weight:800;font-size:22px;color:var(--c-navy)}
+.materi-refleksi>p{font-size:15px;line-height:1.65;color:var(--c-text-muted)}
+.kartu-refleksi{list-style:none;margin:16px 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kartu-refleksi li{border-radius:18px;padding:16px 18px;background:#F4F6FC;border:2px solid transparent;transition:transform .15s ease, box-shadow .15s ease}
+.kartu-refleksi li.tantangan{background:var(--c-gold-soft)}
+.kartu-refleksi li p{margin:6px 0 0;font-size:16px;line-height:1.6;color:var(--c-navy)}
+.kartu-label{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#9A6A12}
+.kartu-refleksi li.tanya .kartu-label{color:var(--c-primary)}
+.kartu-refleksi li.terpilih{border-color:var(--c-primary);background:#FFFFFF;box-shadow:var(--sh-sticker);transform:translate(-2px,-2px)}
+.materi-lanjut{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:28px}
+.materi-lanjut a{display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;background:var(--c-primary-soft);font-weight:700;font-size:15px;text-decoration:none}
+.materi-lanjut a.kanan{margin-left:auto}
+@media (max-width: 760px){
+  .materi-nav ol{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .materi-bab-kepala{gap:14px}
+  .materi-no.besar{width:56px;height:56px;font-size:24px}
+  .materi-bab-kepala h2{font-size:26px}
+  .kartu-refleksi,.materi-dua{grid-template-columns:minmax(0,1fr)}
+  .materi-refleksi{padding:20px;box-shadow:var(--sh-sticker-sm)}
+}
+@media (prefers-reduced-motion: reduce){.kartu-refleksi li{transition:none}.kartu-refleksi li.terpilih{transform:none}}
+@media print{.materi-nav,.materi-lanjut,.materi-refleksi button,.site-header,footer{display:none!important}.materi-bab[hidden]{display:block!important}}

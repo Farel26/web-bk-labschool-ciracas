@@ -60,7 +60,7 @@ var CEK_JENIS = { Curhat: 'Curhat', LaporanPerundungan: 'Laporan perundungan', K
  * saat web pertama kali dipanggil setelah Code.gs diperbarui. Data lama tidak diubah.
  * Kolom pertama setiap tab penting: "Waktu masuk" untuk kotak masuk, "ID" untuk catatan bernomor.
  */
-var SKEMA_VERSI = '2026-11-07-portal';
+var SKEMA_VERSI = '2026-11-07-portal-2';
 var RUJUKAN_TAB = 'RujukanWaliKelas';
 var AKUN_WALI_TAB = 'AkunWaliKelas';
 var AKUN_SISWA_TAB = 'AkunSiswa';
@@ -76,8 +76,16 @@ var SKEMA = {
   TargetSiswa: ['ID', 'Waktu input', 'Akun siswa', 'Nama', 'Kelas', 'Target', 'Bidang', 'Tenggat', 'Selesai', 'Waktu selesai'],
   JurnalHarian: ['ID', 'Waktu input', 'Tanggal', 'Jam', 'Jenis kegiatan', 'Sasaran', 'Uraian kegiatan', 'Hasil', 'Tindak lanjut', 'Diinput oleh'],
   CatatanPerkembangan: ['Sesi ke', 'Pendekatan/teknik', 'Pemahaman baru siswa', 'Perasaan siswa', 'Rencana tindakan siswa',
-    'Pikiran otomatis', 'Pikiran alternatif', 'Skala kemajuan (1-5)']
+    'Pikiran otomatis', 'Pikiran alternatif', 'Skala kemajuan (1-5)'],
+  CheckinEmosi: ['ID', 'Waktu input', 'Tanggal', 'Akun siswa', 'Nama', 'Kelas', 'Skor (1-5)', 'Perasaan', 'Catatan siswa',
+    'Ingin ngobrol', 'Ditindaklanjuti oleh', 'Waktu tindak lanjut'],
+  FormulirSiswa: ['ID', 'Waktu input', 'Judul', 'Keterangan', 'Link', 'Sasaran', 'Tenggat', 'Aktif', 'Dibuat oleh'],
+  FormulirTerisi: ['ID formulir', 'Akun siswa', 'Nama', 'Kelas', 'Waktu'],
+  HasilPsikotes: ['ID', 'Waktu input', 'Akun siswa', 'Nama siswa', 'Kelas', 'Jenis tes', 'Tanggal tes', 'Catatan untuk siswa',
+    'Tampil untuk siswa', 'Nama file asli', 'Ukuran (KB)', 'Link file (khusus pengelola)', 'File ID (jangan diubah)', 'Diunggah oleh'],
+  PesanChat: ['ID', 'Waktu', 'Akun siswa', 'Nama', 'Kelas', 'Dari', 'Nama pengirim', 'Isi', 'Dibaca']
 };
+var CHECKIN_TAB = 'CheckinEmosi', FORM_TAB = 'FormulirSiswa', FORM_ISI_TAB = 'FormulirTerisi', HASIL_TAB = 'HasilPsikotes', CHAT_TAB = 'PesanChat';
 
 function pastikanSkema_() {
   var props = PropertiesService.getScriptProperties();
@@ -417,6 +425,19 @@ function guruApi_(q) {
     case 'daftarAkunSiswa': return daftarAkunSiswa_(String(q.cari || ''));
     case 'resetPinSiswa': return resetPinSiswa_(String(q.id || ''));
     case 'aktifAkunSiswa': return aktifAkunSiswa_(String(q.id || ''), q.aktif === true);
+    case 'checkinRingkas': return checkinRingkas_();
+    case 'tandaiCheckin': return tandaiCheckin_(u, String(q.akun || ''));
+    case 'simpanFormulir': return simpanFormulir_(u, q.data || {});
+    case 'daftarFormulir': return daftarFormulir_();
+    case 'aktifFormulir': return aktifFormulir_(String(q.id || ''), q.aktif === true);
+    case 'unggahHasil': return unggahHasil_(u, q.data || {});
+    case 'daftarHasil': return daftarHasil_(String(q.cari || ''));
+    case 'lihatHasil': return lihatHasil_(String(q.id || ''), null);
+    case 'tampilHasil': return tampilHasil_(String(q.id || ''), q.tampil === true);
+    case 'hapusHasil': return hapusHasil_(String(q.id || ''));
+    case 'chatDaftar': return chatDaftar_();
+    case 'chatAmbil': return chatAmbil_(String(q.akun || ''), Number(q.sejak) || 0, 'guru');
+    case 'chatKirim': return chatKirim_(String(q.akun || ''), String(q.isi || ''), 'Guru BK', u.nama);
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -610,7 +631,9 @@ var PROFIL_SUMBER = [
     isi: ['Nama orang tua/wali', 'Catatan guru BK'], status: 'Status' },
   { tab: RUJUKAN_TAB, jenis: 'Rujukan wali kelas', nama: 'Nama siswa', tgl: 'Waktu masuk', judul: 'Alasan rujukan',
     isi: ['Nama wali kelas', 'Tingkat urgensi', 'Yang diamati', 'Upaya wali kelas', 'Tanggapan untuk wali kelas (tampil di portal)', 'Catatan internal guru BK'],
-    status: 'Status', oleh: 'Ditangani oleh' }
+    status: 'Status', oleh: 'Ditangani oleh' },
+  { tab: 'HasilPsikotes', jenis: 'Hasil psikotes', nama: 'Nama siswa', tgl: 'Tanggal tes', judul: 'Jenis tes',
+    isi: ['Catatan untuk siswa', 'Tampil untuk siswa'], oleh: 'Diunggah oleh' }
 ];
 
 function cocok_(nama, q) { var n = ' ' + norm_(nama) + ' '; return n.indexOf(' ' + q) >= 0; }
@@ -1561,6 +1584,11 @@ function siswaApi_(q) {
     case 'tandaiTarget': return ubahTarget_(u, String(q.id || ''), q.selesai === true ? 'selesai' : 'buka');
     case 'hapusTarget': return ubahTarget_(u, String(q.id || ''), 'hapus');
     case 'gantiPin': return gantiPin_(u, String(q.lama || ''), String(q.baru || ''));
+    case 'checkin': return checkinSiswa_(u, q.data || {});
+    case 'tandaiFormulir': return tandaiFormulir_(u, String(q.id || ''), q.selesai === true);
+    case 'lihatHasil': return lihatHasil_(String(q.id || ''), u);
+    case 'chatAmbil': return chatAmbil_(u.id, Number(q.sejak) || 0, 'siswa');
+    case 'chatKirim': return chatKirimSiswa_(u, String(q.isi || ''));
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -1675,7 +1703,9 @@ function ringkasanSiswa_(u) {
     tes.push({ kode: teks_(sel_(tm, row, 'Kode')), tanggal: tglKey_(sel_(tm, row, 'Waktu masuk')), kodeMinat: teks_(sel_(tm, row, 'Kode minat')) });
   });
   tes.reverse();
-  return { ok: true, nama: u.nama, kelas: u.kelas, pengajuan: pengajuan, target: target, tes: tes.slice(0, 5), bidang: TARGET_BIDANG };
+  return { ok: true, nama: u.nama, kelas: u.kelas, pengajuan: pengajuan, target: target, tes: tes.slice(0, 5), bidang: TARGET_BIDANG,
+    checkin: checkinSiswaRiwayat_(u), hariIni: hariIni_(), formulir: formulirUntuk_(u), hasil: hasilUntuk_(u, kembar),
+    chatBaru: chatBelumDibaca_(u.id, 'Guru BK'), perasaan: PERASAAN };
 }
 
 function ajukanKonselingSiswa_(u, d) {
@@ -1778,6 +1808,375 @@ function bentrokSiswa_(a) {
     if (i === a.r || String(sel_(a.t, r, 'Aktif')).trim().toUpperCase() !== 'YA') return false;
     return (norm_(sel_(a.t, r, 'Nama')) === nama && normKelas_(sel_(a.t, r, 'Kelas')) === kelas) || String(sel_(a.t, r, 'Email')).trim().toLowerCase() === email;
   });
+}
+
+/* ================= Check-in emosi harian ================= */
+// Siswa memilih suasana hati 1-5 sekali sehari (boleh diubah di hari yang sama).
+// Guru BK melihat siswa yang perlu diperhatikan: skor 1-2 hari ini, minta ngobrol, atau 3 check-in terakhir rendah.
+var PERASAAN = ['Senang', 'Tenang', 'Bersemangat', 'Lelah', 'Bosan', 'Cemas', 'Sedih', 'Marah', 'Bingung', 'Kesepian'];
+var SKOR_LABEL = { 1: 'Sangat berat', 2: 'Kurang baik', 3: 'Biasa saja', 4: 'Baik', 5: 'Sangat baik' };
+
+function checkinSiswa_(u, d) {
+  var skor = Math.round(Number(d.skor));
+  if (!(skor >= 1 && skor <= 5)) return { ok: false, error: 'Pilih suasana hatimu dulu.' };
+  var rasa = [].concat(d.perasaan || []).filter(function (p) { return PERASAAN.indexOf(p) >= 0; }).slice(0, 4).join(', ');
+  var ngobrol = d.ngobrol === true ? 'YA' : '';
+  var today = hariIni_(), baru = true, sebelumnya = '';
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var t = tabel_(CHECKIN_TAB);
+    for (var r = t.rows.length - 1; r >= 0; r--) {
+      var row = t.rows[r];
+      if (String(sel_(t, row, 'Akun siswa')) !== u.id || tglKey_(sel_(t, row, 'Tanggal')) !== today) continue;
+      sebelumnya = String(sel_(t, row, 'Ingin ngobrol'));
+      tulisSel_(t, r + 2, 'Skor (1-5)', skor);
+      tulisSel_(t, r + 2, 'Perasaan', rasa);
+      tulisSel_(t, r + 2, 'Catatan siswa', clean_(String(d.catatan || '').slice(0, 300)));
+      tulisSel_(t, r + 2, 'Ingin ngobrol', ngobrol);
+      if (skor <= 2 || ngobrol) { tulisSel_(t, r + 2, 'Ditindaklanjuti oleh', ''); tulisSel_(t, r + 2, 'Waktu tindak lanjut', ''); }
+      baru = false;
+      break;
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  if (baru) tulisBaris_(CHECKIN_TAB, { 'Tanggal': today, 'Akun siswa': u.id, 'Nama': u.nama, 'Kelas': u.kelas, 'Skor (1-5)': skor,
+    'Perasaan': rasa, 'Catatan siswa': clean_(String(d.catatan || '').slice(0, 300)), 'Ingin ngobrol': ngobrol }, 'CE');
+  // Email ke guru BK hanya untuk yang paling perlu, berisi inisial dan kelas saja.
+  if ((skor === 1 || ngobrol) && !(sebelumnya === 'YA' && ngobrol)) {
+    try {
+      MailApp.sendEmail(Session.getEffectiveUser().getEmail(), '[Web BK] Check-in emosi perlu perhatian (' + u.kelas + ')',
+        'Siswa ' + inisial_(u.nama) + ' (' + u.kelas + ') ' + (skor === 1 ? 'memilih suasana hati "Sangat berat"' : 'memilih skor ' + skor) +
+        (ngobrol ? ' dan ingin ngobrol dengan guru BK' : '') + ' hari ini.\n\nBuka dashboard guru BK > Check-in emosi:\nhttps://farel26.github.io/web-bk-labschool-ciracas/guru.html');
+    } catch (err) { /* email opsional */ }
+  }
+  return { ok: true, riwayat: checkinSiswaRiwayat_(u) };
+}
+
+function checkinSiswaRiwayat_(u) {
+  var t = tabel_(CHECKIN_TAB), batas = tambahHari_(hariIni_(), -13), out = [];
+  t.rows.forEach(function (row) {
+    if (String(sel_(t, row, 'Akun siswa')) !== u.id) return;
+    var tg = tglKey_(sel_(t, row, 'Tanggal'));
+    if (tg < batas) return;
+    out.push({ tanggal: tg, skor: Number(sel_(t, row, 'Skor (1-5)')) || 0, perasaan: teks_(sel_(t, row, 'Perasaan')),
+      catatan: teks_(sel_(t, row, 'Catatan siswa')), ngobrol: teks_(sel_(t, row, 'Ingin ngobrol')) === 'YA' });
+  });
+  return out.sort(function (a, b) { return a.tanggal < b.tanggal ? -1 : 1; });
+}
+
+function checkinRingkas_() {
+  var t = tabel_(CHECKIN_TAB), today = hariIni_(), batas = tambahHari_(today, -13), per = {}, kelas = {}, hariIniN = 0;
+  t.rows.forEach(function (row, i) {
+    if (!row[0]) return;
+    var tg = tglKey_(sel_(t, row, 'Tanggal'));
+    if (tg < batas) return;
+    var akun = String(sel_(t, row, 'Akun siswa')), skor = Number(sel_(t, row, 'Skor (1-5)')) || 0, k = teks_(sel_(t, row, 'Kelas'));
+    var s = per[akun] = per[akun] || { akun: akun, nama: teks_(sel_(t, row, 'Nama')), kelas: k, isi: [] };
+    s.isi.push({ tanggal: tg, skor: skor, perasaan: teks_(sel_(t, row, 'Perasaan')), catatan: teks_(sel_(t, row, 'Catatan siswa')),
+      ngobrol: teks_(sel_(t, row, 'Ingin ngobrol')) === 'YA', tindak: teks_(sel_(t, row, 'Ditindaklanjuti oleh')) });
+    if (tg === today) hariIniN++;
+    if (tg >= tambahHari_(today, -6)) { var kk = kelas[k] = kelas[k] || { kelas: k, n: 0, total: 0, rendah: 0 }; kk.n++; kk.total += skor; if (skor <= 2) kk.rendah++; }
+  });
+  var perhatian = [];
+  Object.keys(per).forEach(function (a) {
+    var s = per[a];
+    s.isi.sort(function (x, y) { return x.tanggal < y.tanggal ? -1 : 1; });
+    var akhir = s.isi[s.isi.length - 1], tiga = s.isi.slice(-3), alasan = [];
+    var belum = s.isi.filter(function (x) { return !x.tindak && (x.skor <= 2 || x.ngobrol); });
+    if (!belum.length) return;   // sudah ditindaklanjuti semua
+    if (akhir.tanggal === today && akhir.skor <= 2) alasan.push('Hari ini: ' + SKOR_LABEL[akhir.skor].toLowerCase());
+    if (belum.some(function (x) { return x.ngobrol; })) alasan.push('Ingin ngobrol dengan guru BK');
+    if (tiga.length === 3 && tiga.every(function (x) { return x.skor <= 2; })) alasan.push('3 check-in terakhir rendah');
+    if (!alasan.length) alasan.push('Skor rendah dalam 2 minggu terakhir');
+    perhatian.push({ akun: s.akun, nama: s.nama, kelas: s.kelas, alasan: alasan, isi: s.isi.slice(-7), terakhir: akhir.tanggal,
+      skorTerakhir: akhir.skor, darurat: belum.some(function (x) { return x.skor === 1; }) });
+  });
+  perhatian.sort(function (a, b) { return (b.darurat - a.darurat) || (a.terakhir < b.terakhir ? 1 : -1); });
+  var perKelas = Object.keys(kelas).map(function (k) { var x = kelas[k]; return { kelas: k, n: x.n, rata: Math.round(x.total / x.n * 10) / 10, rendah: x.rendah }; })
+    .sort(function (a, b) { return normKelas_(a.kelas) < normKelas_(b.kelas) ? -1 : 1; });
+  return { ok: true, hariIni: hariIniN, perhatian: perhatian, perKelas: perKelas, label: SKOR_LABEL };
+}
+
+function tandaiCheckin_(u, akun) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var t = tabel_(CHECKIN_TAB), n = 0, waktu = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
+    t.rows.forEach(function (row, i) {
+      if (String(sel_(t, row, 'Akun siswa')) !== akun || teks_(sel_(t, row, 'Ditindaklanjuti oleh'))) return;
+      tulisSel_(t, i + 2, 'Ditindaklanjuti oleh', u.nama); tulisSel_(t, i + 2, 'Waktu tindak lanjut', waktu); n++;
+    });
+    return { ok: true, n: n };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ================= Pembagian formulir (Google Form, angket, asesmen) ================= */
+// Sasaran: "Semua", "Kelas 7"/"Kelas 8"/"Kelas 9", atau kelas tertentu seperti "7A". Boleh beberapa, dipisah koma.
+// "Sudah mengisi" ditandai siswa sendiri di portal; jawaban aslinya tetap di Google Form.
+function cocokSasaran_(sasaran, kelas) {
+  var k = normKelas_(kelas);
+  return String(sasaran || '').split(/\s*,\s*/).some(function (s) {
+    s = String(s).trim(); if (!s) return false;
+    if (/^semua/i.test(s)) return true;
+    var m = s.match(/^kelas\s*([789])$/i) || s.match(/^([789])$/);
+    if (m) return k.charAt(0) === m[1];
+    return normKelas_(s) === k;
+  });
+}
+
+function simpanFormulir_(u, d) {
+  if (wajib_(d, ['judul', 'link', 'sasaran'])) return { ok: false, error: 'Isi judul, tautan, dan sasaran.' };
+  var link = String(d.link).trim();
+  if (!/^https:\/\/[^\s]+$/.test(link)) return { ok: false, error: 'Tautan harus diawali https://' };
+  if (d.tenggat && !/^\d{4}-\d{2}-\d{2}$/.test(String(d.tenggat))) return { ok: false, error: 'Tanggal tenggat tidak valid.' };
+  var id = tulisBaris_(FORM_TAB, { 'Judul': clean_(String(d.judul).slice(0, 150)), 'Keterangan': clean_(String(d.keterangan || '').slice(0, 500)),
+    'Link': link.slice(0, 500), 'Sasaran': clean_(String(d.sasaran).slice(0, 200)), 'Tenggat': String(d.tenggat || ''), 'Aktif': 'YA', 'Dibuat oleh': u.nama }, 'FM');
+  return { ok: true, id: id };
+}
+
+function formulirTerisi_() {
+  var t = tabel_(FORM_ISI_TAB), out = {};
+  t.rows.forEach(function (r) {
+    var id = String(r[0] || '').toUpperCase(); if (!id) return;
+    (out[id] = out[id] || []).push({ akun: String(sel_(t, r, 'Akun siswa')), nama: teks_(sel_(t, r, 'Nama')), kelas: teks_(sel_(t, r, 'Kelas')), waktu: teks_(sel_(t, r, 'Waktu')) });
+  });
+  return out;
+}
+
+function daftarFormulir_() {
+  var t = tabel_(FORM_TAB), isi = formulirTerisi_(), siswa = dataSiswa_(), out = [];
+  for (var r = t.rows.length - 1; r >= 0; r--) {
+    var row = t.rows[r]; if (!row[0]) continue;
+    var id = teks_(row[0]), sas = teks_(sel_(t, row, 'Sasaran'));
+    out.push({ id: id, judul: teks_(sel_(t, row, 'Judul')), keterangan: teks_(sel_(t, row, 'Keterangan')), link: teks_(sel_(t, row, 'Link')),
+      sasaran: sas, tenggat: tglKey_(sel_(t, row, 'Tenggat')), aktif: teks_(sel_(t, row, 'Aktif')).toUpperCase() === 'YA', oleh: teks_(sel_(t, row, 'Dibuat oleh')),
+      target: siswa.filter(function (s) { return cocokSasaran_(sas, s.kelas); }).length,
+      terisi: (isi[id.toUpperCase()] || []).sort(function (a, b) { return a.kelas === b.kelas ? a.nama.localeCompare(b.nama) : (a.kelas < b.kelas ? -1 : 1); }) });
+  }
+  return { ok: true, items: out.slice(0, 100) };
+}
+
+function aktifFormulir_(id, aktif) {
+  var a = cariBaris_(FORM_TAB, 'ID', id);
+  if (!a) return { ok: false, error: 'Formulir tidak ditemukan.' };
+  tulisSel_(a.t, a.baris, 'Aktif', aktif ? 'YA' : 'TIDAK');
+  return { ok: true };
+}
+
+function formulirUntuk_(u) {
+  var t = tabel_(FORM_TAB), isi = formulirTerisi_(), out = [];
+  t.rows.forEach(function (row) {
+    if (!row[0] || teks_(sel_(t, row, 'Aktif')).toUpperCase() !== 'YA' || !cocokSasaran_(sel_(t, row, 'Sasaran'), u.kelas)) return;
+    var id = teks_(row[0]);
+    out.push({ id: id, judul: teks_(sel_(t, row, 'Judul')), keterangan: teks_(sel_(t, row, 'Keterangan')), link: teks_(sel_(t, row, 'Link')),
+      tenggat: tglKey_(sel_(t, row, 'Tenggat')), selesai: (isi[id.toUpperCase()] || []).some(function (x) { return x.akun === u.id; }) });
+  });
+  return out.reverse();
+}
+
+function tandaiFormulir_(u, id, selesai) {
+  if (!formulirUntuk_(u).some(function (f) { return f.id.toUpperCase() === id.toUpperCase(); })) return { ok: false, error: 'Formulir tidak ditemukan.' };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var t = tabel_(FORM_ISI_TAB);
+    for (var r = t.rows.length - 1; r >= 0; r--) {
+      if (String(t.rows[r][0]).toUpperCase() === id.toUpperCase() && String(sel_(t, t.rows[r], 'Akun siswa')) === u.id) {
+        if (!selesai) t.sh.deleteRow(r + 2);
+        return { ok: true };
+      }
+    }
+    if (selesai) tulisBarisKolom_(FORM_ISI_TAB, { 'ID formulir': id.toUpperCase(), 'Akun siswa': u.id, 'Nama': u.nama, 'Kelas': u.kelas,
+      'Waktu': Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm') });
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ================= Hasil psikotes ================= */
+// File hasil disimpan di folder Drive "Hasil Psikotes Web BK" (di sebelah sheet ini).
+// Siswa hanya melihat hasil yang namanya cocok dengan akunnya DAN ditandai "Tampil untuk siswa".
+var HASIL_FOLDER = 'Hasil Psikotes Web BK';
+var HASIL_JENIS = ['Psikotes', 'Brain Assessment', 'Tes minat dan bakat', 'Lainnya'];
+
+function unggahHasil_(u, d) {
+  if (wajib_(d, ['nama', 'kelas'])) return { ok: false, error: 'Isi nama dan kelas siswa.' };
+  var f = d.file || {}, ext = SCAN_MIME[f.type];
+  if (!ext) return { ok: false, error: 'Format file harus PDF, JPG, PNG, atau WEBP.' };
+  var bytes;
+  try { bytes = Utilities.base64Decode(String(f.data || '')); } catch (err) { return { ok: false, error: 'File rusak. Coba pilih ulang.' }; }
+  if (!bytes.length) return { ok: false, error: 'File kosong.' };
+  if (bytes.length > SCAN_MAKS) return { ok: false, error: 'Ukuran file maksimal 10 MB.' };
+  var nama = rapiNama_(d.nama), kelas = String(d.kelas).toUpperCase().trim().slice(0, 20);
+  var jenis = HASIL_JENIS.indexOf(d.jenis) >= 0 ? d.jenis : 'Psikotes';
+  var akun = akunSiswaAktif_('Nama', nama);
+  var file = subfolder_(HASIL_FOLDER).createFile(Utilities.newBlob(bytes, f.type, 'upload.' + ext));
+  var id = tulisBaris_(HASIL_TAB, {
+    'Akun siswa': akun && normKelas_(sel_(akun.t, akun.row, 'Kelas')) === normKelas_(kelas) ? teks_(sel_(akun.t, akun.row, 'ID')) : '',
+    'Nama siswa': clean_(nama), 'Kelas': clean_(kelas), 'Jenis tes': jenis,
+    'Tanggal tes': /^\d{4}-\d{2}-\d{2}$/.test(String(d.tanggal || '')) ? d.tanggal : '', 'Catatan untuk siswa': clean_(String(d.catatan || '').slice(0, 500)),
+    'Tampil untuk siswa': d.tampil === false ? 'TIDAK' : 'YA', 'Nama file asli': clean_(String(f.name || '').slice(0, 150)),
+    'Ukuran (KB)': Math.round(bytes.length / 1024), 'Link file (khusus pengelola)': file.getUrl(), 'File ID (jangan diubah)': file.getId(), 'Diunggah oleh': u.nama
+  }, 'HP');
+  var aman = function (s) { return String(s || '').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); };
+  file.setName([id, aman(nama), aman(kelas), aman(jenis)].join(' - ') + '.' + ext);
+  return { ok: true, id: id };
+}
+
+function barisHasil_(t, r) {
+  return { id: teks_(r[0]), nama: teks_(sel_(t, r, 'Nama siswa')), kelas: teks_(sel_(t, r, 'Kelas')), jenis: teks_(sel_(t, r, 'Jenis tes')),
+    tanggal: tglKey_(sel_(t, r, 'Tanggal tes')), catatan: teks_(sel_(t, r, 'Catatan untuk siswa')),
+    tampil: teks_(sel_(t, r, 'Tampil untuk siswa')).toUpperCase() !== 'TIDAK', ukuran: Number(sel_(t, r, 'Ukuran (KB)')) || 0,
+    oleh: teks_(sel_(t, r, 'Diunggah oleh')), akun: teks_(sel_(t, r, 'Akun siswa')) };
+}
+
+function daftarHasil_(cari) {
+  var t = tabel_(HASIL_TAB), q = norm_(cari), out = [];
+  for (var r = t.rows.length - 1; r >= 0 && out.length < 200; r--) {
+    var row = t.rows[r]; if (!row[0]) continue;
+    if (q && !cocok_(sel_(t, row, 'Nama siswa'), q) && normKelas_(sel_(t, row, 'Kelas')) !== normKelas_(cari)) continue;
+    out.push(barisHasil_(t, row));
+  }
+  return { ok: true, items: out, jenis: HASIL_JENIS };
+}
+
+// Untuk siswa: cocok lewat akun, atau lewat nama (+ kelas bila ada nama kembar).
+function hasilMilik_(t, row, u, kembar) {
+  var akun = teks_(sel_(t, row, 'Akun siswa'));
+  if (akun) return akun === u.id;
+  if (norm_(sel_(t, row, 'Nama siswa')) !== norm_(u.nama)) return false;
+  return !kembar || normKelas_(sel_(t, row, 'Kelas')) === normKelas_(u.kelas);
+}
+function hasilUntuk_(u, kembar) {
+  var t = tabel_(HASIL_TAB), out = [];
+  t.rows.forEach(function (row) {
+    if (!row[0] || teks_(sel_(t, row, 'Tampil untuk siswa')).toUpperCase() === 'TIDAK' || !hasilMilik_(t, row, u, kembar)) return;
+    var x = barisHasil_(t, row);
+    out.push({ id: x.id, jenis: x.jenis, tanggal: x.tanggal, catatan: x.catatan });
+  });
+  return out.reverse();
+}
+
+function lihatHasil_(id, u) {
+  var a = cariBaris_(HASIL_TAB, 'ID', id);
+  if (!a) return { ok: false, error: 'Hasil tidak ditemukan.' };
+  if (u) {   // siswa: hanya miliknya sendiri yang ditampilkan
+    var kembar = dataSiswa_().filter(function (s) { return norm_(s.nama) === norm_(u.nama); }).length > 1;
+    if (teks_(sel_(a.t, a.row, 'Tampil untuk siswa')).toUpperCase() === 'TIDAK' || !hasilMilik_(a.t, a.row, u, kembar)) return { ok: false, error: 'Hasil tidak ditemukan.' };
+  }
+  try {
+    var f = DriveApp.getFileById(String(sel_(a.t, a.row, 'File ID (jangan diubah)')));
+    if (f.isTrashed()) return { ok: false, error: 'File sudah dihapus dari Drive.' };
+    var b = f.getBlob();
+    return { ok: true, nama: f.getName(), mime: b.getContentType(), data: Utilities.base64Encode(b.getBytes()) };
+  } catch (err) {
+    return { ok: false, error: 'File tidak dapat dibuka. Hubungi guru BK.' };
+  }
+}
+
+function tampilHasil_(id, tampil) {
+  var a = cariBaris_(HASIL_TAB, 'ID', id);
+  if (!a) return { ok: false, error: 'Hasil tidak ditemukan.' };
+  tulisSel_(a.t, a.baris, 'Tampil untuk siswa', tampil ? 'YA' : 'TIDAK');
+  return { ok: true };
+}
+
+function hapusHasil_(id) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var a = cariBaris_(HASIL_TAB, 'ID', id);
+    if (!a) return { ok: false, error: 'Hasil tidak ditemukan.' };
+    try { DriveApp.getFileById(String(sel_(a.t, a.row, 'File ID (jangan diubah)'))).setTrashed(true); } catch (err) {}
+    a.t.sh.deleteRow(a.baris);
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/* ================= Chat siswa - guru BK ================= */
+// Pesan disimpan di tab PesanChat. Browser menanyakan pesan baru secara berkala (bukan real-time sungguhan),
+// jadi balasan muncul dalam beberapa detik selama halaman terbuka.
+var CHAT_MAKS = 1000, CHAT_BACA = 3000;
+
+function chatBaris_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CHAT_TAB);
+  if (!sh || sh.getLastRow() < 2) return { h: [], rows: [], awal: 2, sh: sh };
+  var n = sh.getLastColumn(), h = sh.getRange(1, 1, 1, n).getValues()[0].map(function (x) { return String(x).trim(); });
+  var awal = Math.max(2, sh.getLastRow() - CHAT_BACA + 1);   // cukup baca pesan terbaru
+  return { h: h, rows: sh.getRange(awal, 1, sh.getLastRow() - awal + 1, n).getValues(), awal: awal, sh: sh };
+}
+function waktuMs_(v) { return isDate_(v) ? v.getTime() : (new Date(v)).getTime() || 0; }
+
+function chatBelumDibaca_(akun, dari) {
+  var t = chatBaris_(), n = 0;
+  t.rows.forEach(function (r) { if (String(sel_(t, r, 'Akun siswa')) === akun && sel_(t, r, 'Dari') === dari && !sel_(t, r, 'Dibaca')) n++; });
+  return n;
+}
+
+function chatAmbil_(akun, sejak, peran) {
+  if (!akun) return { ok: false, error: 'Percakapan tidak dikenal.' };
+  var t = chatBaris_(), out = [], lawan = peran === 'guru' ? 'Siswa' : 'Guru BK', tandai = [];
+  t.rows.forEach(function (r, i) {
+    if (String(sel_(t, r, 'Akun siswa')) !== akun) return;
+    var ms = waktuMs_(sel_(t, r, 'Waktu'));
+    if (sel_(t, r, 'Dari') === lawan && !sel_(t, r, 'Dibaca')) tandai.push(t.awal + i);
+    if (ms <= sejak) return;
+    out.push({ id: teks_(r[0]), waktu: ms, dari: teks_(sel_(t, r, 'Dari')), pengirim: teks_(sel_(t, r, 'Nama pengirim')), isi: teks_(sel_(t, r, 'Isi')) });
+  });
+  if (tandai.length) {
+    var iB = kol_(t, 'Dibaca');
+    tandai.forEach(function (row) { t.sh.getRange(row, iB + 1).setValue('YA'); });
+  }
+  return { ok: true, pesan: out.slice(-200), sekarang: Date.now() };
+}
+
+function chatKirim_(akun, isi, dari, pengirim) {
+  isi = String(isi || '').trim();
+  if (!isi) return { ok: false, error: 'Pesan kosong.' };
+  if (isi.length > CHAT_MAKS) return { ok: false, error: 'Pesan terlalu panjang (maksimal ' + CHAT_MAKS + ' karakter).' };
+  var a = akunSiswaAktif_('ID', akun);
+  if (!a) return { ok: false, error: 'Akun siswa tidak ditemukan atau nonaktif.' };
+  var waktu = new Date();
+  tulisBaris_(CHAT_TAB, { 'Waktu': waktu, 'Akun siswa': akun, 'Nama': teks_(sel_(a.t, a.row, 'Nama')), 'Kelas': teks_(sel_(a.t, a.row, 'Kelas')),
+    'Dari': dari, 'Nama pengirim': pengirim, 'Isi': clean_(isi), 'Dibaca': '' }, 'PC');
+  return { ok: true, waktu: waktu.getTime() };
+}
+
+function chatKirimSiswa_(u, isi) {
+  var c = CacheService.getScriptCache(), k = 'chatn_' + u.id, n = Number(c.get(k) || 0);
+  if (n >= 20) return { ok: false, error: 'Kamu sudah mengirim banyak pesan. Tunggu balasan guru BK dulu, ya.' };
+  var adaBelum = chatBelumDibaca_(u.id, 'Siswa') > 0;
+  var hasil = chatKirim_(u.id, isi, 'Siswa', u.nama);
+  if (!hasil.ok) return hasil;
+  c.put(k, String(n + 1), 10 * 60);
+  if (!adaBelum) {   // satu email per rangkaian pesan, berisi inisial & kelas saja
+    try {
+      MailApp.sendEmail(Session.getEffectiveUser().getEmail(), '[Web BK] Pesan baru dari siswa (' + u.kelas + ')',
+        'Siswa ' + inisial_(u.nama) + ' (' + u.kelas + ') mengirim pesan lewat portal siswa.\n\nBalas di dashboard guru BK > Chat siswa:\nhttps://farel26.github.io/web-bk-labschool-ciracas/guru.html');
+    } catch (err) { /* email opsional */ }
+  }
+  return hasil;
+}
+
+function chatDaftar_() {
+  var t = chatBaris_(), per = {};
+  t.rows.forEach(function (r) {
+    var akun = String(sel_(t, r, 'Akun siswa')); if (!akun) return;
+    var c = per[akun] = per[akun] || { akun: akun, nama: '', kelas: '', terakhir: 0, cuplikan: '', dari: '', belum: 0 };
+    var ms = waktuMs_(sel_(t, r, 'Waktu'));
+    c.nama = teks_(sel_(t, r, 'Nama')); c.kelas = teks_(sel_(t, r, 'Kelas'));
+    if (ms >= c.terakhir) { c.terakhir = ms; c.cuplikan = teks_(sel_(t, r, 'Isi')).slice(0, 90); c.dari = teks_(sel_(t, r, 'Dari')); }
+    if (sel_(t, r, 'Dari') === 'Siswa' && !sel_(t, r, 'Dibaca')) c.belum++;
+  });
+  var list = Object.keys(per).map(function (k) { return per[k]; }).sort(function (a, b) { return b.terakhir - a.terakhir; });
+  return { ok: true, items: list.slice(0, 100), belum: list.reduce(function (s, c) { return s + c.belum; }, 0) };
 }
 
 /* ---------------- Email pemberitahuan ---------------- */

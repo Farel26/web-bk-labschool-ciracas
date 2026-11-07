@@ -12,6 +12,7 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `lapor.html` | Lapor perundungan (boleh anonim, dapat kode) |
 | `cek.html` | Cek balasan dan jadwal konseling dengan kode |
 | `siswa.html` | Portal siswa: aktivasi akun (nama + kelas + NIS cocok dengan DataSiswa), pengajuan konseling dan jadwalnya, target belajar, waktu fokus, hasil tes minat |
+| `materi.html` | Materi BK kelas 7 dari Buku BK (6 bab + kartu refleksi), dibuat dari draf buku |
 | `wali.html` | Portal wali kelas: kirim rujukan siswa, pantau status, jadwal, dan tanggapan guru BK (tanpa catatan konseling) |
 | `tes-minat.html` | Tes minat karier RIASEC (persetujuan, identitas, 42 pernyataan, halaman hasil bergambar) |
 | `survei.html` | Survei kepuasan layanan |
@@ -110,3 +111,15 @@ Kolom baru: **Konseling** (Kode, Akun siswa, Jadwal sesi, Jam sesi, Tempat sesi,
 **Aktivasi akun siswa** mencocokkan nama lengkap + kelas dengan tab **DataSiswa**. Bila tab itu punya kolom berjudul **NIS** (atau NISN), siswa juga wajib mengisi NIS. Tanpa kolom NIS, siapa pun yang tahu nama dan kelas seorang siswa bisa mengaktifkan akun atas namanya, jadi sebaiknya tambahkan kolom NIS sebelum portal siswa diumumkan. Satu nama hanya bisa diaktifkan sekali; bila ada yang mengaku "akunku sudah dipakai orang", nonaktifkan akun itu di menu Akun lalu minta siswa mengaktifkan ulang.
 
 **Keamanan sesi:** guru BK, wali kelas, dan siswa memakai jenis sesi yang terpisah. Token wali kelas atau siswa ditolak oleh semua aksi dashboard guru. Akun yang dinonaktifkan langsung keluar. Lima kali salah password/PIN mengunci akun itu 15 menit.
+
+### Tahap 2: check-in emosi, chat, hasil psikotes, formulir, materi
+
+Tab baru (dibuat otomatis seperti di atas): **CheckinEmosi**, **PesanChat**, **HasilPsikotes**, **FormulirSiswa**, **FormulirTerisi**.
+
+- **Check-in emosi:** siswa memilih suasana hati 1–5 sekali sehari di Portal Siswa. Dashboard › Check-in emosi menampilkan siswa yang perlu diperhatikan (skor 1–2 hari ini, minta ngobrol, atau tiga check-in terakhir rendah). Skor 1 atau "ingin ngobrol" juga mengirim email ke pemilik sheet (inisial + kelas saja).
+- **Chat siswa:** pesan dua arah antara Portal Siswa dan Dashboard › Chat siswa. Bukan real-time sungguhan: halaman menanyakan pesan baru tiap 10–15 detik selama terbuka. Pesan pertama dari siswa dalam satu rangkaian mengirim email pemberitahuan. Batas 20 pesan per 10 menit per siswa.
+- **Hasil psikotes:** Dashboard › Hasil psikotes. Bisa unggah banyak file sekaligus; nama file yang sama dengan nama siswa (mis. `Ahmad Rizky Pratama.pdf`) otomatis dicocokkan. File disimpan di folder Drive **Hasil Psikotes Web BK**. Siswa hanya melihat hasil yang dicentang "Tampilkan untuk siswa".
+- **Formulir siswa:** bagikan tautan Google Form per sasaran (semua, kelas 7/8/9, atau kelas tertentu). Hitungan "sudah mengisi" berasal dari centang siswa di portal, bukan dari Google Form.
+- **Materi:** `materi.html` dibuat dari draf Buku BK Kelas 7. Bagian draf yang masih kosong ("[Isi: ...]") tidak dimasukkan. Bila buku diperbarui, minta dibuatkan ulang halamannya.
+
+Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemilik sheet, dan Apps Script hanya melayani sekitar 30 permintaan bersamaan. Portal siswa menanyakan pesan baru tiap 15 detik hanya saat kotak chat terlihat di layar (selain itu tiap 60 detik, dan berhenti saat tab disembunyikan). Bila satu kelas membuka portal bersamaan di lab komputer dan ada galat, naikkan jeda di `siswa.js` (`15000` dan `60000`).

@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261107a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261107b">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -56,6 +56,8 @@
 
       <div class="dash-tabs" role="tablist" aria-label="Menu dashboard">
         <button type="button" class="dash-tab" role="tab" id="t-inbox" data-tab="inbox" aria-controls="tab-inbox" aria-selected="true">Kotak masuk <span class="badge" id="badge-inbox" hidden></span></button>
+        <button type="button" class="dash-tab" role="tab" id="t-chat" data-tab="chat" aria-controls="tab-chat" aria-selected="false" tabindex="-1">Chat siswa <span class="badge" id="badge-chat" hidden></span></button>
+        <button type="button" class="dash-tab" role="tab" id="t-checkin" data-tab="checkin" aria-controls="tab-checkin" aria-selected="false" tabindex="-1">Check-in emosi <span class="badge" id="badge-checkin" hidden></span></button>
         <button type="button" class="dash-tab" role="tab" id="t-pantau" data-tab="pantau" aria-controls="tab-pantau" aria-selected="false" tabindex="-1">Pemantauan <span class="badge" id="badge-pantau" hidden></span></button>
         <button type="button" class="dash-tab" role="tab" id="t-jurnal" data-tab="jurnal" aria-controls="tab-jurnal" aria-selected="false" tabindex="-1">Jurnal harian</button>
         <button type="button" class="dash-tab" role="tab" id="t-siswa" data-tab="siswa" aria-controls="tab-siswa" aria-selected="false" tabindex="-1">Profil siswa</button>
@@ -63,6 +65,8 @@
         <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
         <button type="button" class="dash-tab" role="tab" id="t-surat" data-tab="surat" aria-controls="tab-surat" aria-selected="false" tabindex="-1">Surat lain</button>
         <button type="button" class="dash-tab" role="tab" id="t-scan" data-tab="scan" aria-controls="tab-scan" aria-selected="false" tabindex="-1">Arsip scan</button>
+        <button type="button" class="dash-tab" role="tab" id="t-hasil" data-tab="hasil" aria-controls="tab-hasil" aria-selected="false" tabindex="-1">Hasil psikotes</button>
+        <button type="button" class="dash-tab" role="tab" id="t-formulir" data-tab="formulir" aria-controls="tab-formulir" aria-selected="false" tabindex="-1">Formulir siswa</button>
         <button type="button" class="dash-tab" role="tab" id="t-minat" data-tab="minat" aria-controls="tab-minat" aria-selected="false" tabindex="-1">Tes minat</button>
         <button type="button" class="dash-tab" role="tab" id="t-statistik" data-tab="statistik" aria-controls="tab-statistik" aria-selected="false" tabindex="-1">Statistik</button>
         <button type="button" class="dash-tab" role="tab" id="t-riwayat" data-tab="riwayat" aria-controls="tab-riwayat" aria-selected="false" tabindex="-1">Riwayat</button>
@@ -85,6 +89,37 @@
         <div id="inbox-list" aria-live="polite"></div>
         <datalist id="dl-jam"><option value="Istirahat pertama"><option value="Istirahat kedua"><option value="1 jam setelah pulang sekolah"></datalist>
         <datalist id="dl-tempat"><option value="Ruang BK lantai 1 (samping lobi)"><option value="Ruang BK lantai 7 (sebelah ruang TU)"></datalist>
+      </div>
+
+      <!-- Chat siswa -->
+      <div id="tab-chat" class="dash-panel" role="tabpanel" aria-labelledby="t-chat" hidden>
+        <p class="muted" style="margin: 0 0 14px">Pesan dari siswa yang memakai Portal Siswa. Daftar diperbarui otomatis selama menu ini terbuka. Siswa melihat nama guru yang membalas.</p>
+        <div class="chat-guru">
+          <div class="chat-daftar" id="chat-daftar" aria-live="polite"></div>
+          <section class="chat-ruang" id="chat-ruang" aria-labelledby="chat-judul">
+            <div class="chat-kepala"><button type="button" class="btn-mini" id="chat-kembali">← Daftar</button><h2 class="dash-h" id="chat-judul" style="font-size: 18px">Pilih percakapan</h2></div>
+            <div class="chat-isi" id="chat-isi-guru" tabindex="0" aria-label="Isi percakapan"></div>
+            <form id="form-chat-guru" class="chat-kirim" novalidate>
+              <label for="chat-teks-guru" class="sr-only">Tulis balasan</label>
+              <textarea id="chat-teks-guru" rows="2" maxlength="1000" placeholder="Tulis balasan…" disabled></textarea>
+              <button type="submit" class="btn-solid" disabled>Kirim</button>
+            </form>
+            <p class="form-status" id="chat-guru-status" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+      </div>
+
+      <!-- Check-in emosi -->
+      <div id="tab-checkin" class="dash-panel" role="tabpanel" aria-labelledby="t-checkin" hidden>
+        <div id="checkin-ringkas"></div>
+        <div class="bar-aksi">
+          <h2 class="dash-h">Perlu diperhatikan</h2>
+          <button type="button" id="checkin-muat" class="btn-mini">Muat ulang</button>
+        </div>
+        <p class="muted" style="margin: -6px 0 14px">Siswa dengan skor 1–2 hari ini, yang minta ngobrol, atau tiga check-in terakhirnya rendah. Hilang dari daftar setelah ditandai sudah ditindaklanjuti.</p>
+        <div id="checkin-list" aria-live="polite"></div>
+        <h2 class="dash-h" style="margin-top: 28px">Rata-rata per kelas (7 hari)</h2>
+        <div id="checkin-kelas" style="margin-top: 12px"></div>
       </div>
 
       <!-- Profil siswa -->
@@ -232,6 +267,60 @@
         <div id="scan-list" style="margin-top: 16px"></div>
       </div>
 
+      <!-- Hasil psikotes -->
+      <div id="tab-hasil" class="dash-panel" role="tabpanel" aria-labelledby="t-hasil" hidden>
+        <form id="form-hasil" class="card-form" novalidate>
+          <h2 class="dash-h">Unggah hasil psikotes</h2>
+          <p class="muted" style="margin: 0">Pilih satu atau banyak file sekaligus. Bila nama file sama dengan nama siswa (mis. <strong>Ahmad Rizky Pratama.pdf</strong>), nama dan kelas terisi otomatis. Siswa melihat hasilnya di Portal Siswa bila "Tampilkan untuk siswa" dicentang.</p>
+          <div class="g3f">
+            <div class="field"><label for="hs-jenis">Jenis tes</label><select id="hs-jenis"><option>Psikotes</option><option>Brain Assessment</option><option>Tes minat dan bakat</option><option>Lainnya</option></select></div>
+            <div class="field"><label for="hs-tanggal">Tanggal tes (opsional)</label><input id="hs-tanggal" type="date"></div>
+            <div class="field" style="justify-content: flex-end"><label class="check" style="min-height: 46px; align-items: center"><input type="checkbox" id="hs-tampil" checked> Tampilkan untuk siswa</label></div>
+          </div>
+          <div class="field"><label for="hs-catatan">Catatan untuk siswa (opsional)</label><input id="hs-catatan" type="text" maxlength="500" placeholder="mis. Datang ke ruang BK untuk membahas hasilnya bersama orang tua."></div>
+          <div class="field"><label for="hs-file">File hasil (PDF atau foto)</label><input id="hs-file" type="file" accept="application/pdf,image/*" multiple><span class="hint">Maksimal 10 MB per file. Foto dikirim apa adanya per file.</span></div>
+          <div id="hs-cocok"></div>
+          <div class="tombol-baris"><button type="submit" class="btn-solid">Unggah</button></div>
+          <p class="form-status" id="hasil-status" role="status" aria-live="polite"></p>
+        </form>
+        <form id="form-cari-hasil" class="cari-baris" role="search" novalidate style="margin-top: 24px">
+          <div class="field" style="flex: 1"><label for="cari-hasil">Cari nama atau kelas</label><input id="cari-hasil" type="search" list="dl-siswa" autocomplete="off"><span class="hint">Kosongkan untuk melihat unggahan terbaru.</span></div>
+          <button type="submit" class="btn-solid">Cari</button>
+        </form>
+        <div id="hasil-list" style="margin-top: 16px"></div>
+      </div>
+
+      <!-- Formulir siswa -->
+      <div id="tab-formulir" class="dash-panel" role="tabpanel" aria-labelledby="t-formulir" hidden>
+        <form id="form-formulir" class="card-form" novalidate>
+          <h2 class="dash-h">Bagikan formulir ke siswa</h2>
+          <p class="muted" style="margin: 0">Tempel tautan Google Form (angket, asesmen, atau survei). Formulir muncul di Portal Siswa sesuai sasaran. Jawaban tetap tersimpan di Google Form; di sini Anda melihat siapa yang sudah menandai selesai.</p>
+          <div class="field"><label for="fm-judul">Judul</label><input id="fm-judul" type="text" maxlength="150" placeholder="mis. Angket Kebutuhan Peserta Didik" required></div>
+          <div class="field"><label for="fm-link">Tautan formulir</label><input id="fm-link" type="url" placeholder="https://forms.gle/…" required></div>
+          <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+            <legend style="font-size: 14px; font-weight: 600; color: #12204F; margin-bottom: 8px; padding: 0">Sasaran</legend>
+            <div class="seg" id="fm-tingkat">
+              <label class="seg-radio"><input type="checkbox" value="Semua"> Semua siswa</label>
+              <label class="seg-radio"><input type="checkbox" value="Kelas 7"> Kelas 7</label>
+              <label class="seg-radio"><input type="checkbox" value="Kelas 8"> Kelas 8</label>
+              <label class="seg-radio"><input type="checkbox" value="Kelas 9"> Kelas 9</label>
+            </div>
+            <input id="fm-kelas" type="text" placeholder="Atau kelas tertentu, pisahkan dengan koma: 7A, 8B" style="margin-top: 10px; font: inherit; font-size: 15px; border: 1.5px solid #CFD5E6; border-radius: 12px; padding: 12px 14px; min-height: 46px">
+          </fieldset>
+          <div class="g2" style="gap: 16px">
+            <div class="field"><label for="fm-tenggat">Tenggat (opsional)</label><input id="fm-tenggat" type="date"></div>
+            <div class="field"><label for="fm-ket">Keterangan (opsional)</label><input id="fm-ket" type="text" maxlength="500" placeholder="mis. Butuh sekitar 10 menit."></div>
+          </div>
+          <div class="tombol-baris"><button type="submit" class="btn-solid">Bagikan</button></div>
+          <p class="form-status" id="formulir-status" role="status" aria-live="polite"></p>
+        </form>
+        <div class="bar-aksi" style="margin-top: 24px">
+          <h2 class="dash-h">Formulir yang dibagikan</h2>
+          <button type="button" id="formulir-muat" class="btn-mini">Muat ulang</button>
+        </div>
+        <div id="formulir-list"></div>
+      </div>
+
       <!-- Tes minat karier -->
       <div id="tab-minat" class="dash-panel" role="tabpanel" aria-labelledby="t-minat" hidden>
         <div class="bar-aksi">
@@ -344,8 +433,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261107a"></script>
-<script src="assets/js/main.js?v=20261107a"></script>
-<script src="assets/js/guru.js?v=20261107a"></script>
+<script src="assets/js/config.js?v=20261107b"></script>
+<script src="assets/js/main.js?v=20261107b"></script>
+<script src="assets/js/guru.js?v=20261107b"></script>
 </body>
 </html>

@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261107a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261107b">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -82,7 +82,38 @@
 
       <div class="portal-grid">
         <div class="portal-kolom">
-          <form id="form-ajuan" class="kartu-stk" novalidate>
+          <form id="form-checkin" class="kartu-stk" novalidate>
+            <div>
+              <h2 class="dash-h">Gimana perasaanmu hari ini?</h2>
+              <p class="muted" style="margin: 6px 0 0; font-size: 14px" id="ci-info">Cukup 10 detik. Hanya kamu dan guru BK yang bisa melihatnya.</p>
+            </div>
+            <div class="wajah" role="radiogroup" aria-label="Suasana hati hari ini" id="ci-wajah"></div>
+            <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+              <legend style="font-size: 14px; font-weight: 600; color: #12204F; margin-bottom: 8px; padding: 0">Yang kamu rasakan (pilih sampai 4, boleh dilewati)</legend>
+              <div class="chip-pilih" id="ci-rasa"></div>
+            </fieldset>
+            <div class="field"><label for="ci-catatan">Mau cerita sedikit? (opsional)</label><textarea id="ci-catatan" rows="2" maxlength="300"></textarea></div>
+            <label class="check"><input type="checkbox" id="ci-ngobrol"> Aku ingin ngobrol dengan guru BK</label>
+            <div class="tombol-baris"><button type="submit" class="btn-solid">Simpan check-in</button></div>
+            <p class="form-status" id="checkin-status" role="status" aria-live="polite"></p>
+            <div class="dukungan" id="ci-dukungan" hidden>
+              <strong>Terima kasih sudah jujur tentang perasaanmu.</strong>
+              <span>Hari yang berat itu nyata, dan kamu nggak harus menghadapinya sendirian. Guru BK bisa melihat check-in ini dan siap mendengarkan kapan pun kamu mau cerita.</span>
+              <div class="tombol-baris"><button type="button" class="btn-line" data-ke="chat">Kirim pesan ke guru BK</button><a class="btn-line" href="#form-ajuan" style="display: inline-flex; align-items: center; text-decoration: none">Ajukan konseling</a></div>
+              <span style="font-size: 14px">Kalau kamu merasa tidak aman atau ingin menyakiti diri sendiri, jangan menunggu: datang ke ruang BK sekarang, beri tahu orang dewasa di dekatmu, atau hubungi SAPA 129 (WA 08111-129-129), layanan kesehatan jiwa 119 ext. 8, atau 112.</span>
+            </div>
+            <div id="ci-riwayat" hidden>
+              <span class="jadwal-label">14 hari terakhir</span>
+              <div class="ci-batang" id="ci-batang"></div>
+            </div>
+          </form>
+
+          <section id="sek-formulir" class="card-form" style="padding: 24px; gap: 14px" aria-labelledby="h-formulir" hidden>
+            <h2 class="dash-h" id="h-formulir" style="font-size: 19px">Formulir dari guru BK</h2>
+            <ul class="daftar-ajuan" id="daftar-formulir"></ul>
+          </section>
+
+          <form id="form-ajuan" class="card-form" style="padding: 24px" novalidate>
             <h2 class="dash-h">Mau ngobrol dengan guru BK?</h2>
             <div class="field"><label for="k-topik">Mau ngobrol tentang</label>
               <select id="k-topik" required><option value="">Pilih topik</option><option>Pribadi</option><option>Sosial / pertemanan</option><option>Belajar</option><option>Karier / pilih sekolah</option><option>Lainnya</option></select></div>
@@ -122,6 +153,20 @@
         </div>
 
         <div class="portal-kolom">
+          <section class="card-form chat" id="sek-chat" style="padding: 24px; gap: 12px" aria-labelledby="h-chat">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+              <h2 class="dash-h" id="h-chat" style="font-size: 19px">Chat dengan guru BK <span class="badge" id="chat-badge" hidden></span></h2>
+            </div>
+            <div class="chat-isi" id="chat-isi" aria-live="polite" tabindex="0" aria-label="Percakapan dengan guru BK"></div>
+            <form id="form-chat" class="chat-kirim" novalidate>
+              <label for="chat-teks" class="sr-only">Tulis pesan</label>
+              <textarea id="chat-teks" rows="2" maxlength="1000" placeholder="Tulis pesanmu…"></textarea>
+              <button type="submit" class="btn-solid">Kirim</button>
+            </form>
+            <p class="form-status" id="chat-status" role="status" aria-live="polite"></p>
+            <p class="muted" style="margin: 0; font-size: 13px">Guru BK membalas di jam sekolah. Pesan diperbarui otomatis selama halaman ini terbuka.</p>
+          </section>
+
           <section class="card-form pomodoro" style="padding: 24px" aria-labelledby="h-fokus">
             <h2 class="dash-h" id="h-fokus">Waktu fokus</h2>
             <span class="pomodoro-mode" id="pm-mode">Fokus 25 menit</span>
@@ -135,6 +180,7 @@
 
           <section class="card-form" style="padding: 24px; gap: 14px" aria-labelledby="h-tes">
             <h2 class="dash-h" id="h-tes" style="font-size: 19px">Tes dan hasilku</h2>
+            <div id="daftar-hasil"></div>
             <div id="daftar-tes"></div>
           </section>
 
@@ -171,8 +217,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261107a"></script>
-<script src="assets/js/jadwal.js?v=20261107a"></script>
-<script src="assets/js/siswa.js?v=20261107a"></script>
+<script src="assets/js/config.js?v=20261107b"></script>
+<script src="assets/js/jadwal.js?v=20261107b"></script>
+<script src="assets/js/siswa.js?v=20261107b"></script>
 </body>
 </html>

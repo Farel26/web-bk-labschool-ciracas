@@ -105,7 +105,8 @@
   function keluar(pesan) {
     if (sesi && sesi.token && !pesan) api("logout").catch(function () {});
     simpanSesi(null);
-    pmBerhenti();
+    pmBerhenti(); chatBerhenti();
+    $("chat-isi").innerHTML = ""; $("daftar-hasil").innerHTML = ""; $("daftar-formulir").innerHTML = ""; $("sek-formulir").hidden = true;
     $("panel-portal").hidden = true; $("panel-masuk").hidden = false;
     $("form-masuk").reset(); $("daftar-ajuan").innerHTML = ""; $("target-list").innerHTML = ""; $("daftar-tes").innerHTML = "";
     pilihMode("masuk");
@@ -127,6 +128,9 @@
         return (a.tenggat || "9999") < (b.tenggat || "9999") ? -1 : 1;
       });
       gambarAjuan(d.pengajuan); gambarTarget(); gambarTes(d.tes);
+      gambarCheckin(d.checkin, d.hariIni, d.perasaan); gambarFormulir(d.formulir || []); gambarHasil(d.hasil || []);
+      setBadgeChat(d.chatBaru || 0);
+      if (!chat.mulai) chatMulai();
     }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
   }
   $("btn-muat").addEventListener("click", muatRingkasan);
@@ -217,6 +221,180 @@
     api("hapusTarget", { id: id }).then(function (d) {
       if (!d.ok) { dataTarget = simpan; gambarTarget(); status($("target-status"), d.error, "err"); }
     }).catch(function (err) { if (err.message !== "auth") { dataTarget = simpan; gambarTarget(); status($("target-status"), "Belum terhapus karena koneksi.", "err"); } });
+  });
+
+  /* ---------- Check-in emosi ---------- */
+  var WAJAH = [
+    [1, "Sangat berat", "M8 17c1.2-1.6 2.6-2.4 4-2.4s2.8.8 4 2.4"],
+    [2, "Kurang baik", "M8.5 16c1-.9 2.2-1.3 3.5-1.3s2.5.4 3.5 1.3"],
+    [3, "Biasa saja", "M8.5 15.5h7"],
+    [4, "Baik", "M8.5 14.5c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5"],
+    [5, "Sangat baik", "M8 14c1.1 1.7 2.5 2.6 4 2.6s2.9-.9 4-2.6"]
+  ];
+  var ciSkor = 0, ciRasa = [];
+  $("ci-wajah").innerHTML = WAJAH.map(function (w) {
+    return '<label><input type="radio" name="ci-skor" value="' + w[0] + '"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="9.5"></circle><circle cx="9" cy="10" r=".9" fill="currentColor"></circle><circle cx="15" cy="10" r=".9" fill="currentColor"></circle><path d="' + w[2] + '"></path></svg><span>' + w[1] + "</span></label>";
+  }).join("");
+  $("ci-wajah").addEventListener("change", function (e) { ciSkor = +e.target.value; });
+  function gambarRasa(daftar) {
+    if ($("ci-rasa").children.length || !daftar.length) return;
+    $("ci-rasa").innerHTML = daftar.map(function (r) { return '<button type="button" aria-pressed="false" data-rasa="' + esc(r) + '">' + esc(r) + "</button>"; }).join("");
+  }
+  $("ci-rasa").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-rasa]"); if (!b) return;
+    var on = b.getAttribute("aria-pressed") !== "true";
+    if (on && ciRasa.length >= 4) { status($("checkin-status"), "Pilih paling banyak 4 perasaan.", "err"); return; }
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    ciRasa = on ? ciRasa.concat(b.dataset.rasa) : ciRasa.filter(function (x) { return x !== b.dataset.rasa; });
+    status($("checkin-status"), "");
+  });
+  function tanggalIso(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function gambarCheckin(list, today, perasaan) {
+    gambarRasa(perasaan || []);
+    list = list || [];
+    var kini = list.filter(function (x) { return x.tanggal === today; })[0];
+    $("ci-info").textContent = kini ? "Kamu sudah check-in hari ini. Boleh diubah kalau perasaanmu berubah." : "Cukup 10 detik. Hanya kamu dan guru BK yang bisa melihatnya.";
+    if (kini && !ciSkor) {
+      ciSkor = kini.skor;
+      var r = document.querySelector('input[name=ci-skor][value="' + kini.skor + '"]'); if (r) r.checked = true;
+      ciRasa = kini.perasaan ? kini.perasaan.split(/\s*,\s*/) : [];
+      document.querySelectorAll("#ci-rasa button").forEach(function (b) { b.setAttribute("aria-pressed", ciRasa.indexOf(b.dataset.rasa) >= 0 ? "true" : "false"); });
+      $("ci-catatan").value = kini.catatan || ""; $("ci-ngobrol").checked = !!kini.ngobrol;
+    }
+    var hari = [];
+    for (var i = 13; i >= 0; i--) { var d = new Date(); d.setDate(d.getDate() - i); hari.push(tanggalIso(d)); }
+    var peta = {}; list.forEach(function (x) { peta[x.tanggal] = x; });
+    $("ci-riwayat").hidden = !list.length;
+    $("ci-batang").innerHTML = hari.map(function (h) {
+      var x = peta[h], hr = ["M", "S", "S", "R", "K", "J", "S"][new Date(h + "T00:00:00").getDay()];
+      return '<span title="' + esc(J.tglPanjang(h) + (x ? ": " + WAJAH[x.skor - 1][1] : ": belum check-in")) + '"><i style="height:' + (x ? x.skor * 20 : 6) + '%"' + (x ? "" : ' class="ci-kosong"') + "></i><b>" + hr + "</b></span>";
+    }).join("");
+  }
+  $("form-checkin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var st = $("checkin-status"), btn = this.querySelector("button[type=submit]");
+    if (!ciSkor) { status(st, "Pilih salah satu wajah dulu, ya.", "err"); $("ci-wajah").querySelector("input").focus(); return; }
+    sibuk(btn, true, "Menyimpan…"); status(st, "");
+    api("checkin", { data: { skor: ciSkor, perasaan: ciRasa, catatan: $("ci-catatan").value, ngobrol: $("ci-ngobrol").checked } }).then(function (d) {
+      if (!d.ok) { status(st, d.error, "err"); return; }
+      status(st, ciSkor >= 4 ? "Tersimpan. Senang mendengarnya!" : "Tersimpan. Terima kasih sudah check-in hari ini.", "ok");
+      $("ci-dukungan").hidden = !(ciSkor <= 2 || $("ci-ngobrol").checked);
+      gambarCheckin(d.riwayat, hariIni(), []);
+    }).catch(function (err) { if (err.message !== "auth") status(st, "Belum tersimpan karena koneksi. Coba lagi.", "err"); }).finally(function () { sibuk(btn, false); });
+  });
+  $("ci-dukungan").addEventListener("click", function (e) {
+    if (e.target.closest("[data-ke=chat]")) { $("sek-chat").scrollIntoView({ behavior: "smooth", block: "start" }); $("chat-teks").focus({ preventScroll: true }); }
+  });
+
+  /* ---------- Formulir dari guru BK ---------- */
+  var dataFormulir = [];
+  function gambarFormulir(list) {
+    dataFormulir = list;
+    $("sek-formulir").hidden = !list.length;
+    var today = hariIni();
+    $("daftar-formulir").innerHTML = list.map(function (f) {
+      var telat = !f.selesai && f.tenggat && f.tenggat < today;
+      return '<li><div class="ajuan-kepala"><div><h3>' + esc(f.judul) + "</h3>" +
+        (f.tenggat ? "<p" + (telat ? ' style="color:#A1260D;font-weight:700"' : "") + ">" + (telat ? "Lewat tenggat " : "Isi sebelum ") + esc(J.tglPanjang(f.tenggat)) + "</p>" : "") + "</div>" +
+        (f.selesai ? '<span class="pill pill-selesai">Sudah diisi</span>' : "") + "</div>" +
+        (f.keterangan ? '<p style="margin:0;font-size:15px;color:#3B4568">' + esc(f.keterangan) + "</p>" : "") +
+        '<div class="tombol-baris" style="align-items:center"><a class="btn-solid" style="display:inline-flex;align-items:center;text-decoration:none;min-height:48px" href="' + esc(f.link) + '" target="_blank" rel="noopener">Buka formulir</a>' +
+        '<label class="check" style="font-size:14px"><input type="checkbox" data-form="' + esc(f.id) + '"' + (f.selesai ? " checked" : "") + "> Aku sudah mengisinya</label></div></li>";
+    }).join("");
+  }
+  $("daftar-formulir").addEventListener("change", function (e) {
+    var cb = e.target.closest("input[data-form]"); if (!cb) return;
+    var f = dataFormulir.filter(function (x) { return x.id === cb.dataset.form; })[0], nilai = cb.checked;
+    cb.disabled = true;
+    api("tandaiFormulir", { id: f.id, selesai: nilai }).then(function (d) {
+      if (!d.ok) { cb.checked = !nilai; return; }
+      f.selesai = nilai; gambarFormulir(dataFormulir);
+    }).catch(function () { cb.checked = !nilai; }).finally(function () { cb.disabled = false; });
+  });
+
+  /* ---------- Hasil psikotes ---------- */
+  var dataHasil = [], urlHasil = null;
+  function gambarHasil(list) {
+    dataHasil = list;
+    $("daftar-hasil").innerHTML = list.length ? '<ul class="tautan-list" style="margin-bottom:12px">' + list.map(function (x, i) {
+      return '<li><button type="button" class="hasil-btn" data-hasil="' + i + '"><span>Hasil ' + esc(x.jenis.toLowerCase()) + (x.tanggal ? " · " + esc(J.tglPanjang(x.tanggal)) : "") + '</span><span class="hasil-aksi">Buka</span></button>' +
+        (x.catatan ? '<p class="muted" style="margin:6px 4px 0;font-size:13px">' + esc(x.catatan) + "</p>" : "") + "</li>";
+    }).join("") + '</ul><p class="muted" style="margin:0 0 12px;font-size:13px">Hasil tes bukan label untukmu. Diskusikan dengan guru BK supaya kamu paham artinya.</p>' : "";
+  }
+  $("daftar-hasil").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-hasil]"); if (!b) return;
+    var x = dataHasil[+b.dataset.hasil], label = b.querySelector(".hasil-aksi");
+    // Buka tab baru saat diklik (agar tidak diblokir browser), lalu isi setelah file datang.
+    var w = window.open("", "_blank");
+    label.textContent = "Membuka…";
+    api("lihatHasil", { id: x.id }).then(function (d) {
+      if (!d.ok) { if (w) w.close(); label.textContent = d.error; return; }
+      var bin = atob(d.data), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      if (urlHasil) URL.revokeObjectURL(urlHasil);
+      urlHasil = URL.createObjectURL(new Blob([arr], { type: d.mime }));
+      if (w) w.location.href = urlHasil;
+      else { var a = document.createElement("a"); a.href = urlHasil; a.download = d.nama; document.body.appendChild(a); a.click(); a.remove(); }
+      label.textContent = "Buka";
+    }).catch(function (err) { if (w) w.close(); if (err.message !== "auth") label.textContent = "Gagal, coba lagi"; });
+  });
+
+  /* ---------- Chat dengan guru BK ---------- */
+  var chat = { mulai: false, sejak: 0, timer: null, pesan: [], pertama: false, terlihat: false };
+  function setBadgeChat(n) { var b = $("chat-badge"); b.hidden = !n; b.textContent = n; b.setAttribute("aria-label", n + " pesan baru"); }
+  function jamPesan(ms) {
+    var d = new Date(ms), t = ("0" + d.getHours()).slice(-2) + "." + ("0" + d.getMinutes()).slice(-2);
+    return d.toDateString() === new Date().toDateString() ? t : d.getDate() + "/" + (d.getMonth() + 1) + " " + t;
+  }
+  function gambarChat() {
+    var box = $("chat-isi"), bawah = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.innerHTML = chat.pesan.length ? chat.pesan.map(function (m) {
+      var aku = m.dari === "Siswa";
+      return '<div class="gelembung' + (aku ? " aku" : "") + '"><p>' + esc(m.isi) + "</p><span>" + (aku ? "" : esc(m.pengirim) + " · ") + jamPesan(m.waktu) + "</span></div>";
+    }).join("") : '<p class="muted chat-kosong">Belum ada pesan. Sapa guru BK kapan saja, misalnya "Bu/Pak, aku mau cerita."</p>';
+    if (bawah || chat.pertama) { box.scrollTop = box.scrollHeight; chat.pertama = false; }
+  }
+  function chatTarik() {
+    if (!sesi || !sesi.token) return Promise.resolve();
+    return api("chatAmbil", { sejak: chat.sejak }).then(function (d) {
+      if (!d.ok) return;
+      if (d.pesan.length) {
+        var ada = {}; chat.pesan.forEach(function (m) { ada[m.id] = 1; });
+        d.pesan.forEach(function (m) { if (!ada[m.id]) chat.pesan.push(m); });
+        chat.sejak = chat.pesan[chat.pesan.length - 1].waktu;
+        gambarChat();
+      }
+      setBadgeChat(0);
+    }).catch(function () {});
+  }
+  function chatJadwal() {
+    clearTimeout(chat.timer);
+    // Cepat (15 detik) hanya bila kotak chat terlihat di layar; selain itu 60 detik, agar kuota Apps Script hemat.
+    chat.timer = setTimeout(function () { if (!chat.mulai) return; (document.hidden ? Promise.resolve() : chatTarik()).then(chatJadwal); }, chat.terlihat ? 15000 : 60000);
+  }
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (en) {
+      var dulu = chat.terlihat; chat.terlihat = en[0].isIntersecting;
+      if (chat.terlihat && !dulu && chat.mulai) { chatTarik(); chatJadwal(); }
+    }).observe($("sek-chat"));
+  } else chat.terlihat = true;
+  function chatMulai() { chat.mulai = true; chat.pertama = true; chat.pesan = []; chat.sejak = 0; gambarChat(); chatTarik().then(chatJadwal); }
+  function chatBerhenti() { clearTimeout(chat.timer); chat.mulai = false; chat.pesan = []; chat.sejak = 0; }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && chat.mulai) chatTarik(); });
+  $("form-chat").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var isi = $("chat-teks").value.trim(), st = $("chat-status"), btn = this.querySelector("button[type=submit]");
+    if (!isi) { $("chat-teks").focus(); return; }
+    sibuk(btn, true, "…"); status(st, "");
+    api("chatKirim", { isi: isi }).then(function (d) {
+      if (!d.ok) { status(st, d.error, "err"); return; }
+      $("chat-teks").value = "";
+      return chatTarik();
+    }).catch(function (err) { if (err.message !== "auth") status(st, "Belum terkirim karena koneksi. Coba lagi.", "err"); }).finally(function () { sibuk(btn, false); });
+  });
+  $("chat-teks").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("form-chat").requestSubmit(); }
   });
 
   /* ---------- Waktu fokus (Pomodoro), hanya di browser ---------- */

@@ -74,6 +74,7 @@
     pilihTab("inbox");
     muatNamaSiswa();
     muatPantau(true);
+    muatChatDaftar(true); muatCheckin(true);
   }
 
   function keluar(pesan) {
@@ -85,6 +86,8 @@
     $("inbox-list").innerHTML = ""; $("profil-hasil").innerHTML = ""; $("statistik-isi").innerHTML = "";
     $("jurnal-list").innerHTML = ""; $("wali-list").innerHTML = ""; $("akun-siswa-list").innerHTML = "";
     $("wali-sandi").hidden = true; $("siswa-sandi").hidden = true; dimuat = {};
+    chatGuruBerhenti(); cg.akun = ""; $("chat-isi-guru").innerHTML = ""; $("chat-daftar").innerHTML = "";
+    $("checkin-list").innerHTML = ""; $("hasil-list").innerHTML = ""; $("formulir-list").innerHTML = "";
     status($("login-status"), pesan || "", pesan ? "err" : "");
     $("l-user").focus();
   }
@@ -102,6 +105,10 @@
     if (nama === "statistik" && !dimuat.statistik) muatStatistik();
     if (nama === "akun") { muatBackup(); muatAkunWali(); if (!dimuat.akunSiswa) muatAkunSiswa(); }
     if (nama === "jurnal" && !dimuat.jurnal) muatJurnal();
+    if (nama === "chat") { muatChatDaftar(); chatGuruJadwal(); } else chatGuruBerhenti();
+    if (nama === "checkin") muatCheckin();
+    if (nama === "hasil" && !dimuat.hasil) muatHasil();
+    if (nama === "formulir" && !dimuat.formulir) muatFormulir();
     if (nama === "pantau") muatPantau();
     if (nama === "minat" && !dimuat.minat) muatMinat();
     if (nama === "scan" && !dimuat.scan) muatScan();
@@ -315,12 +322,14 @@
             .filter(Boolean).map(esc).join(" · ") + "</p>" +
           '<dl class="isian">' + it.isi.map(function (x) { return "<dt>" + esc(x.label) + "</dt><dd>" + esc(x.teks) + "</dd>"; }).join("") + "</dl>" +
           (it.sumber === "ArsipScan" ? '<button type="button" class="btn-mini" data-lihat="' + esc(it.id) + '" style="margin-top:10px">Lihat scan</button>' : "") +
+          (it.sumber === "HasilPsikotes" ? '<button type="button" class="btn-mini" data-lihat-hasil="' + esc(it.id) + '" style="margin-top:10px">Lihat hasil</button>' : "") +
           (it.sumber === "TesMinatKarier" ? '<a class="btn-mini" style="display:inline-flex;align-items:center;text-decoration:none;margin-top:10px" target="_blank" rel="noopener" href="tes-minat.html?kode=' + encodeURIComponent(((it.isi.filter(function (x) { return x.label === "Kode"; })[0]) || {}).teks || "") + '">Lihat hasil tes</a>' : "") + "</li>";
       }).join("") + "</ol>";
   }
 
   $("profil-hasil").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-lihat]"); if (b) lihatScan(b.dataset.lihat, b);
+    var h = e.target.closest("button[data-lihat-hasil]"); if (h) lihatHasil(h.dataset.lihatHasil, h);
   });
 
   /* ---------- Pemantauan kasus ---------- */
@@ -1237,13 +1246,14 @@
       box.innerHTML = '<div class="table-wrap"><table><thead><tr><th scope=col>Siswa</th><th scope=col>Email</th><th scope=col>Terakhir masuk</th><th scope=col><span class=sr-only>Aksi</span></th></tr></thead><tbody>' +
         dataAkunSiswa.map(function (x, i) {
           return '<tr class="akun-baris"><td><strong>' + esc(x.nama) + "</strong> (" + esc(x.kelas) + ') <span class="status-akun' + (x.aktif ? "" : " mati") + '">' + (x.aktif ? "Aktif" : "Nonaktif") + "</span></td><td>" + esc(x.email) + "</td><td>" + esc(x.terakhir || "Belum pernah") +
-            '</td><td><button type="button" class="btn-mini" data-pin="' + i + '">PIN baru</button> <button type="button" class="btn-mini' + (x.aktif ? " btn-hapus" : "") + '" data-aktif-siswa="' + i + '">' + (x.aktif ? "Nonaktifkan" : "Aktifkan") + "</button></td></tr>";
+            '</td><td><button type="button" class="btn-mini" data-chat-siswa="' + i + '">Chat</button> <button type="button" class="btn-mini" data-pin="' + i + '">PIN baru</button> <button type="button" class="btn-mini' + (x.aktif ? " btn-hapus" : "") + '" data-aktif-siswa="' + i + '">' + (x.aktif ? "Nonaktifkan" : "Aktifkan") + "</button></td></tr>";
         }).join("") + "</tbody></table></div>";
     }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
   }
   $("form-akun-siswa").addEventListener("submit", function (e) { e.preventDefault(); $("siswa-sandi").hidden = true; muatAkunSiswa(); });
   $("akun-siswa-list").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.chatSiswa) { var cs = dataAkunSiswa[+b.dataset.chatSiswa]; bukaChat(cs.id, cs.nama, cs.kelas); return; }
     if (b.dataset.pin) {
       var x = dataAkunSiswa[+b.dataset.pin];
       if (b.dataset.yakin !== "1") { b.dataset.yakin = "1"; b.textContent = "Yakin buat PIN baru?"; setTimeout(function () { if (b.isConnected) { b.dataset.yakin = ""; b.textContent = "PIN baru"; } }, 6000); return; }
@@ -1264,6 +1274,283 @@
         return muatAkunSiswa();
       }).catch(function (err) { if (err.message !== "auth") alertSingkat(b, "Gagal. Coba lagi."); }).finally(function () { sibuk(b, false); });
     }
+  });
+
+  /* ---------- Chat siswa ---------- */
+  var cg = { akun: "", nama: "", sejak: 0, pesan: [], timer: null, pertama: false };
+  var jamPesan = function (ms) {
+    var d = new Date(ms), t = ("0" + d.getHours()).slice(-2) + "." + ("0" + d.getMinutes()).slice(-2);
+    return d.toDateString() === new Date().toDateString() ? t : d.getDate() + "/" + (d.getMonth() + 1) + " " + t;
+  };
+  function setBadgeChat(n) { var b = $("badge-chat"); b.hidden = !n; b.textContent = n; b.setAttribute("aria-label", n + " pesan belum dibaca"); }
+  var chatDaftarData = [];
+  function muatChatDaftar(diam) {
+    var box = $("chat-daftar");
+    if (!diam && !chatDaftarData.length) box.innerHTML = '<p class="muted" style="padding:12px">Memuat…</p>';
+    return api("chatDaftar").then(function (d) {
+      if (!d.ok) return;
+      setBadgeChat(d.belum); chatDaftarData = d.items;
+      if (diam && $("tab-chat").hidden) return;
+      box.innerHTML = d.items.length ? d.items.map(function (c) {
+        return '<button type="button" class="chat-item' + (c.akun === cg.akun ? " aktif" : "") + '" data-akun="' + esc(c.akun) + '" data-nama="' + esc(c.nama) + '" data-kelas="' + esc(c.kelas) + '">' +
+          '<span class="chat-item-atas"><strong>' + esc(c.nama) + '</strong><span class="muted" style="font-size:12px">' + esc(jamPesan(c.terakhir)) + "</span></span>" +
+          '<span class="chat-item-bawah"><span>' + esc(c.kelas) + " · " + (c.dari === "Guru BK" ? "Anda: " : "") + esc(c.cuplikan) + "</span>" + (c.belum ? '<span class="badge">' + c.belum + "</span>" : "") + "</span></button>";
+      }).join("") : '<div class="kosong" style="margin:12px"><strong>Belum ada pesan.</strong><span>Pesan muncul di sini saat siswa menulis lewat Portal Siswa. Anda juga bisa memulai chat dari menu Check-in emosi atau Akun siswa.</span></div>';
+    }).catch(function () {});
+  }
+  function gambarChatGuru() {
+    var box = $("chat-isi-guru"), bawah = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.innerHTML = cg.pesan.length ? cg.pesan.map(function (m) {
+      var aku = m.dari === "Guru BK";
+      return '<div class="gelembung' + (aku ? " aku" : "") + '"><p>' + esc(m.isi) + "</p><span>" + (aku ? esc(m.pengirim) + " · " : "") + jamPesan(m.waktu) + "</span></div>";
+    }).join("") : '<p class="muted chat-kosong">Belum ada pesan dengan siswa ini. Tulis sapaan untuk memulai.</p>';
+    if (bawah || cg.pertama) { box.scrollTop = box.scrollHeight; cg.pertama = false; }
+  }
+  function tarikChatGuru() {
+    if (!cg.akun) return Promise.resolve();
+    var akun = cg.akun;
+    return api("chatAmbil", { akun: akun, sejak: cg.sejak }).then(function (d) {
+      if (!d.ok || akun !== cg.akun) return;
+      if (d.pesan.length) {
+        var ada = {}; cg.pesan.forEach(function (m) { ada[m.id] = 1; });
+        d.pesan.forEach(function (m) { if (!ada[m.id]) cg.pesan.push(m); });
+        cg.sejak = cg.pesan[cg.pesan.length - 1].waktu;
+      }
+      gambarChatGuru();
+    }).catch(function () {});
+  }
+  function bukaChat(akun, nama, kelas) {
+    if ($("tab-chat").hidden) pilihTab("chat");
+    cg.akun = akun; cg.nama = nama; cg.sejak = 0; cg.pesan = []; cg.pertama = true;
+    $("chat-judul").textContent = nama + (kelas ? " (" + kelas + ")" : "");
+    $("chat-teks-guru").disabled = false; $("form-chat-guru").querySelector("button").disabled = false;
+    document.querySelector(".chat-guru").classList.add("buka");
+    document.querySelectorAll(".chat-item").forEach(function (b) { b.classList.toggle("aktif", b.dataset.akun === akun); });
+    $("chat-isi-guru").innerHTML = '<p class="muted chat-kosong">Memuat…</p>';
+    tarikChatGuru().then(function () { muatChatDaftar(true); });
+    $("chat-teks-guru").focus({ preventScroll: true });
+  }
+  function chatGuruJadwal() {
+    clearTimeout(cg.timer);
+    // Percakapan terbuka: cek tiap 10 detik; daftar: tiap 30 detik. Berhenti saat tab browser disembunyikan.
+    cg.timer = setTimeout(function () {
+      if ($("tab-chat").hidden) return;
+      var p = document.hidden ? Promise.resolve() : Promise.all([tarikChatGuru(), (cg.ke = (cg.ke || 0) + 1) % 3 === 0 ? muatChatDaftar(true) : null]);
+      p.then(chatGuruJadwal);
+    }, 10000);
+  }
+  function chatGuruBerhenti() { clearTimeout(cg.timer); }
+  $("chat-daftar").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-akun]"); if (b) bukaChat(b.dataset.akun, b.dataset.nama, b.dataset.kelas);
+  });
+  $("chat-kembali").addEventListener("click", function () { document.querySelector(".chat-guru").classList.remove("buka"); muatChatDaftar(); });
+  $("form-chat-guru").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var isi = $("chat-teks-guru").value.trim(), st = $("chat-guru-status"), btn = this.querySelector("button");
+    if (!isi || !cg.akun) return;
+    sibuk(btn, true, "…"); status(st, "");
+    api("chatKirim", { akun: cg.akun, isi: isi }).then(function (d) {
+      if (!d.ok) { status(st, d.error, "err"); return; }
+      $("chat-teks-guru").value = "";
+      return tarikChatGuru().then(function () { muatChatDaftar(true); });
+    }).catch(gagalKoneksi(st, "Belum terkirim karena koneksi. Coba lagi.")).finally(function () { sibuk(btn, false); });
+  });
+  $("chat-teks-guru").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("form-chat-guru").requestSubmit(); }
+  });
+
+  /* ---------- Check-in emosi ---------- */
+  var dataCheckin = [], LABEL_SKOR = { 1: "Sangat berat", 2: "Kurang baik", 3: "Biasa saja", 4: "Baik", 5: "Sangat baik" };
+  function setBadgeCheckin(n) { var b = $("badge-checkin"); b.hidden = !n; b.textContent = n; b.setAttribute("aria-label", n + " siswa perlu diperhatikan"); }
+  function stripSkor(isi) {
+    return '<span class="skor-strip" aria-label="Skor 7 check-in terakhir: ' + isi.map(function (x) { return x.skor; }).join(", ") + '">' + isi.map(function (x) {
+      return '<i class="s' + x.skor + '" title="' + esc(tglPanjang(x.tanggal) + ": " + LABEL_SKOR[x.skor]) + '">' + x.skor + "</i>";
+    }).join("") + "</span>";
+  }
+  function muatCheckin(diam) {
+    var box = $("checkin-list");
+    if (!diam) box.innerHTML = '<p class="muted">Memuat…</p>';
+    return api("checkinRingkas").then(function (d) {
+      if (!d.ok) return;
+      setBadgeCheckin(d.perhatian.length); dataCheckin = d.perhatian;
+      if (diam) return;
+      $("checkin-ringkas").innerHTML = '<div class="tiles tiles-3"><div class="tile"><span class="tile-n">' + d.hariIni + '</span><span class="tile-l">Siswa check-in hari ini</span></div>' +
+        '<div class="tile' + (d.perhatian.length ? " tile-alert" : "") + '"><span class="tile-n">' + d.perhatian.length + '</span><span class="tile-l">Perlu diperhatikan</span></div>' +
+        '<div class="tile"><span class="tile-n">' + d.perhatian.filter(function (x) { return x.alasan.some(function (a) { return /ngobrol/.test(a); }); }).length + '</span><span class="tile-l">Minta ngobrol dengan guru BK</span></div></div>';
+      box.innerHTML = d.perhatian.length ? '<ul class="daftar-ajuan">' + d.perhatian.map(function (x, i) {
+        var akhir = x.isi[x.isi.length - 1];
+        return '<li' + (x.darurat ? ' class="li-darurat"' : "") + '><div class="ajuan-kepala"><div><h3>' + esc(x.nama) + " · " + esc(x.kelas) + "</h3><p>Check-in terakhir " + esc(tglPanjang(x.terakhir)) +
+          (akhir.perasaan ? " · " + esc(akhir.perasaan) : "") + "</p></div>" + stripSkor(x.isi) + "</div>" +
+          '<p style="margin:0;display:flex;flex-wrap:wrap;gap:6px">' + x.alasan.map(function (a) { return '<span class="pill ' + (/sangat berat/.test(a) ? "pill-darurat" : "pill-segera") + '">' + esc(a) + "</span>"; }).join("") + "</p>" +
+          (akhir.catatan ? '<p class="pre-wrap" style="margin:0;font-size:15px;color:#3B4568">“' + esc(akhir.catatan) + "”</p>" : "") +
+          '<div class="tombol-baris"><button type="button" class="btn-solid" style="min-height:44px" data-ci-chat="' + i + '">Chat siswa</button>' +
+          '<button type="button" class="btn-line" data-ci-profil="' + i + '">Lihat profil</button><button type="button" class="btn-line" data-ci-tandai="' + i + '">Sudah ditindaklanjuti</button></div></li>';
+      }).join("") + "</ul>" : '<div class="kosong"><strong>Tidak ada siswa yang perlu diperhatikan saat ini.</strong><span>Daftar ini terisi dari check-in emosi di Portal Siswa.</span></div>';
+      $("checkin-kelas").innerHTML = d.perKelas.length ? '<div class="table-wrap"><table><thead><tr><th scope=col>Kelas</th><th scope=col>Check-in</th><th scope=col>Rata-rata skor</th><th scope=col>Skor 1–2</th></tr></thead><tbody>' +
+        d.perKelas.map(function (k) { return "<tr><td><strong>" + esc(k.kelas) + "</strong></td><td>" + k.n + "</td><td>" + String(k.rata).replace(".", ",") + " dari 5</td><td>" + k.rendah + "</td></tr>"; }).join("") + "</tbody></table></div>"
+        : '<p class="muted">Belum ada check-in dalam 7 hari terakhir.</p>';
+    }).catch(function (err) { if (err.message !== "auth" && !diam) box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
+  }
+  $("checkin-muat").addEventListener("click", function () { muatCheckin(); });
+  $("checkin-list").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.ciChat) { var c = dataCheckin[+b.dataset.ciChat]; bukaChat(c.akun, c.nama, c.kelas); return; }
+    if (b.dataset.ciProfil) { pilihTab("siswa"); $("cari-nama").value = dataCheckin[+b.dataset.ciProfil].nama; $("form-profil").requestSubmit(); return; }
+    if (b.dataset.ciTandai) {
+      var x = dataCheckin[+b.dataset.ciTandai];
+      sibuk(b, true, "Menyimpan…");
+      api("tandaiCheckin", { akun: x.akun }).then(function () { return muatCheckin(); })
+        .catch(function (err) { if (err.message !== "auth") alertSingkat(b, "Gagal. Coba lagi."); }).finally(function () { sibuk(b, false); });
+    }
+  });
+
+  /* ---------- Hasil psikotes ---------- */
+  var antreHasil = [], dataHasil = [];
+  function normNama(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+  // Nama file -> nama siswa: buang ekstensi, angka urut di depan, dan garis bawah.
+  function namaDariFile(n) { return String(n).replace(/\.[^.]+$/, "").replace(/[_\-.]+/g, " ").replace(/^\s*\d+\s*/, "").replace(/\s+/g, " ").trim(); }
+  function cariSiswa(nama) {
+    var q = normNama(nama), hasil = null;
+    Object.keys(petaSiswa).forEach(function (k) { if (normNama(k) === q) hasil = petaSiswa[k]; });
+    return hasil;
+  }
+  function gambarAntre() {
+    var box = $("hs-cocok");
+    if (!antreHasil.length) { box.innerHTML = ""; return; }
+    var cocok = antreHasil.filter(function (x) { return x.kelas; }).length;
+    box.innerHTML = '<p class="hint' + (cocok === antreHasil.length ? " hint-ok" : "") + '" style="margin:0 0 8px">' + cocok + " dari " + antreHasil.length + " file sudah cocok dengan data siswa. Periksa atau lengkapi sebelum mengunggah.</p>" +
+      '<div class="table-wrap"><table><thead><tr><th scope=col>File</th><th scope=col>Nama siswa</th><th scope=col>Kelas</th><th scope=col><span class=sr-only>Status</span></th></tr></thead><tbody>' +
+      antreHasil.map(function (x, i) {
+        return "<tr><td>" + esc(x.file.name) + '</td><td><input class="in-tabel" data-hs-nama="' + i + '" list="dl-siswa" value="' + esc(x.nama) + '" aria-label="Nama siswa untuk ' + esc(x.file.name) + '"></td>' +
+          '<td><input class="in-tabel" style="max-width:80px" data-hs-kelas="' + i + '" value="' + esc(x.kelas) + '" aria-label="Kelas untuk ' + esc(x.file.name) + '"></td><td>' + (x.selesai ? '<span class="pill pill-selesai">Terunggah</span>' : x.gagal ? '<span class="pill pill-telat">' + esc(x.gagal) + "</span>" : "") + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+  $("hs-file").addEventListener("change", function () {
+    antreHasil = ambilFile("hs-file").map(function (f) {
+      var nama = namaDariFile(f.name), s2 = cariSiswa(nama);
+      return { file: f, nama: s2 ? s2.nama : nama, kelas: s2 ? s2.kelas : "" };
+    });
+    status($("hasil-status"), ""); gambarAntre();
+  });
+  $("hs-cocok").addEventListener("input", function (e) {
+    var n = e.target.closest("[data-hs-nama]"), k = e.target.closest("[data-hs-kelas]");
+    if (n) { var x = antreHasil[+n.dataset.hsNama]; x.nama = n.value; var s2 = cariSiswa(n.value); if (s2 && s2.kelas) { x.kelas = s2.kelas; var ik = document.querySelector('[data-hs-kelas="' + n.dataset.hsNama + '"]'); if (ik) ik.value = s2.kelas; } }
+    if (k) antreHasil[+k.dataset.hsKelas].kelas = k.value;
+  });
+  $("form-hasil").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var st = $("hasil-status"), btn = this.querySelector("button[type=submit]");
+    var sisa = antreHasil.filter(function (x) { return !x.selesai; });
+    if (!sisa.length) { status(st, "Pilih file hasil terlebih dahulu.", "err"); $("hs-file").focus(); return; }
+    var kurang = sisa.filter(function (x) { return !String(x.nama).trim() || !String(x.kelas).trim(); });
+    if (kurang.length) { status(st, "Lengkapi nama dan kelas untuk " + kurang.length + " file.", "err"); return; }
+    var besar = sisa.filter(function (x) { return x.file.size > MAKS_FILE; });
+    if (besar.length) { status(st, besar[0].file.name + " lebih dari 10 MB.", "err"); return; }
+    var opsi = { jenis: $("hs-jenis").value, tanggal: $("hs-tanggal").value, catatan: $("hs-catatan").value, tampil: $("hs-tampil").checked };
+    sibuk(btn, true, "Mengunggah…");
+    sisa.reduce(function (p2, x, i) {
+      return p2.then(function () {
+        status(st, "Mengunggah " + (i + 1) + " dari " + sisa.length + "…", "");
+        return bacaBase64(x.file).then(function (b64) {
+          return api("unggahHasil", { data: { nama: x.nama, kelas: x.kelas, jenis: opsi.jenis, tanggal: opsi.tanggal, catatan: opsi.catatan, tampil: opsi.tampil,
+            file: { name: x.file.name, type: x.file.type, data: b64 } } });
+        }).then(function (d) { if (d.ok) { x.selesai = true; x.gagal = ""; } else x.gagal = d.error; gambarAntre(); });
+      });
+    }, Promise.resolve()).then(function () {
+      var gagal = antreHasil.filter(function (x) { return x.gagal; }).length;
+      status(st, gagal ? gagal + " file gagal. Perbaiki lalu tekan Unggah lagi." : "Semua hasil terunggah.", gagal ? "err" : "ok");
+      if (!gagal) { antreHasil = []; $("hs-file").value = ""; setTimeout(gambarAntre, 1500); }
+      dimuat.hasil = false; muatHasil();
+    }).catch(gagalKoneksi(st, "Koneksi terputus saat mengunggah. Tekan Unggah lagi untuk melanjutkan.")).finally(function () { sibuk(btn, false); });
+  });
+  function muatHasil() {
+    var box = $("hasil-list"), q = $("cari-hasil").value.trim();
+    box.innerHTML = '<p class="muted">Memuat…</p>';
+    return api("daftarHasil", { cari: q }).then(function (d) {
+      dimuat.hasil = true; dataHasil = d.items || [];
+      if (!dataHasil.length) { box.innerHTML = '<div class="kosong"><strong>' + (q ? 'Tidak ada hasil untuk "' + esc(q) + '".' : "Belum ada hasil psikotes yang diunggah.") + "</strong><span>Unggah file lewat formulir di atas.</span></div>"; return; }
+      box.innerHTML = '<div class="table-wrap"><table><thead><tr><th scope=col>Siswa</th><th scope=col>Tes</th><th scope=col>Untuk siswa</th><th scope=col><span class=sr-only>Aksi</span></th></tr></thead><tbody>' +
+        dataHasil.map(function (x, i) {
+          return "<tr><td><strong>" + esc(x.nama) + "</strong> (" + esc(x.kelas) + ")" + (x.akun ? "" : '<br><span class="muted" style="font-size:13px">Belum punya akun portal</span>') + "</td><td>" + esc(x.jenis) +
+            (x.tanggal ? "<br><span class=muted>" + esc(tglPanjang(x.tanggal)) + "</span>" : "") + '</td><td><span class="status-akun' + (x.tampil ? "" : " mati") + '">' + (x.tampil ? "Ditampilkan" : "Disembunyikan") + "</span></td>" +
+            '<td class="sel-scan"><button type="button" class="btn-mini" data-hs-lihat="' + i + '">Lihat</button> <button type="button" class="btn-mini" data-hs-tampil="' + i + '">' + (x.tampil ? "Sembunyikan" : "Tampilkan") + '</button> <button type="button" class="btn-mini btn-hapus" data-hs-hapus="' + i + '">Hapus</button></td></tr>';
+        }).join("") + "</tbody></table></div>";
+    }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
+  }
+  $("form-cari-hasil").addEventListener("submit", function (e) { e.preventDefault(); muatHasil(); });
+  function lihatHasil(id, btn) {
+    sibuk(btn, true, "Membuka…");
+    api("lihatHasil", { id: id }).then(function (d) {
+      if (!d.ok) { alertSingkat(btn, d.error); return; }
+      var bin = atob(d.data), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      if (urlLihat) URL.revokeObjectURL(urlLihat);
+      urlLihat = URL.createObjectURL(new Blob([arr], { type: d.mime }));
+      $("scan-viewer-judul").textContent = d.nama;
+      $("scan-unduh").href = urlLihat; $("scan-unduh").setAttribute("download", d.nama);
+      $("scan-viewer-isi").innerHTML = /^image\//.test(d.mime) ? '<img src="' + urlLihat + '" alt="' + esc(d.nama) + '">'
+        : '<iframe src="' + urlLihat + '" title="' + esc(d.nama) + '"></iframe><p class="muted" style="margin:8px 0 0">PDF tidak tampil? Tekan Unduh untuk membukanya.</p>';
+      $("scan-viewer").hidden = false; $("scan-viewer").scrollIntoView({ behavior: "smooth", block: "start" });
+    }).catch(function (err) { if (err.message !== "auth") alertSingkat(btn, "Gagal membuka. Coba lagi."); }).finally(function () { sibuk(btn, false); });
+  }
+  $("hasil-list").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.hsLihat) { lihatHasil(dataHasil[+b.dataset.hsLihat].id, b); return; }
+    if (b.dataset.hsTampil) {
+      var x = dataHasil[+b.dataset.hsTampil]; sibuk(b, true, "Menyimpan…");
+      api("tampilHasil", { id: x.id, tampil: !x.tampil }).then(function () { return muatHasil(); }).catch(function () { sibuk(b, false); });
+      return;
+    }
+    if (b.dataset.hsHapus) {
+      if (b.dataset.yakin !== "1") { b.dataset.yakin = "1"; b.textContent = "Yakin hapus?"; setTimeout(function () { if (b.isConnected) { b.dataset.yakin = ""; b.textContent = "Hapus"; } }, 6000); return; }
+      sibuk(b, true, "Menghapus…");
+      api("hapusHasil", { id: dataHasil[+b.dataset.hsHapus].id }).then(function (d) { if (!d.ok) { sibuk(b, false); alertSingkat(b, d.error); return; } muatHasil(); })
+        .catch(function () { sibuk(b, false); });
+    }
+  });
+
+  /* ---------- Formulir siswa ---------- */
+  var dataFormulir = [];
+  function muatFormulir() {
+    var box = $("formulir-list");
+    box.innerHTML = '<p class="muted">Memuat…</p>';
+    return api("daftarFormulir").then(function (d) {
+      dimuat.formulir = true; dataFormulir = d.items || [];
+      if (!dataFormulir.length) { box.innerHTML = '<div class="kosong"><strong>Belum ada formulir yang dibagikan.</strong><span>Bagikan angket atau asesmen lewat formulir di atas.</span></div>'; return; }
+      box.innerHTML = '<ul class="daftar-ajuan">' + dataFormulir.map(function (f, i) {
+        var persen = f.target ? Math.round(f.terisi.length / f.target * 100) : 0;
+        return "<li><div class=\"ajuan-kepala\"><div><h3>" + esc(f.judul) + "</h3><p>Untuk " + esc(f.sasaran) + (f.tenggat ? " · tenggat " + esc(tglPanjang(f.tenggat)) : "") + " · oleh " + esc(f.oleh) + "</p></div>" +
+          '<span class="status-akun' + (f.aktif ? "" : " mati") + '">' + (f.aktif ? "Tampil di portal" : "Disembunyikan") + "</span></div>" +
+          '<div><p style="margin:0 0 6px;font-size:14px;color:#3B4568"><strong>' + f.terisi.length + "</strong> dari " + f.target + " siswa sasaran menandai sudah mengisi</p>" +
+          '<div class="progres"><span style="width:' + Math.min(100, persen) + '%"></span></div></div>' +
+          (f.terisi.length ? "<details><summary style=\"cursor:pointer;font-weight:700;color:#1D3FAE;font-size:14px\">Lihat siapa saja</summary><p class=\"muted\" style=\"margin:8px 0 0;font-size:14px\">" +
+            f.terisi.map(function (x) { return esc(x.nama) + " (" + esc(x.kelas) + ")"; }).join(", ") + "</p></details>" : "") +
+          '<div class="tombol-baris"><a class="btn-mini" style="display:inline-flex;align-items:center;text-decoration:none" href="' + esc(f.link) + '" target="_blank" rel="noopener">Buka formulir</a>' +
+          '<button type="button" class="btn-mini" data-fm-aktif="' + i + '">' + (f.aktif ? "Sembunyikan dari portal" : "Tampilkan lagi") + "</button></div></li>";
+      }).join("") + '</ul><p class="muted" style="font-size:13px;margin-top:10px">Hitungan berasal dari tanda "sudah mengisi" di Portal Siswa. Siswa tanpa akun portal tidak terhitung; cek jawaban lengkap di Google Form.</p>';
+    }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
+  }
+  $("formulir-muat").addEventListener("click", muatFormulir);
+  $("formulir-list").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-fm-aktif]"); if (!b) return;
+    var f = dataFormulir[+b.dataset.fmAktif]; sibuk(b, true, "Menyimpan…");
+    api("aktifFormulir", { id: f.id, aktif: !f.aktif }).then(function () { return muatFormulir(); }).catch(function () { sibuk(b, false); });
+  });
+  $("form-formulir").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var f = this, st = $("formulir-status"), btn = f.querySelector("button[type=submit]");
+    var bad = tandaiWajib(f);
+    if (bad) { status(st, "Isi judul dan tautan formulir.", "err"); bad.focus(); return; }
+    if (!/^https:\/\/\S+$/.test($("fm-link").value.trim())) { status(st, "Tautan harus diawali https://", "err"); $("fm-link").focus(); return; }
+    var sasaran = [].slice.call(document.querySelectorAll("#fm-tingkat input:checked")).map(function (x) { return x.value; })
+      .concat($("fm-kelas").value.split(",").map(function (x) { return x.trim().toUpperCase(); }).filter(String));
+    if (!sasaran.length) { status(st, "Pilih sasaran: semua siswa, tingkat, atau kelas tertentu.", "err"); return; }
+    sibuk(btn, true, "Membagikan…"); status(st, "");
+    api("simpanFormulir", { data: { judul: $("fm-judul").value, link: $("fm-link").value.trim(), sasaran: sasaran.join(", "), tenggat: $("fm-tenggat").value, keterangan: $("fm-ket").value } }).then(function (d) {
+      if (!d.ok) { status(st, d.error, "err"); return; }
+      f.reset(); status(st, "Formulir dibagikan. Siswa sasaran melihatnya di Portal Siswa.", "ok");
+      return muatFormulir();
+    }).catch(gagalKoneksi(st)).finally(function () { sibuk(btn, false); });
   });
 
   /* ---------- Akun ---------- */
