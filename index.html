@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261106a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261107a">
 </head>
 <body>
 <main><div style="background: #FEFBF2; color: #12204F; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; box-sizing: border-box">
@@ -186,10 +186,14 @@
             <a class="btn-primary" href="#guru" style="display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 24px; border-radius: 999px; background: #1E7A4C; color: #FFFFFF; font-weight: 700; font-size: 16px; text-decoration: none">Chat Guru BK</a>
             <a class="btn-ghost" href="curhat.html" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 22px; border-radius: 999px; border: 2px solid #1D3FAE; color: #1D3FAE; font-weight: 700; font-size: 16px; text-decoration: none; background: transparent">Kotak Curhat Anonim</a>
           </div>
-          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3B4568">Sudah pernah curhat? <a href="cek.html" style="font-weight: 700">Cek balasan guru BK</a>. Sudah selesai konseling? <a href="survei.html" style="font-weight: 700">Isi survei singkat</a>.</p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3B4568">Sudah mengirim curhat atau pengajuan? <a href="cek.html" style="font-weight: 700">Cek balasan dan jadwal</a>. Sudah selesai konseling? <a href="survei.html" style="font-weight: 700">Isi survei singkat</a>.</p>
+          <div class="portal-pintu">
+            <a href="siswa.html"><strong>Portal siswa</strong><span>Pantau pengajuan konseling, jadwal, dan target belajarmu.</span></a>
+            <a href="wali.html"><strong>Portal wali kelas</strong><span>Kirim rujukan siswa ke guru BK dan pantau tindak lanjutnya.</span></a>
+          </div>
         </div>
 
-        <form style="background: #F6F7FC; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box" id="form-konseling" class="js-form" data-form="Konseling" novalidate>
+        <form style="background: #F6F7FC; border-radius: 24px; padding: 32px; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box" id="form-konseling" class="js-form" data-form="Konseling" data-kode="1" novalidate>
           <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
           <h3 style="margin: 0; font-family: Rubik, sans-serif; font-weight: 700; font-size: 22px">Formulir pengajuan konseling</h3>
           <div class="g2" style="gap: 16px">
@@ -212,6 +216,16 @@
             Data hanya dibaca oleh guru BK dan dijaga kerahasiaannya.
           </p>
         </form>
+        <div class="kode-box" hidden tabindex="-1" style="margin-top: 0; align-self: start">
+          <h3 style="margin: 0; font-family: Rubik, sans-serif; font-weight: 800; font-size: 22px">Pengajuanmu sudah diterima guru BK.</h3>
+          <p style="margin: 0; font-size: 16px; line-height: 1.6">Simpan kode ini. Pakai di halaman <a href="cek.html">Cek Balasan</a> untuk melihat kapan dan di mana kamu bertemu guru BK.</p>
+          <p class="kode-val" style="margin: 0; font-family: Rubik, sans-serif; font-weight: 800; font-size: 36px; letter-spacing: 2px; color: #1D3FAE"></p>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <button type="button" class="btn-ghost kode-copy" style="min-height: 48px; padding: 0 20px; border-radius: 999px; border: 2px solid #1D3FAE; background: transparent; color: #1D3FAE; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">Salin kode</button>
+            <a class="kode-link" href="cek.html" style="min-height: 48px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 999px; background: #1D3FAE; color: #FFFFFF; font-weight: 700; font-size: 15px; text-decoration: none">Cek jadwal nanti</a>
+          </div>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #4A5578">Tip: foto layar ini. Biar tidak perlu menyimpan kode, aktifkan <a href="siswa.html">akun siswa</a>: semua pengajuan dan jadwalmu tersimpan di sana.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -423,7 +437,7 @@
           <span style="font-weight: 700; font-size: 17px; color: #FFFFFF">Bimbingan dan Konseling SMP Labschool Ciracas</span>
           <p style="margin: 0; font-size: 15px; line-height: 1.6">Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750</p>
           <p style="margin: 0; font-size: 15px; line-height: 1.6">WA <a href="https://wa.me/6282280003416" style="color: #FFFFFF">0822 8000 3416</a> · <a href="mailto:smplabsciracas@labschool.sch.id" style="color: #FFFFFF">smplabsciracas@labschool.sch.id</a></p>
-          <p style="margin: 0; font-size: 15px; line-height: 1.8"><a href="curhat.html" style="color: #FFFFFF">Kotak curhat</a> · <a href="lapor.html" style="color: #FFFFFF">Lapor perundungan</a> · <a href="alur-penanganan.html" style="color: #FFFFFF">Alur penanganan</a> · <a href="cek.html" style="color: #FFFFFF">Cek balasan</a> · <a href="janji-orang-tua.html" style="color: #FFFFFF">Janji orang tua</a> · <a href="tes-minat.html" style="color: #FFFFFF">Tes minat karier</a> · <a href="survei.html" style="color: #FFFFFF">Survei layanan</a> · <a href="psb.html" style="color: #FFFFFF">Informasi PSB</a> · <a href="kaldik.html" style="color: #FFFFFF">Kalender pendidikan</a> · <a href="arsip.html" style="color: #FFFFFF">Arsip kegiatan</a></p>
+          <p style="margin: 0; font-size: 15px; line-height: 1.8"><a href="curhat.html" style="color: #FFFFFF">Kotak curhat</a> · <a href="lapor.html" style="color: #FFFFFF">Lapor perundungan</a> · <a href="alur-penanganan.html" style="color: #FFFFFF">Alur penanganan</a> · <a href="cek.html" style="color: #FFFFFF">Cek balasan</a> · <a href="siswa.html" style="color: #FFFFFF">Portal siswa</a> · <a href="wali.html" style="color: #FFFFFF">Portal wali kelas</a> · <a href="janji-orang-tua.html" style="color: #FFFFFF">Janji orang tua</a> · <a href="tes-minat.html" style="color: #FFFFFF">Tes minat karier</a> · <a href="survei.html" style="color: #FFFFFF">Survei layanan</a> · <a href="psb.html" style="color: #FFFFFF">Informasi PSB</a> · <a href="kaldik.html" style="color: #FFFFFF">Kalender pendidikan</a> · <a href="arsip.html" style="color: #FFFFFF">Arsip kegiatan</a></p>
           <p style="margin: 0; font-size: 15px">Instagram <a href="https://instagram.com/labschoolciracas.official" style="color: #FFFFFF">@labschoolciracas.official</a></p>
         </div>
         <div style="display: flex; align-items: center; gap: 20px; justify-self: end">
@@ -434,7 +448,7 @@
       <p style="margin: 0; padding-top: 24px; border-top: 1px solid #2C3B6E; font-size: 13px; color: #B3BEDF">© 2026 BK SMP Labschool Ciracas · <a href="privasi.html" style="color: #B3BEDF">Kebijakan privasi</a> · <a href="guru.html" style="color: #B3BEDF">Masuk guru BK</a></p>
     </div>
   </footer>
-<script src="assets/js/config.js?v=20261106a"></script>
-<script src="assets/js/main.js?v=20261106a"></script>
+<script src="assets/js/config.js?v=20261107a"></script>
+<script src="assets/js/main.js?v=20261107a"></script>
 </body>
 </html>

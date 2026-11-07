@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261106a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261107a">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -57,6 +57,7 @@
       <div class="dash-tabs" role="tablist" aria-label="Menu dashboard">
         <button type="button" class="dash-tab" role="tab" id="t-inbox" data-tab="inbox" aria-controls="tab-inbox" aria-selected="true">Kotak masuk <span class="badge" id="badge-inbox" hidden></span></button>
         <button type="button" class="dash-tab" role="tab" id="t-pantau" data-tab="pantau" aria-controls="tab-pantau" aria-selected="false" tabindex="-1">Pemantauan <span class="badge" id="badge-pantau" hidden></span></button>
+        <button type="button" class="dash-tab" role="tab" id="t-jurnal" data-tab="jurnal" aria-controls="tab-jurnal" aria-selected="false" tabindex="-1">Jurnal harian</button>
         <button type="button" class="dash-tab" role="tab" id="t-siswa" data-tab="siswa" aria-controls="tab-siswa" aria-selected="false" tabindex="-1">Profil siswa</button>
         <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="false" tabindex="-1">Laporan kejadian</button>
         <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
@@ -74,6 +75,7 @@
           <button type="button" class="seg-btn" data-jenis="curhat" aria-pressed="true">Curhat <span class="badge" id="b-curhat" hidden></span></button>
           <button type="button" class="seg-btn" data-jenis="laporan" aria-pressed="false">Laporan perundungan <span class="badge" id="b-laporan" hidden></span></button>
           <button type="button" class="seg-btn" data-jenis="konseling" aria-pressed="false">Permintaan konseling <span class="badge" id="b-konseling" hidden></span></button>
+          <button type="button" class="seg-btn" data-jenis="rujukan" aria-pressed="false">Rujukan wali kelas <span class="badge" id="b-rujukan" hidden></span></button>
           <button type="button" class="seg-btn" data-jenis="janji" aria-pressed="false">Janji orang tua <span class="badge" id="b-janji" hidden></span></button>
         </div>
         <div class="bar-aksi">
@@ -81,6 +83,8 @@
           <button type="button" id="inbox-muat" class="btn-mini">Muat ulang</button>
         </div>
         <div id="inbox-list" aria-live="polite"></div>
+        <datalist id="dl-jam"><option value="Istirahat pertama"><option value="Istirahat kedua"><option value="1 jam setelah pulang sekolah"></datalist>
+        <datalist id="dl-tempat"><option value="Ruang BK lantai 1 (samping lobi)"><option value="Ruang BK lantai 7 (sebelah ruang TU)"></datalist>
       </div>
 
       <!-- Profil siswa -->
@@ -92,6 +96,35 @@
           <button type="button" id="pantau-muat" class="btn-mini">Muat ulang</button>
         </div>
         <div id="pantau-list" aria-live="polite"></div>
+      </div>
+
+      <!-- Jurnal harian -->
+      <div id="tab-jurnal" class="dash-panel" role="tabpanel" aria-labelledby="t-jurnal" hidden>
+        <form id="form-jurnal" class="card-form" novalidate>
+          <h2 class="dash-h">Catat kegiatan hari ini</h2>
+          <p class="muted" style="margin: 0">Jurnal harian guru BK: semua kegiatan layanan, konsultasi, koordinasi, dan administrasi. Bisa dicetak per bulan untuk laporan dan supervisi.</p>
+          <div class="g3f">
+            <div class="field"><label for="j-tanggal">Tanggal</label><input id="j-tanggal" type="date" required></div>
+            <div class="field"><label for="j-jenis">Jenis kegiatan</label><select id="j-jenis"></select></div>
+            <div class="field"><label for="j-jam">Jam (opsional)</label><input id="j-jam" type="text" placeholder="mis. 07.30–08.50" list="dl-jam"></div>
+          </div>
+          <div class="field"><label for="j-sasaran">Sasaran (opsional)</label><input id="j-sasaran" type="text" placeholder="mis. Kelas 7A, 3 siswa 8B, orang tua Bima"><span class="hint">Untuk layanan perorangan cukup tulis kelas atau inisial. Rincian kasus tetap di Laporan kejadian.</span></div>
+          <div class="field"><label for="j-uraian">Uraian kegiatan</label><textarea id="j-uraian" rows="3" required></textarea></div>
+          <div class="g2" style="gap: 16px">
+            <div class="field"><label for="j-hasil">Hasil (opsional)</label><textarea id="j-hasil" rows="2"></textarea></div>
+            <div class="field"><label for="j-tindak">Tindak lanjut (opsional)</label><textarea id="j-tindak" rows="2"></textarea></div>
+          </div>
+          <div class="tombol-baris"><button type="submit" class="btn-solid">Simpan ke jurnal</button></div>
+          <p class="form-status" id="jurnal-status" role="status" aria-live="polite"></p>
+        </form>
+        <form id="form-jurnal-lihat" class="filter-baris" novalidate style="margin-top: 28px">
+          <div class="field"><label for="jl-bulan">Bulan</label><input id="jl-bulan" type="month"></div>
+          <div class="field" style="min-width: 220px"><label for="jl-guru">Guru BK</label><select id="jl-guru"><option value="">Semua guru BK</option></select></div>
+          <button type="submit" class="btn-mini" style="min-height: 46px">Tampilkan</button>
+          <button type="button" id="jl-cetak" class="btn-mini" style="min-height: 46px">Cetak jurnal</button>
+        </form>
+        <p class="form-status" id="jurnal-lihat-status" role="status" aria-live="polite"></p>
+        <div id="jurnal-list" aria-live="polite"></div>
       </div>
 
       <div id="tab-siswa" class="dash-panel" role="tabpanel" aria-labelledby="t-siswa" hidden>
@@ -250,7 +283,31 @@
 
       <!-- Akun -->
       <div id="tab-akun" class="dash-panel" role="tabpanel" aria-labelledby="t-akun" hidden>
-        <form id="form-password" class="card-form" novalidate>
+        <form id="form-wali" class="card-form" novalidate>
+          <h2 class="dash-h">Akun wali kelas</h2>
+          <p class="muted" style="margin: 0">Wali kelas masuk ke <a href="wali.html" target="_blank" rel="noopener">Portal Wali Kelas</a> untuk mengirim rujukan dan melihat status serta tanggapan guru BK. Mereka tidak bisa melihat catatan konseling.</p>
+          <div class="g3f">
+            <div class="field"><label for="w-nama">Nama wali kelas</label><input id="w-nama" type="text" required></div>
+            <div class="field"><label for="w-email">Email</label><input id="w-email" type="email" autocomplete="off" required></div>
+            <div class="field"><label for="w-kelas">Kelas perwalian</label><input id="w-kelas" type="text" placeholder="mis. 7A" required></div>
+          </div>
+          <div class="tombol-baris"><button type="submit" class="btn-solid">Simpan akun</button></div>
+          <p class="form-status" id="wali-status" role="status" aria-live="polite"></p>
+          <div class="sandi-sekali" id="wali-sandi" hidden aria-live="polite"></div>
+          <div id="wali-list"></div>
+        </form>
+        <form id="form-akun-siswa" class="card-form" novalidate style="margin-top: 20px" role="search">
+          <h2 class="dash-h">Akun siswa</h2>
+          <p class="muted" style="margin: 0">Siswa mengaktifkan akunnya sendiri di <a href="siswa.html" target="_blank" rel="noopener">Portal Siswa</a> dengan nama, kelas, dan NIS yang cocok dengan tab DataSiswa. Bila siswa lupa PIN, buat PIN baru di sini lalu sampaikan langsung kepadanya.</p>
+          <div class="cari-baris">
+            <div class="field" style="flex: 1"><label for="as-cari">Cari nama atau kelas</label><input id="as-cari" type="search" list="dl-siswa" autocomplete="off"><span class="hint">Kosongkan untuk melihat semua akun.</span></div>
+            <button type="submit" class="btn-solid">Cari</button>
+          </div>
+          <p class="form-status" id="akun-siswa-status" role="status" aria-live="polite"></p>
+          <div class="sandi-sekali" id="siswa-sandi" hidden aria-live="polite"></div>
+          <div id="akun-siswa-list"></div>
+        </form>
+        <form id="form-password" class="card-form" novalidate style="margin-top: 20px">
           <h2 class="dash-h">Ganti password</h2>
           <div class="field"><label for="pw-lama">Password lama</label><input id="pw-lama" type="password" autocomplete="current-password" required></div>
           <div class="field"><label for="pw-baru">Password baru</label><input id="pw-baru" type="password" autocomplete="new-password" minlength="8" required><span class="hint">Minimal 8 karakter.</span></div>
@@ -287,8 +344,8 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261106a"></script>
-<script src="assets/js/main.js?v=20261106a"></script>
-<script src="assets/js/guru.js?v=20261106a"></script>
+<script src="assets/js/config.js?v=20261107a"></script>
+<script src="assets/js/main.js?v=20261107a"></script>
+<script src="assets/js/guru.js?v=20261107a"></script>
 </body>
 </html>

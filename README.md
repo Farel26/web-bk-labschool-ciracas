@@ -10,12 +10,14 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `curhat.html` | Kotak curhat anonim |
 | `janji-orang-tua.html` | Formulir janji temu orang tua/wali |
 | `lapor.html` | Lapor perundungan (boleh anonim, dapat kode) |
-| `cek.html` | Cek balasan guru BK dengan kode |
+| `cek.html` | Cek balasan dan jadwal konseling dengan kode |
+| `siswa.html` | Portal siswa: aktivasi akun (nama + kelas + NIS cocok dengan DataSiswa), pengajuan konseling dan jadwalnya, target belajar, waktu fokus, hasil tes minat |
+| `wali.html` | Portal wali kelas: kirim rujukan siswa, pantau status, jadwal, dan tanggapan guru BK (tanpa catatan konseling) |
 | `tes-minat.html` | Tes minat karier RIASEC (persetujuan, identitas, 42 pernyataan, halaman hasil bergambar) |
 | `survei.html` | Survei kepuasan layanan |
 | `kaldik.html` | Kalender pendidikan, otomatis dari file kaldik resmi |
 | `psb.html` | Informasi Penerimaan Siswa Baru (PSB), otomatis dari tab **Info_PSB** |
-| `guru.html` | Dashboard tertutup guru BK (login): kotak masuk, profil siswa, laporan, surat, arsip scan, statistik |
+| `guru.html` | Dashboard tertutup guru BK (login): kotak masuk (termasuk rujukan wali kelas dan penjadwalan sesi), pemantauan + evaluasi sesi, jurnal harian, profil siswa, laporan, surat, arsip scan, statistik, akun wali kelas & siswa |
 | `privasi.html` | Kebijakan privasi |
 | `arsip.html`, `arsip-*.html` | Arsip kegiatan (tujuan, hasil, evaluasi, dokumentasi) |
 | `assets/css/style.css` | Tampilan |
@@ -23,6 +25,8 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `assets/js/main.js` | Menu HP, pengiriman formulir, agenda dari Sheets |
 | `assets/js/riasec.js` | Butir soal, kunci, dan isi hasil RIASEC (pekerjaan, jurusan, kegiatan) |
 | `assets/js/tes-minat.js` | Alur tes minat dan tampilan hasil |
+| `assets/js/jadwal.js` | Tampilan status & jadwal sesi (dipakai cek.html, siswa.html, wali.html) |
+| `assets/js/siswa.js`, `assets/js/wali.js` | Portal siswa dan portal wali kelas |
 | `assets/img/` | Logo, ilustrasi, foto guru, galeri, QR code |
 | `apps-script/Code.gs` | Kode untuk Google Sheet (tidak dijalankan oleh GitHub) |
 
@@ -36,7 +40,7 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 4. Izinkan akses yang diminta, lalu salin URL yang berakhiran `/exec`.
 5. Tempel URL itu di `assets/js/config.js` pada `SCRIPT_URL`, lalu commit.
 
-Isian formulir masuk ke tab **Konseling**, **Curhat**, **LaporanPerundungan**, **JanjiOrangTua**, dan **Survei**. Tab **Rekap** menghitung semuanya otomatis.
+Isian formulir masuk ke tab **Konseling** (sekarang dengan kode, jadi siswa bisa cek jadwalnya), **Curhat**, **LaporanPerundungan**, **JanjiOrangTua**, dan **Survei**. Tab **Rekap** menghitung semuanya otomatis.
 
 **Setelah mengubah CSS/JS:** naikkan angka `?v=` di tautan `style.css`/`*.js` pada semua halaman agar browser tidak memakai file lama.
 
@@ -88,3 +92,21 @@ Folder backup dan arsip scan selalu dibuat di sebelah sheet. Jika sheet dipindah
 ## Kode cek balasan
 
 Curhat dan laporan perundungan mendapat kode (mis. `BK-7F3K9Q`). Guru BK menulis jawaban di kolom **"Balasan untuk siswa/pelapor (tampil di web)"**. Siswa membacanya di `cek.html` dengan kode itu. Kolom catatan internal tidak pernah tampil di web.
+
+## Portal siswa, portal wali kelas, jurnal harian (November 2026)
+
+**Setelah menempel `Code.gs` versi ini dan membuat Versi baru:** buka web sekali (halaman mana saja). Tab baru dibuat otomatis dan kolom baru ditambahkan di ujung kanan tab lama. Data lama tidak diubah.
+
+| Tab baru | Isi |
+|---|---|
+| **RujukanWaliKelas** | Rujukan dari portal wali kelas. Muncul di Kotak masuk › Rujukan wali kelas |
+| **AkunWaliKelas** | Akun wali kelas (dibuat guru BK di menu Akun). Password hanya disimpan sebagai hash |
+| **AkunSiswa** | Akun yang diaktifkan siswa sendiri. PIN hanya disimpan sebagai hash |
+| **TargetSiswa** | Target belajar yang ditulis siswa di portal |
+| **JurnalHarian** | Jurnal harian guru BK |
+
+Kolom baru: **Konseling** (Kode, Akun siswa, Jadwal sesi, Jam sesi, Tempat sesi, Pesan untuk siswa) dan **CatatanPerkembangan** (Sesi ke, Pendekatan/teknik, laiseg, pikiran otomatis/alternatif, skala kemajuan).
+
+**Aktivasi akun siswa** mencocokkan nama lengkap + kelas dengan tab **DataSiswa**. Bila tab itu punya kolom berjudul **NIS** (atau NISN), siswa juga wajib mengisi NIS. Tanpa kolom NIS, siapa pun yang tahu nama dan kelas seorang siswa bisa mengaktifkan akun atas namanya, jadi sebaiknya tambahkan kolom NIS sebelum portal siswa diumumkan. Satu nama hanya bisa diaktifkan sekali; bila ada yang mengaku "akunku sudah dipakai orang", nonaktifkan akun itu di menu Akun lalu minta siswa mengaktifkan ulang.
+
+**Keamanan sesi:** guru BK, wali kelas, dan siswa memakai jenis sesi yang terpisah. Token wali kelas atau siswa ditolak oleh semua aksi dashboard guru. Akun yang dinonaktifkan langsung keluar. Lima kali salah password/PIN mengunci akun itu 15 menit.

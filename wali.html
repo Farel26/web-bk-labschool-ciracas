@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Wali Kelas — BK SMP Labschool Ciracas</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Wali kelas mengirim rujukan siswa ke guru BK dan memantau tindak lanjutnya.">
+<meta name="theme-color" content="#1D3FAE">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Portal Wali Kelas — BK SMP Labschool Ciracas">
+<meta property="og:description" content="Wali kelas mengirim rujukan siswa ke guru BK dan memantau tindak lanjutnya.">
+<meta property="og:image" content="https://farel26.github.io/web-bk-labschool-ciracas/assets/img/og-image.jpg">
+<meta property="og:locale" content="id_ID">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css?v=20261107a">
+</head>
+<body>
+<div style="background: #FEFBF2; min-height: 100vh">
+<div class="wrap">
+  <header class="site-header sub-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+    <a href="index.html" aria-label="Beranda BK SMP Labschool Ciracas" style="display: flex; align-items: center; gap: 16px; text-decoration: none">
+      <img src="assets/img/logo-labschool-ciracas.webp" alt="Logo SMP Labschool Ciracas" style="height: 52px; width: auto; display: block">
+      <span aria-hidden="true" style="width: 1.5px; height: 40px; background: #D9DCE6"></span>
+      <span style="display: flex; flex-direction: column; line-height: 1.15; font-family: Rubik, sans-serif; font-weight: 800; font-size: 17px; color: #1D3FAE"><span>Bimbingan</span><span>dan Konseling</span></span>
+    </a>
+    <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
+  </header>
+
+  <main class="portal">
+    <section id="panel-masuk" class="portal-masuk">
+      <span class="eyebrow">Portal wali kelas</span>
+      <h1 class="h2" style="margin-top: 12px">Rujuk siswa ke guru BK</h1>
+      <p class="lead" style="margin-top: 14px">Kirim rujukan untuk siswa di kelas Anda, lalu pantau statusnya: diterima, dijadwalkan, atau sedang didampingi. Isi pembicaraan konseling tetap rahasia antara siswa dan guru BK.</p>
+      <form id="form-masuk" class="card-form" novalidate>
+        <div class="field"><label for="m-email">Email</label><input id="m-email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <div class="field"><label for="m-pass">Password</label><input id="m-pass" type="password" autocomplete="current-password" required></div>
+        <button type="submit" class="btn-solid">Masuk</button>
+        <p class="form-status" id="masuk-status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="muted" style="margin-top: 16px">Belum punya akun atau lupa password? Minta guru BK membuatkan password baru. Akun wali kelas dibuat oleh guru BK.</p>
+    </section>
+
+    <section id="panel-portal" hidden>
+      <div class="portal-top">
+        <div>
+          <span class="eyebrow">Portal wali kelas</span>
+          <h1 class="h2" style="margin-top: 8px; font-size: 32px">Halo, <span id="nama-wali"></span></h1>
+          <div class="chips" style="margin-top: 10px"><span class="chip" id="kelas-wali"></span></div>
+        </div>
+        <button type="button" id="btn-keluar" class="btn-line">Keluar</button>
+      </div>
+
+      <div class="portal-grid">
+        <div class="portal-kolom">
+          <form id="form-rujukan" class="kartu-stk" novalidate>
+            <h2 class="dash-h">Kirim rujukan baru</h2>
+            <div class="g-nama-kelas">
+              <div class="field"><label for="r-nama">Nama siswa</label><input id="r-nama" type="text" list="dl-siswa-kelas" autocomplete="off" required><span class="hint" id="r-nama-hint">Ketik untuk memilih dari daftar kelas.</span></div>
+              <div class="field"><label for="r-kelas">Kelas</label><input id="r-kelas" type="text" required></div>
+            </div>
+            <datalist id="dl-siswa-kelas"></datalist>
+            <div class="field"><label for="r-alasan">Alasan rujukan</label><select id="r-alasan" required><option value="">Pilih alasan</option></select></div>
+            <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+              <legend style="font-size: 14px; font-weight: 600; color: #12204F; margin-bottom: 6px; padding: 0">Seberapa mendesak?</legend>
+              <div class="seg" id="r-urgensi"></div>
+            </fieldset>
+            <div class="sandi-sekali" id="r-darurat" hidden style="background: #FFF4F0; border-color: #A1260D; box-shadow: 4px 4px 0 #E9C9C0; color: #5B3A30">
+              <strong style="color: #8A2B12; font-size: 16px">Untuk keadaan darurat, jangan menunggu formulir.</strong>
+              <span>Telepon atau WhatsApp guru BK sekarang: Bu Nurul <a href="https://wa.me/6281381057408">0813 8105 7408</a>, Pak Farel <a href="https://wa.me/62895336711972">0895 3367 11972</a>, atau Bu Asmaa <a href="https://wa.me/62895404660333">0895 4046 60333</a>. Rujukan ini tetap dikirim sebagai catatan.</span>
+            </div>
+            <div class="field"><label for="r-diamati">Apa yang Anda amati</label><textarea id="r-diamati" rows="4" required></textarea><span class="hint">Tulis fakta yang terlihat: perilaku, kapan, seberapa sering. Hindari label seperti "nakal" atau "malas".</span></div>
+            <div class="field"><label for="r-upaya">Yang sudah Anda lakukan (opsional)</label><textarea id="r-upaya" rows="2" placeholder="mis. sudah diajak bicara dua kali, sudah menghubungi orang tua"></textarea></div>
+            <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+              <legend style="font-size: 14px; font-weight: 600; color: #12204F; margin-bottom: 6px; padding: 0">Sudah dibicarakan dengan orang tua?</legend>
+              <div class="seg">
+                <label class="seg-radio"><input type="radio" name="r-ortu" value="Belum" checked> Belum</label>
+                <label class="seg-radio"><input type="radio" name="r-ortu" value="Sudah"> Sudah</label>
+              </div>
+            </fieldset>
+            <div class="tombol-baris"><button type="submit" class="btn-solid">Kirim rujukan</button></div>
+            <p class="form-status" id="rujukan-status" role="status" aria-live="polite"></p>
+          </form>
+
+          <section aria-labelledby="h-rujukan-saya">
+            <div class="bar-aksi" style="margin-top: 0">
+              <h2 class="dash-h" id="h-rujukan-saya">Rujukan saya</h2>
+              <button type="button" id="btn-muat" class="btn-mini">Muat ulang</button>
+            </div>
+            <div id="daftar-rujukan" aria-live="polite"></div>
+          </section>
+        </div>
+
+        <div class="portal-kolom">
+          <div class="card-form" style="padding: 24px; gap: 12px">
+            <h2 class="dash-h" style="font-size: 19px">Yang Anda lihat di sini</h2>
+            <ul class="target-list" style="gap: 6px">
+              <li style="grid-template-columns: auto 1fr"><span aria-hidden="true" style="color: #17603B; font-weight: 800">✓</span><span class="t-teks">Status rujukan, jadwal siswa bertemu guru BK, dan tanggapan guru BK untuk Anda.</span></li>
+              <li style="grid-template-columns: auto 1fr"><span aria-hidden="true" style="color: #A1260D; font-weight: 800">✕</span><span class="t-teks">Isi pembicaraan dan catatan konseling. Itu rahasia siswa, sesuai kode etik ABKIN.</span></li>
+            </ul>
+            <p class="muted" style="margin: 0; font-size: 14px">Bila penanganan butuh kerja sama Anda, guru BK akan menghubungi Anda langsung.</p>
+          </div>
+          <details class="card-form" style="padding: 20px 24px; gap: 14px">
+            <summary style="cursor: pointer; font-weight: 700; color: #1D3FAE; min-height: 32px; display: flex; align-items: center">Ganti password</summary>
+            <form id="form-password" novalidate style="display: flex; flex-direction: column; gap: 14px; margin-top: 12px">
+              <div class="field"><label for="pw-lama">Password sekarang</label><input id="pw-lama" type="password" autocomplete="current-password" required></div>
+              <div class="field"><label for="pw-baru">Password baru</label><input id="pw-baru" type="password" autocomplete="new-password" minlength="8" required><span class="hint">Minimal 8 karakter.</span></div>
+              <div class="field"><label for="pw-ulang">Ulangi password baru</label><input id="pw-ulang" type="password" autocomplete="new-password" required></div>
+              <button type="submit" class="btn-solid">Simpan password</button>
+              <p class="form-status" id="password-status" role="status" aria-live="polite"></p>
+            </form>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<footer style="background: #12204F; color: #DCE3F8">
+  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750 · <a href="privasi.html" style="color: #DCE3F8">Kebijakan privasi</a></div>
+</footer>
+</div>
+
+<script src="assets/js/config.js?v=20261107a"></script>
+<script src="assets/js/jadwal.js?v=20261107a"></script>
+<script src="assets/js/wali.js?v=20261107a"></script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Siswa — BK SMP Labschool Ciracas</title>
+<meta name="description" content="Ajukan konseling, pantau jadwal bertemu guru BK, dan atur target belajarmu.">
+<meta name="theme-color" content="#1D3FAE">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Portal Siswa — BK SMP Labschool Ciracas">
+<meta property="og:description" content="Ajukan konseling, pantau jadwal bertemu guru BK, dan atur target belajarmu.">
+<meta property="og:image" content="https://farel26.github.io/web-bk-labschool-ciracas/assets/img/og-image.jpg">
+<meta property="og:locale" content="id_ID">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css?v=20261107a">
+</head>
+<body>
+<div style="background: #FEFBF2; min-height: 100vh">
+<div class="wrap">
+  <header class="site-header sub-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+    <a href="index.html" aria-label="Beranda BK SMP Labschool Ciracas" style="display: flex; align-items: center; gap: 16px; text-decoration: none">
+      <img src="assets/img/logo-labschool-ciracas.webp" alt="Logo SMP Labschool Ciracas" style="height: 52px; width: auto; display: block">
+      <span aria-hidden="true" style="width: 1.5px; height: 40px; background: #D9DCE6"></span>
+      <span style="display: flex; flex-direction: column; line-height: 1.15; font-family: Rubik, sans-serif; font-weight: 800; font-size: 17px; color: #1D3FAE"><span>Bimbingan</span><span>dan Konseling</span></span>
+    </a>
+    <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
+  </header>
+
+  <main class="portal">
+    <!-- Masuk & aktivasi -->
+    <section id="panel-masuk" class="portal-masuk">
+      <span class="eyebrow">Portal siswa</span>
+      <h1 class="h2" style="margin-top: 12px">Ruang BK milikmu</h1>
+      <p class="lead" style="margin-top: 14px">Ajukan konseling, lihat kapan kamu bertemu guru BK, simpan hasil tes, dan atur target belajarmu. Semua di satu tempat.</p>
+      <div class="seg" role="group" aria-label="Pilih">
+        <button type="button" class="seg-btn" data-mode="masuk" aria-pressed="true">Masuk</button>
+        <button type="button" class="seg-btn" data-mode="aktivasi" aria-pressed="false">Aktifkan akun (pertama kali)</button>
+      </div>
+
+      <form id="form-masuk" class="card-form" novalidate>
+        <div class="field"><label for="m-email">Email</label><input id="m-email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <div class="field"><label for="m-pin">PIN (6 angka)</label><input id="m-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" required></div>
+        <button type="submit" class="btn-solid">Masuk</button>
+        <p class="form-status" id="masuk-status" role="status" aria-live="polite"></p>
+        <p class="muted" style="margin: 0; font-size: 14px">Lupa PIN? Datang ke ruang BK. Guru BK akan membuatkan PIN baru untukmu.</p>
+      </form>
+
+      <form id="form-aktivasi" class="card-form" novalidate hidden>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp" id="a-hp">
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3B4568">Cukup sekali. Tulis nama dan kelasmu persis seperti di kartu pelajar, supaya sistem bisa mencocokkan dengan data sekolah.</p>
+        <div class="g-nama-kelas">
+          <div class="field"><label for="a-nama">Nama lengkap</label><input id="a-nama" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="a-kelas">Kelas</label><input id="a-kelas" type="text" placeholder="mis. 7A" required></div>
+        </div>
+        <div class="field" id="a-nis-wrap" hidden><label for="a-nis">NIS</label><input id="a-nis" type="text" inputmode="numeric" autocomplete="off"><span class="hint">Nomor induk siswa, ada di kartu pelajar atau rapor.</span></div>
+        <div class="field"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required><span class="hint">Dipakai untuk masuk. Boleh email sekolah atau email pribadimu.</span></div>
+        <div class="g2" style="gap: 16px">
+          <div class="field"><label for="a-pin">Buat PIN (6 angka)</label><input id="a-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></div>
+          <div class="field"><label for="a-pin2">Ulangi PIN</label><input id="a-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></div>
+        </div>
+        <label class="check"><input type="checkbox" id="a-setuju" required> <span>Aku paham: pengajuan konseling dan target yang kusimpan di sini bisa dibaca guru BK, dan dijaga kerahasiaannya sesuai <a href="privasi.html" target="_blank" rel="noopener">kebijakan privasi</a>. Aku tidak memberi tahu PIN-ku ke siapa pun.</span></label>
+        <button type="submit" class="btn-solid">Aktifkan akun</button>
+        <p class="form-status" id="aktivasi-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- Portal setelah masuk -->
+    <section id="panel-portal" hidden>
+      <div class="portal-top">
+        <div>
+          <span class="eyebrow">Portal siswa</span>
+          <h1 class="h2" style="margin-top: 8px; font-size: 32px">Halo, <span id="nama-siswa"></span></h1>
+          <div class="chips" style="margin-top: 10px"><span class="chip" id="kelas-siswa"></span></div>
+        </div>
+        <button type="button" id="btn-keluar" class="btn-line">Keluar</button>
+      </div>
+
+      <div class="portal-grid">
+        <div class="portal-kolom">
+          <form id="form-ajuan" class="kartu-stk" novalidate>
+            <h2 class="dash-h">Mau ngobrol dengan guru BK?</h2>
+            <div class="field"><label for="k-topik">Mau ngobrol tentang</label>
+              <select id="k-topik" required><option value="">Pilih topik</option><option>Pribadi</option><option>Sosial / pertemanan</option><option>Belajar</option><option>Karier / pilih sekolah</option><option>Lainnya</option></select></div>
+            <div class="field"><label for="k-waktu">Waktu yang kamu inginkan</label>
+              <select id="k-waktu" required><option value="">Pilih waktu</option><option>Istirahat pertama</option><option>Istirahat kedua</option><option>1 jam setelah pulang sekolah</option></select></div>
+            <div class="field"><label for="k-cerita">Ceritakan singkat (boleh dikosongkan)</label><textarea id="k-cerita" rows="3"></textarea></div>
+            <div class="tombol-baris"><button type="submit" class="btn-solid">Kirim pengajuan</button></div>
+            <p class="form-status" id="ajuan-status" role="status" aria-live="polite"></p>
+          </form>
+
+          <section aria-labelledby="h-ajuan">
+            <div class="bar-aksi" style="margin-top: 0">
+              <h2 class="dash-h" id="h-ajuan">Pengajuan konselingku</h2>
+              <button type="button" id="btn-muat" class="btn-mini">Muat ulang</button>
+            </div>
+            <div id="daftar-ajuan" aria-live="polite"></div>
+          </section>
+
+          <section class="card-form" style="padding: 24px" aria-labelledby="h-target">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+              <h2 class="dash-h" id="h-target">Target belajarku</h2>
+              <span class="muted" id="target-hitung" style="font-size: 14px"></span>
+            </div>
+            <div class="progres" id="target-progres" hidden><span style="width: 0"></span></div>
+            <ul class="target-list" id="target-list"></ul>
+            <form id="form-target" novalidate style="display: flex; flex-direction: column; gap: 10px">
+              <div class="field"><label for="t-teks">Target baru</label><input id="t-teks" type="text" maxlength="200" placeholder="mis. Hafal 20 kosakata bahasa Inggris" required></div>
+              <div class="target-opsi">
+                <div class="field"><label for="t-bidang">Bidang</label><select id="t-bidang"><option>Belajar</option><option>Pribadi</option><option>Sosial</option><option>Karier</option></select></div>
+                <div class="field"><label for="t-tenggat">Tenggat (opsional)</label><input id="t-tenggat" type="date"></div>
+              </div>
+              <div class="tombol-baris"><button type="submit" class="btn-solid">Tambah target</button></div>
+              <p class="form-status" id="target-status" role="status" aria-live="polite"></p>
+            </form>
+            <p class="muted" style="margin: 0; font-size: 13px">Tips: pecah target besar jadi langkah kecil yang bisa selesai dalam seminggu.</p>
+          </section>
+        </div>
+
+        <div class="portal-kolom">
+          <section class="card-form pomodoro" style="padding: 24px" aria-labelledby="h-fokus">
+            <h2 class="dash-h" id="h-fokus">Waktu fokus</h2>
+            <span class="pomodoro-mode" id="pm-mode">Fokus 25 menit</span>
+            <span class="pomodoro-waktu" id="pm-waktu" role="timer" aria-live="off">25:00</span>
+            <div class="tombol-baris" style="justify-content: center">
+              <button type="button" id="pm-mulai" class="btn-solid" style="min-width: 140px">Mulai</button>
+              <button type="button" id="pm-ulang" class="btn-mini" style="min-height: 52px">Ulang</button>
+            </div>
+            <p class="muted" style="margin: 0; font-size: 14px">Teknik Pomodoro: 25 menit fokus tanpa HP, lalu istirahat 5 menit. Setelah 4 putaran, istirahat lebih lama. <span id="pm-putaran"></span></p>
+          </section>
+
+          <section class="card-form" style="padding: 24px; gap: 14px" aria-labelledby="h-tes">
+            <h2 class="dash-h" id="h-tes" style="font-size: 19px">Tes dan hasilku</h2>
+            <div id="daftar-tes"></div>
+          </section>
+
+          <section class="card-form" style="padding: 24px; gap: 14px" aria-labelledby="h-lain">
+            <h2 class="dash-h" id="h-lain" style="font-size: 19px">Butuh yang lain?</h2>
+            <ul class="tautan-list">
+              <li><a href="curhat.html">Curhat tanpa nama <span aria-hidden="true">→</span></a></li>
+              <li><a href="index.html#materi">Materi BK kelas 7 <span aria-hidden="true">→</span></a></li>
+              <li><a href="lapor.html" class="merah">Lapor perundungan <span aria-hidden="true">→</span></a></li>
+            </ul>
+          </section>
+
+          <details class="card-form" style="padding: 20px 24px; gap: 14px">
+            <summary style="cursor: pointer; font-weight: 700; color: #1D3FAE; min-height: 32px; display: flex; align-items: center">Ganti PIN</summary>
+            <form id="form-pin" novalidate style="display: flex; flex-direction: column; gap: 14px; margin-top: 12px">
+              <div class="field"><label for="pin-lama">PIN sekarang</label><input id="pin-lama" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" required></div>
+              <div class="field"><label for="pin-baru">PIN baru (6 angka)</label><input id="pin-baru" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required></div>
+              <div class="field"><label for="pin-ulang">Ulangi PIN baru</label><input id="pin-ulang" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required></div>
+              <button type="submit" class="btn-solid">Simpan PIN</button>
+              <p class="form-status" id="pin-status" role="status" aria-live="polite"></p>
+            </form>
+          </details>
+        </div>
+      </div>
+
+      <aside style="margin-top: 28px; background: #FFF4F0; border: 1px solid #F4D6CB; border-radius: 20px; padding: 22px 24px; font-size: 15px; line-height: 1.6; color: #5B3A30">
+        <strong style="color: #8A2B12">Butuh bantuan segera?</strong> Portal ini tidak dipantau setiap saat. Kalau kamu dalam bahaya atau merasa tidak aman, langsung datang ke ruang BK, hubungi orang dewasa yang kamu percaya, SAPA 129 (telepon 129 · WA 08111-129-129), atau panggilan darurat 112.
+      </aside>
+    </section>
+  </main>
+</div>
+<footer style="background: #12204F; color: #DCE3F8">
+  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750 · <a href="privasi.html" style="color: #DCE3F8">Kebijakan privasi</a></div>
+</footer>
+</div>
+
+<script src="assets/js/config.js?v=20261107a"></script>
+<script src="assets/js/jadwal.js?v=20261107a"></script>
+<script src="assets/js/siswa.js?v=20261107a"></script>
+</body>
+</html>
