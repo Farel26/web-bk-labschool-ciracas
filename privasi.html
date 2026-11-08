@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261106a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261108a">
 <style>
   .privasi h2{font-family:Rubik,sans-serif;font-weight:800;font-size:22px;color:#12204F;margin:40px 0 10px}
   .privasi p,.privasi li{font-size:16px;line-height:1.7;color:#3B4568}
@@ -48,7 +48,7 @@
 
     <div class="ringkas">
       <ul>
-        <li><strong>Hanya guru BK</strong> yang bisa membaca isian formulir. Wali kelas, teman, dan orang lain tidak bisa.</li>
+        <li><strong>Hanya guru BK</strong> yang bisa membaca isian formulir dan catatan konseling. Wali kelas, teman, dan orang lain tidak bisa.</li>
         <li><strong>Curhat dan laporan perundungan boleh tanpa nama.</strong> Kamu cukup menyimpan kodenya untuk membaca balasan.</li>
         <li><strong>Rahasia, dengan satu batas:</strong> kalau ada bahaya bagi keselamatanmu atau orang lain, guru BK wajib bertindak untuk melindungi.</li>
         <li><strong>Tidak ada iklan dan tidak ada pelacak.</strong> Data tidak pernah dijual atau dibagikan untuk kepentingan lain.</li>
@@ -57,12 +57,16 @@
 
     <h2>Data yang dikumpulkan</h2>
     <ul>
-      <li><strong>Konsultasi dengan guru BK:</strong> nama, kelas, topik, waktu yang diinginkan, dan cerita singkat.</li>
+      <li><strong>Konsultasi dengan guru BK:</strong> nama, kelas, topik, waktu yang diinginkan, dan cerita singkat. Guru BK menambahkan jadwal, tempat, dan pesan untukmu.</li>
+      <li><strong>Akun portal siswa (jika kamu mengaktifkannya):</strong> nama dan kelas (dicocokkan dengan data sekolah), email, PIN dalam bentuk tersandi, waktu terakhir masuk, serta target belajar yang kamu tulis. Akun ini tidak wajib; semua layanan BK tetap bisa dipakai tanpa akun.</li>
+      <li><strong>Lewat portal siswa:</strong> check-in suasana hati harian (skor, perasaan, catatan singkat), pesan chat dengan guru BK, dan tanda "sudah mengisi" untuk formulir dari guru BK. Jawaban formulirnya sendiri tersimpan di Google Form, bukan di web ini.</li>
+      <li><strong>Hasil psikotes dan asesmen:</strong> file hasil tes yang diunggah guru BK. Siswa hanya bisa membuka hasil miliknya sendiri lewat akunnya, dan hanya bila guru BK menandainya untuk ditampilkan.</li>
+      <li><strong>Rujukan wali kelas:</strong> nama dan kelas siswa, alasan rujukan, hal yang diamati wali kelas, dan upaya yang sudah dilakukan.</li>
       <li><strong>Kotak curhat:</strong> jenjang kelas dan nama/kontak hanya jika kamu mau mengisinya, topik, dan isi curhat.</li>
       <li><strong>Lapor perundungan:</strong> peranmu (korban, saksi, atau orang tua), kejadiannya, tempat, waktu, dan pihak yang terlibat. Nama pelapor tidak wajib.</li>
       <li><strong>Janji temu orang tua:</strong> nama orang tua/wali, nama dan kelas siswa, nomor WhatsApp, keperluan, dan waktu.</li>
       <li><strong>Survei kepuasan:</strong> penilaian dan saran, tanpa nama.</li>
-      <li><strong>Catatan guru BK:</strong> laporan kejadian, surat perjanjian, surat panggilan, rujukan, dan berita acara home visit yang dibuat guru BK saat menangani siswa, termasuk hasil scan atau foto dokumen yang sudah ditandatangani.</li>
+      <li><strong>Catatan guru BK:</strong> jurnal harian, catatan dan evaluasi setiap sesi konseling, laporan kejadian, surat perjanjian, surat panggilan, rujukan, dan berita acara home visit yang dibuat guru BK saat menangani siswa, termasuk hasil scan atau foto dokumen yang sudah ditandatangani.</li>
     </ul>
 
     <h2>Untuk apa data dipakai</h2>
@@ -72,28 +76,35 @@
     <ul>
       <li>Data tersimpan di Google Sheet milik layanan BK yang hanya dibagikan kepada guru BK.</li>
       <li>Dashboard guru BK dilindungi username dan password masing-masing guru. Sesi masuk otomatis berakhir setelah 6 jam, dan akun dikunci sementara jika password salah berkali-kali.</li>
-      <li>Balasan untuk curhat dan laporan hanya bisa dibaca dengan kode yang kamu terima. Catatan internal guru BK tidak pernah tampil di web.</li>
+      <li>Balasan untuk curhat dan laporan, serta jadwal dan pesan untuk pengajuan konseling, hanya bisa dibaca dengan kode yang kamu terima atau lewat akun portal siswamu. Catatan internal guru BK tidak pernah tampil di web.</li>
+      <li>Check-in suasana hati dan chat hanya dibaca guru BK. Bila kamu memilih suasana hati paling berat atau meminta ngobrol, guru BK mendapat pemberitahuan berisi inisial dan kelas saja, lalu akan menyapamu. Check-in dan chat tidak dipantau setiap saat, jadi untuk keadaan darurat hubungi orang dewasa di dekatmu atau layanan darurat.</li>
+      <li>PIN siswa dan password wali kelas tidak disimpan apa adanya, hanya bentuk tersandinya. Guru BK pun tidak bisa melihatnya; bila lupa, guru BK membuatkan yang baru.</li>
+      <li>Wali kelas hanya melihat rujukan yang ia kirim sendiri: status, jadwal siswa bertemu guru BK, dan tanggapan guru BK untuknya. Isi pembicaraan dan catatan konseling tidak pernah ditampilkan kepada wali kelas.</li>
       <li>Jika penanganan membutuhkan pihak lain, misalnya orang tua, wali kelas, pimpinan sekolah, atau psikolog, guru BK hanya menyampaikan informasi yang diperlukan, dan sebisa mungkin membicarakannya denganmu lebih dulu.</li>
     </ul>
 
+    <h2>Persetujuan orang tua</h2>
+    <p>Data siswa SMP termasuk data pribadi anak. Layanan BK di web ini adalah bagian dari tugas layanan BK sekolah. <strong>Akun Portal Siswa</strong> bersifat sukarela: siswa boleh tidak memakainya dan tetap mendapat layanan BK yang sama. Orang tua/wali boleh meminta akun anaknya dinonaktifkan atau dihapus kapan saja melalui guru BK.</p>
+
     <h2>Batas kerahasiaan</h2>
-    <p>Guru BK menjaga rahasia ceritamu. Pengecualiannya: jika ada tanda bahaya bagi keselamatan, misalnya kamu atau orang lain terancam disakiti, ada kekerasan, atau ada keinginan menyakiti diri sendiri, guru BK wajib bertindak untuk melindungi, termasuk menghubungi orang tua atau pihak yang berwenang.</p>
+    <p>Guru BK menjaga rahasia ceritamu sesuai kode etik profesi bimbingan dan konseling. Kerahasiaan ini kuat, tetapi tidak mutlak. Pengecualiannya: jika ada tanda bahaya bagi keselamatan, misalnya kamu atau orang lain terancam disakiti, ada kekerasan, atau ada keinginan menyakiti diri sendiri, guru BK wajib bertindak untuk melindungi, termasuk menghubungi orang tua atau pihak yang berwenang.</p>
 
     <h2>Penyimpanan dan cadangan</h2>
     <ul>
       <li>Kode web ini terbuka untuk umum, tetapi isinya tidak memuat data siswa sama sekali. Semua isian hanya disimpan di Google Sheet BK.</li>
-      <li>Hasil scan dokumen disimpan di folder Google Drive BK yang hanya dapat diakses guru BK.</li>
+      <li>Hasil scan dokumen dan hasil psikotes disimpan di folder Google Drive BK yang hanya dapat diakses guru BK.</li>
       <li>Salinan cadangan Google Sheet dibuat otomatis setiap minggu dan disimpan di folder Google Drive BK yang sama, dengan akses yang sama terbatasnya.</li>
-      <li>Data disimpan selama siswa masih bersekolah di SMP Labschool Ciracas, lalu dihapus atau diarsipkan sesuai kebijakan sekolah.</li>
+      <li>Data Portal Siswa (akun, check-in, chat, target, tanda formulir) disimpan selama siswa bersekolah di SMP Labschool Ciracas dan dihapus setelah lulus atau pindah. Guru BK memeriksanya setiap awal tahun ajaran.</li>
+      <li>Catatan layanan BK (pengajuan, laporan kejadian, catatan sesi, surat) disimpan sebagai arsip BK sesuai ketentuan kearsipan sekolah, lalu dimusnahkan sesuai jadwal retensinya.</li>
     </ul>
 
     <h2>Layanan pihak lain</h2>
     <p>Web ini dihosting di GitHub Pages, memakai huruf dari Google Fonts, dan menyimpan isian lewat Google Apps Script. Layanan tersebut bisa mencatat data teknis seperti alamat IP sesuai kebijakan privasi masing-masing. Web ini tidak memasang cookie iklan atau alat pelacak.</p>
 
     <h2>Hakmu</h2>
-    <p>Kamu dan orang tua/wali boleh bertanya data apa yang tersimpan tentang dirimu, meminta perbaikan jika ada yang salah, atau meminta penghapusan data yang tidak lagi diperlukan. Sampaikan langsung ke guru BK di ruang BK (lantai 1 di samping lobi, atau lantai 7 di sebelah ruang Tata Usaha). Pengelolaan data mengikuti prinsip Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.</p>
+    <p>Kamu dan orang tua/wali boleh bertanya data apa yang tersimpan tentang dirimu, meminta perbaikan jika ada yang salah, meminta akun Portal Siswa dinonaktifkan kapan saja, atau meminta akun dan data portalmu dihapus. Guru BK bisa menghapusnya langsung dari dashboard. Sampaikan langsung ke guru BK di ruang BK (lantai 1 di samping lobi, atau lantai 7 di sebelah ruang Tata Usaha). Pengelolaan data mengikuti prinsip Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.</p>
 
-    <p style="margin-top: 32px; font-size: 14px; color: #4A5578">Terakhir diperbarui: 29 Oktober 2026.</p>
+    <p style="margin-top: 32px; font-size: 14px; color: #4A5578">Terakhir diperbarui: 8 November 2026.</p>
   </main>
 </div>
 <footer style="background: #12204F; color: #DCE3F8">
@@ -101,7 +112,7 @@
 </footer>
 </div>
 
-<script src="assets/js/config.js?v=20261106a"></script>
-<script src="assets/js/main.js?v=20261106a"></script>
+<script src="assets/js/config.js?v=20261108a"></script>
+<script src="assets/js/main.js?v=20261108a"></script>
 </body>
 </html>

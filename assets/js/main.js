@@ -133,6 +133,7 @@
         .then(function (d) {
           out.hidden = false;
           if (!d.found) { out.innerHTML = '<p style="margin:0;font-size:16px;line-height:1.6">Kode <strong>' + esc2(k) + '</strong> belum ditemukan. Periksa lagi penulisannya. Kalau baru saja mengirim, tunggu sebentar lalu coba lagi.</p>'; return; }
+          if (d.jadwal) { out.innerHTML = window.BK_JADWAL ? window.BK_JADWAL.kartuCek(d) : ""; return; }
           var balas = d.balasan
             ? '<div style="background:#EEF1FB;border-radius:16px;padding:18px 20px;font-size:16px;line-height:1.7;white-space:pre-line">' + esc2(d.balasan) + '</div>'
             : '<p style="margin:0;font-size:16px;line-height:1.6;color:#3B4568">Guru BK belum menulis balasan. Coba cek lagi besok, atau datang langsung ke ruang BK kalau mendesak.</p>';
