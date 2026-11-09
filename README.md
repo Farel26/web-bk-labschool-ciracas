@@ -1,6 +1,22 @@
 # Web BK SMP Labschool Ciracas
 
-Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultasi, kotak curhat anonim, janji temu orang tua, materi BK, agenda, dan galeri.
+Website layanan Bimbingan dan Konseling SMP Labschool Ciracas, Jakarta Timur.
+
+**Alamat web:** https://farel26.github.io/web-bk-labschool-ciracas/
+
+Isinya: konsultasi, kotak curhat anonim, lapor perundungan, janji temu orang tua, materi BK kelas 7, tes minat karier, kalender pendidikan, info PSB, Portal Siswa, Portal Wali Kelas, dan dashboard tertutup untuk guru BK.
+
+## Siapa memakai apa
+
+| Pengguna | Halaman | Yang bisa dilakukan |
+|---|---|---|
+| Siswa (tanpa akun) | Beranda, `curhat.html`, `lapor.html`, `cek.html`, `materi.html`, `tes-minat.html` | Mengajukan konseling, curhat anonim, lapor perundungan, cek balasan dengan kode, membaca materi, tes minat |
+| Siswa (dengan akun) | `siswa.html` | Check-in perasaan, pengajuan dan jadwal konseling (termasuk sesi daring), chat dengan guru BK, formulir, target belajar, waktu fokus, hasil tes |
+| Wali kelas | `wali.html` | Merujuk siswa ke guru BK dan memantau statusnya (tanpa melihat isi konseling) |
+| Orang tua | `janji-orang-tua.html` | Meminta janji temu dengan guru BK |
+| Guru BK | `guru.html` | Kotak masuk, chat, check-in emosi, pemantauan kasus, jurnal harian, hasil psikotes, formulir, akun, surat, statistik |
+
+Data disimpan di Google Sheet milik guru BK melalui Google Apps Script (`apps-script/Code.gs`). Repo ini hanya berisi tampilan web.
 
 ## Isi folder
 
@@ -11,14 +27,14 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `janji-orang-tua.html` | Formulir janji temu orang tua/wali |
 | `lapor.html` | Lapor perundungan (boleh anonim, dapat kode) |
 | `cek.html` | Cek balasan dan jadwal konseling dengan kode |
-| `siswa.html` | Portal siswa: aktivasi akun (nama + kelas + NIS cocok dengan DataSiswa), pengajuan konseling dan jadwalnya, target belajar, waktu fokus, hasil tes minat |
+| `siswa.html` | Portal siswa: aktivasi akun (nama + kelas + NIS cocok dengan DataSiswa), check-in perasaan, pengajuan konseling dan jadwalnya, chat, formulir, target belajar, waktu fokus, hasil tes |
 | `materi.html` | Materi BK kelas 7 dari Buku BK (6 bab + kartu refleksi), dibuat dari draf buku |
 | `wali.html` | Portal wali kelas: kirim rujukan siswa, pantau status, jadwal, dan tanggapan guru BK (tanpa catatan konseling) |
 | `tes-minat.html` | Tes minat karier RIASEC (persetujuan, identitas, 42 pernyataan, halaman hasil bergambar) |
 | `survei.html` | Survei kepuasan layanan |
 | `kaldik.html` | Kalender pendidikan, otomatis dari file kaldik resmi |
 | `psb.html` | Informasi Penerimaan Siswa Baru (PSB), otomatis dari tab **Info_PSB** |
-| `guru.html` | Dashboard tertutup guru BK (login): kotak masuk (termasuk rujukan wali kelas dan penjadwalan sesi), pemantauan + evaluasi sesi, jurnal harian, profil siswa, laporan, surat, arsip scan, statistik, akun wali kelas & siswa |
+| `guru.html` | Dashboard tertutup guru BK (login): kotak masuk (termasuk rujukan wali kelas, penjadwalan sesi, dan disposisi), chat siswa, check-in emosi, pemantauan + evaluasi sesi, jurnal harian, hasil psikotes, formulir siswa, profil siswa, laporan, surat, arsip scan, statistik, akun wali kelas & siswa |
 | `privasi.html` | Kebijakan privasi |
 | `arsip.html`, `arsip-*.html` | Arsip kegiatan (tujuan, hasil, evaluasi, dokumentasi) |
 | `assets/css/style.css` | Tampilan |
@@ -28,6 +44,7 @@ Website layanan Bimbingan dan Konseling SMP Labschool Ciracas. Isinya: konsultas
 | `assets/js/tes-minat.js` | Alur tes minat dan tampilan hasil |
 | `assets/js/jadwal.js` | Tampilan status & jadwal sesi (dipakai cek.html, siswa.html, wali.html) |
 | `assets/js/siswa.js`, `assets/js/wali.js` | Portal siswa dan portal wali kelas |
+| `assets/js/materi.js` | Daftar isi dan kartu refleksi acak di halaman materi |
 | `assets/img/` | Logo, ilustrasi, foto guru, galeri, QR code |
 | `apps-script/Code.gs` | Kode untuk Google Sheet (tidak dijalankan oleh GitHub) |
 
@@ -77,7 +94,7 @@ Folder backup dan arsip scan selalu dibuat di sebelah sheet. Jika sheet dipindah
 - Akun ada di tab **AkunGuruBK** (Username, Nama, Salt, Hash password, Aktif, Terakhir masuk). Password hanya disimpan sebagai hash; ganti lewat tab **Akun** di dashboard. Isi `TIDAK` di kolom Aktif untuk menonaktifkan akun.
 - Data masuk ke tab **LaporanKejadian** dan **SuratPerjanjian**.
 - Sesi berlaku 6 jam; 5x salah password = dikunci 15 menit.
-- **DataSiswa**: daftar siswa resmi (Nama siswa, Kelas, L/P). Dipakai untuk saran nama dan isi kelas otomatis di dashboard. Perbarui setiap tahun ajaran.
+- **DataSiswa**: daftar siswa resmi (Nama siswa, Kelas, L/P, NIS). Kelas ditulis `7A`, `8B`, dst. NIS = nomor induk 6 angka (bukan NISN). Dipakai untuk saran nama di dashboard dan untuk mencocokkan aktivasi akun siswa. Perbarui setiap tahun ajaran dari daftar siswa resmi sekolah.
 - **CatatanPerkembangan**: catatan tindak lanjut setiap kasus (KJ-). Kolom *Pantau berikutnya* di LaporanKejadian menentukan urutan di menu Pemantauan.
 - Pengingat email setiap Senin 06.00 (fungsi `pengingatPemantauan`, dipasang sekali lewat `pasangPemicuPengingat`).
 - Laporan bulanan untuk kepala sekolah dicetak dari menu Statistik.
@@ -120,7 +137,7 @@ Tab baru (dibuat otomatis seperti di atas): **CheckinEmosi**, **PesanChat**, **H
 - **Chat siswa:** pesan dua arah antara Portal Siswa dan Dashboard › Chat siswa. Bukan real-time sungguhan: halaman menanyakan pesan baru tiap 10–15 detik selama terbuka. Pesan pertama dari siswa dalam satu rangkaian mengirim email pemberitahuan. Batas 20 pesan per 10 menit per siswa.
 - **Hasil psikotes:** Dashboard › Hasil psikotes. Bisa unggah banyak file sekaligus; nama file yang sama dengan nama siswa (mis. `Ahmad Rizky Pratama.pdf`) otomatis dicocokkan. File disimpan di folder Drive **Hasil Psikotes Web BK**. Siswa hanya melihat hasil yang dicentang "Tampilkan untuk siswa".
 - **Formulir siswa:** bagikan tautan Google Form per sasaran (semua, kelas 7/8/9, atau kelas tertentu). Hitungan "sudah mengisi" berasal dari centang siswa di portal, bukan dari Google Form.
-- **Materi:** `materi.html` dibuat dari draf Buku BK Kelas 7. Bagian draf yang masih kosong ("[Isi: ...]") tidak dimasukkan. Bila buku diperbarui, minta dibuatkan ulang halamannya.
+- **Materi:** `materi.html` berisi 6 bab dari draf Buku BK Kelas 7 dan 41 kartu refleksi (tombol "Ambil kartu acak"). Bagian draf yang masih kosong ("[Isi: ...]") tidak dimasukkan. Bila buku diperbarui, minta dibuatkan ulang halamannya.
 
 Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemilik sheet, dan Apps Script hanya melayani sekitar 30 permintaan bersamaan. Portal siswa menanyakan pesan baru tiap 15 detik hanya saat kotak chat terlihat di layar (selain itu tiap 60 detik, dan berhenti saat tab disembunyikan). Bila satu kelas membuka portal bersamaan di lab komputer dan ada galat, naikkan jeda di `siswa.js` (`15000` dan `60000`).
 
@@ -134,3 +151,9 @@ Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemi
 - **Kabar perubahan:** saat status atau jadwal berubah, siswa (pemilik akun) atau wali kelas mendapat email singkat tanpa nama, topik, atau isi cerita.
 - **Hapus data:** tombol "Hapus akun & data" per siswa dan "Cek akun siswa yang sudah lulus/pindah" di menu Akun. Catatan layanan BK tetap tersimpan sebagai arsip, hanya diputus dari akun.
 - **Hasil psikotes** kini tersembunyi secara bawaan; tampilkan setelah dibahas bersama siswa.
+
+## Status (9 November 2026)
+
+- Semua fitur di atas sudah tayang, termasuk halaman materi.
+- `Code.gs` terpasang sebagai Versi 12 di deployment yang sama (URL `/exec` tidak berubah).
+- Tab **DataSiswa** berisi 348 siswa kelas 7 dan 8 TP 2026/2027 dengan kolom NIS, jadi aktivasi akun siswa mewajibkan NIS.
