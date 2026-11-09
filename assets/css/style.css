@@ -799,3 +799,23 @@ form[hidden]{display:none !important}
 .kesepakatan strong{color:var(--c-navy)}
 .gabung-daring{display:inline-flex;align-items:center;align-self:flex-start;margin-top:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--c-primary);color:#FFFFFF!important;font-weight:700;font-size:15px;text-decoration:none}
 .inbox-item[hidden]{display:none}
+
+/* ---------- Halaman masuk gabungan (masuk.html) ---------- */
+.masuk{max-width:560px;margin:0 auto;padding:16px 0 72px;display:flex;flex-direction:column;gap:20px}
+.masuk-kepala{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.masuk-kepala .h2{margin:4px 0 0}
+.masuk-kepala .lead{margin:0}
+.masuk-lencana{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#E7ECFA;color:#1D3FAE;font-size:13px;font-weight:700}
+.peran-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px;background:#EEF1F8;border-radius:20px}
+.peran-tabs [role=tab]{min-height:64px;border:0;border-radius:14px;background:transparent;color:#3B4568;font:inherit;font-weight:700;font-size:15px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 6px}
+.peran-tabs [role=tab]:hover{color:#1D3FAE}
+.peran-tabs [role=tab][aria-selected="true"]{background:#1D3FAE;color:#FFFFFF;box-shadow:0 4px 12px rgba(29,63,174,.25)}
+.peran-tabs [role=tab]:focus-visible{outline:3px solid #B9C8F2;outline-offset:2px}
+.masuk-panel{display:flex;flex-direction:column;gap:16px}
+.masuk-panel[hidden]{display:none}
+.masuk-seg{display:grid;grid-template-columns:1fr 1fr}
+.masuk-seg .seg-btn{justify-content:center}
+.masuk-info{display:flex;flex-direction:column;gap:4px;background:#E6F4EC;border:1px solid #BFE0CC;border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.55;color:#24563A}
+.masuk-info strong{color:#17603B;font-size:15px}
+.masuk-catatan{margin:0;text-align:center;font-size:14px;color:#4A5578}
+@media (max-width:420px){.peran-tabs [role=tab]{font-size:14px;min-height:60px}}

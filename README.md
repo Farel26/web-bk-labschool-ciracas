@@ -26,6 +26,7 @@ Data disimpan di Google Sheet milik guru BK melalui Google Apps Script (`apps-sc
 | `curhat.html` | Kotak curhat anonim |
 | `janji-orang-tua.html` | Formulir janji temu orang tua/wali |
 | `lapor.html` | Lapor perundungan (boleh anonim, dapat kode) |
+| `masuk.html` | Halaman masuk gabungan: pilih peran Siswa (masuk atau aktivasi akun), Guru BK, atau Wali kelas, lalu langsung dibawa ke portalnya |
 | `cek.html` | Cek balasan dan jadwal konseling dengan kode |
 | `siswa.html` | Portal siswa: aktivasi akun (nama + kelas + NIS cocok dengan DataSiswa), check-in perasaan, pengajuan konseling dan jadwalnya, chat, formulir, target belajar, waktu fokus, hasil tes |
 | `materi.html` | Materi BK kelas 7 dari Buku BK (6 bab + kartu refleksi), dibuat dari draf buku |
@@ -44,6 +45,7 @@ Data disimpan di Google Sheet milik guru BK melalui Google Apps Script (`apps-sc
 | `assets/js/tes-minat.js` | Alur tes minat dan tampilan hasil |
 | `assets/js/jadwal.js` | Tampilan status & jadwal sesi (dipakai cek.html, siswa.html, wali.html) |
 | `assets/js/siswa.js`, `assets/js/wali.js` | Portal siswa dan portal wali kelas |
+| `assets/js/masuk.js` | Login dan aktivasi di halaman masuk; menyimpan sesi lalu membuka portal yang sesuai |
 | `assets/js/materi.js` | Daftar isi dan kartu refleksi acak di halaman materi |
 | `assets/img/` | Logo, ilustrasi, foto guru, galeri, QR code |
 | `apps-script/Code.gs` | Kode untuk Google Sheet (tidak dijalankan oleh GitHub) |
@@ -155,5 +157,5 @@ Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemi
 ## Status (9 November 2026)
 
 - Semua fitur di atas sudah tayang, termasuk halaman materi.
-- `Code.gs` terpasang sebagai Versi 12 di deployment yang sama (URL `/exec` tidak berubah).
+- `Code.gs` terpasang sebagai Versi 13 di deployment yang sama (URL `/exec` tidak berubah). Versi 13 menambahkan daftar kelas untuk form aktivasi di `masuk.html` (hanya nama kelas, tanpa nama atau nomor siswa).
 - Tab **DataSiswa** berisi 348 siswa kelas 7 dan 8 TP 2026/2027 dengan kolom NIS, jadi aktivasi akun siswa mewajibkan NIS.

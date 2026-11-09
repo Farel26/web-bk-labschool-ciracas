@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk — BK SMP Labschool Ciracas</title>
+<meta name="description" content="Masuk ke layanan BK SMP Labschool Ciracas sebagai siswa, guru BK, atau wali kelas.">
+<meta name="theme-color" content="#1D3FAE">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Masuk — BK SMP Labschool Ciracas">
+<meta property="og:description" content="Masuk ke layanan BK SMP Labschool Ciracas sebagai siswa, guru BK, atau wali kelas.">
+<meta property="og:image" content="https://farel26.github.io/web-bk-labschool-ciracas/assets/img/og-image.jpg">
+<meta property="og:locale" content="id_ID">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css?v=20261109a">
+</head>
+<body>
+<div style="background: #FEFBF2; min-height: 100vh">
+<div class="wrap">
+  <header class="site-header sub-header" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0">
+    <a href="index.html" aria-label="Beranda BK SMP Labschool Ciracas" style="display: flex; align-items: center; gap: 16px; text-decoration: none">
+      <img src="assets/img/logo-labschool-ciracas.webp" alt="Logo SMP Labschool Ciracas" style="height: 52px; width: auto; display: block">
+      <span aria-hidden="true" style="width: 1.5px; height: 40px; background: #D9DCE6"></span>
+      <span style="display: flex; flex-direction: column; line-height: 1.15; font-family: Rubik, sans-serif; font-weight: 800; font-size: 17px; color: #1D3FAE"><span>Bimbingan</span><span>dan Konseling</span></span>
+    </a>
+    <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
+  </header>
+
+  <main class="masuk">
+    <div class="masuk-kepala">
+      <span class="masuk-lencana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Portal masuk resmi BK SMP Labschool Ciracas</span>
+      <h1 class="h2">Masuk ke layanan BK</h1>
+      <p class="lead">Pilih peranmu untuk masuk ke portal yang sesuai.</p>
+    </div>
+
+    <div class="peran-tabs" role="tablist" aria-label="Pilih peran">
+      <button type="button" role="tab" id="t-siswa" aria-controls="p-siswa" aria-selected="true" data-peran="siswa">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10L12 5 2 10l10 5 10-5z"></path><path d="M6 12v5c3 2 9 2 12 0v-5"></path></svg>
+        <span>Siswa</span>
+      </button>
+      <button type="button" role="tab" id="t-guru" aria-controls="p-guru" aria-selected="false" tabindex="-1" data-peran="guru">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21c0-4 3-7 7-7s7 3 7 7"></path><path d="M16 11l2 2 4-4"></path></svg>
+        <span>Guru BK</span>
+      </button>
+      <button type="button" role="tab" id="t-wali" aria-controls="p-wali" aria-selected="false" tabindex="-1" data-peran="wali">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"></path><path d="M9 21v-6h6v6"></path><path d="M9 10h.01M15 10h.01"></path></svg>
+        <span>Wali kelas</span>
+      </button>
+    </div>
+
+    <!-- SISWA -->
+    <section id="p-siswa" role="tabpanel" aria-labelledby="t-siswa" class="masuk-panel">
+      <div class="seg masuk-seg" role="group" aria-label="Masuk atau aktifkan akun">
+        <button type="button" class="seg-btn" data-mode="masuk" aria-pressed="true">Masuk</button>
+        <button type="button" class="seg-btn" data-mode="aktivasi" aria-pressed="false">Aktifkan akun</button>
+      </div>
+
+      <form id="s-masuk" class="card-form" novalidate>
+        <div class="field"><label for="s-email">Email</label><input id="s-email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <div class="field"><label for="s-pin">PIN (6 angka)</label><input id="s-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" required></div>
+        <button type="submit" class="btn-solid">Masuk</button>
+        <p class="form-status" id="s-masuk-status" role="status" aria-live="polite"></p>
+        <p class="muted" style="margin: 0; font-size: 14px">Belum punya akun? Pilih <strong>Aktifkan akun</strong>. Lupa PIN? Datang ke ruang BK untuk dibuatkan PIN baru.</p>
+      </form>
+
+      <form id="s-aktivasi" class="card-form" novalidate hidden>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp" id="s-hp">
+        <div class="masuk-info">
+          <strong>Aktivasi akun siswa</strong>
+          <span>Cukup sekali. Pilih kelasmu, lalu tulis nama lengkap dan NIS persis seperti di kartu pelajar. Sistem mencocokkannya dengan daftar siswa resmi sekolah.</span>
+        </div>
+        <p class="form-status err" id="s-tutup" hidden></p>
+        <div class="field">
+          <label for="s-kelas">1. Kelas</label>
+          <select id="s-kelas" required><option value="">Pilih kelas</option></select>
+        </div>
+        <div class="field"><label for="s-nama">2. Nama lengkap</label><input id="s-nama" type="text" autocomplete="name" required><span class="hint">Tulis lengkap, seperti di kartu pelajar.</span></div>
+        <div class="field" id="s-nis-wrap" hidden><label for="s-nis">3. NIS (nomor induk siswa)</label><input id="s-nis" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="6 angka, mis. 260124"><span class="hint">Ada di kartu pelajar atau rapor. Ini bukan NISN.</span></div>
+        <div class="field"><label for="s-email2">Email untuk masuk</label><input id="s-email2" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required placeholder="mis. nama@gmail.com"></div>
+        <div class="g2" style="gap: 16px">
+          <div class="field"><label for="s-pin1">Buat PIN (6 angka)</label><input id="s-pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></div>
+          <div class="field"><label for="s-pin2">Ulangi PIN</label><input id="s-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" required></div>
+        </div>
+        <label class="check"><input type="checkbox" id="s-setuju" required> <span>Aku paham: pengajuan konseling dan target yang kusimpan di portal bisa dibaca guru BK, dan dijaga kerahasiaannya sesuai <a href="privasi.html" target="_blank" rel="noopener">kebijakan privasi</a>. Aku tidak memberi tahu PIN-ku ke siapa pun.</span></label>
+        <button type="submit" class="btn-solid">Aktifkan akun dan masuk</button>
+        <p class="form-status" id="s-aktivasi-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <!-- GURU BK -->
+    <section id="p-guru" role="tabpanel" aria-labelledby="t-guru" class="masuk-panel" hidden>
+      <form id="g-masuk" class="card-form" novalidate>
+        <div class="field"><label for="g-user">Username</label><input id="g-user" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <div class="field"><label for="g-pass">Password</label><input id="g-pass" type="password" autocomplete="current-password" required></div>
+        <button type="submit" class="btn-solid">Masuk ke dashboard</button>
+        <p class="form-status" id="g-status" role="status" aria-live="polite"></p>
+        <p class="muted" style="margin: 0; font-size: 14px">Khusus guru BK. Lima kali salah password mengunci akun selama 15 menit.</p>
+      </form>
+    </section>
+
+    <!-- WALI KELAS -->
+    <section id="p-wali" role="tabpanel" aria-labelledby="t-wali" class="masuk-panel" hidden>
+      <form id="w-masuk" class="card-form" novalidate>
+        <div class="field"><label for="w-email">Email</label><input id="w-email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <div class="field"><label for="w-pass">Password</label><input id="w-pass" type="password" autocomplete="current-password" required></div>
+        <button type="submit" class="btn-solid">Masuk ke portal wali kelas</button>
+        <p class="form-status" id="w-status" role="status" aria-live="polite"></p>
+        <p class="muted" style="margin: 0; font-size: 14px">Akun wali kelas dibuat oleh guru BK. Belum punya atau lupa password? Hubungi guru BK.</p>
+      </form>
+    </section>
+
+    <p class="masuk-catatan">Data yang kamu masukkan hanya dipakai untuk masuk ke layanan BK. <a href="privasi.html">Kebijakan privasi</a></p>
+  </main>
+</div>
+<footer style="background: #12204F; color: #DCE3F8">
+  <div class="wrap" style="padding: 28px 24px; font-size: 14px; line-height: 1.6">© 2026 BK SMP Labschool Ciracas · Jl. H. Baping No. 33, Ciracas, Jakarta Timur 13750 · <a href="privasi.html" style="color: #DCE3F8">Kebijakan privasi</a></div>
+</footer>
+</div>
+
+<script src="assets/js/config.js?v=20261109a"></script>
+<script src="assets/js/masuk.js?v=20261109a"></script>
+</body>
+</html>

@@ -1597,7 +1597,13 @@ var TARGET_BIDANG = ['Belajar', 'Pribadi', 'Sosial', 'Karier'];
 var TARGET_MAKS = 40;
 
 function siswaApi_(q) {
-  if (q.action === 'infoAktivasi') { var ds = dataSiswa_(); return { ok: true, perluNis: ds.some(function (s) { return !!s.nis; }), dibuka: ds.length > 0 }; }
+  if (q.action === 'infoAktivasi') {
+    var ds = dataSiswa_(), kelas = {};
+    ds.forEach(function (s) { if (s.kelas) kelas[s.kelas] = 1; });
+    // Hanya daftar kelas (mis. 7A) yang dikirim, tidak ada nama atau nomor siswa.
+    var urut = Object.keys(kelas).sort(function (x, y) { return (parseInt(x, 10) - parseInt(y, 10)) || (x < y ? -1 : x > y ? 1 : 0); });
+    return { ok: true, perluNis: ds.some(function (s) { return !!s.nis; }), dibuka: ds.length > 0, kelas: urut };
+  }
   if (q.action === 'aktivasi') return aktivasiSiswa_(q.data || {});
   if (q.action === 'login') return loginSiswa_(String(q.email || ''), String(q.pin || ''));
   var u = sesiPortal_('tsk_', q.token);
