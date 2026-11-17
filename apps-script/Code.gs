@@ -62,7 +62,7 @@ var CEK_JENIS = { Curhat: 'Curhat', LaporanPerundungan: 'Laporan perundungan', K
  * saat web pertama kali dipanggil setelah Code.gs diperbarui. Data lama tidak diubah.
  * Kolom pertama setiap tab penting: "Waktu masuk" untuk kotak masuk, "ID" untuk catatan bernomor.
  */
-var SKEMA_VERSI = '2026-11-17-angket-1';
+var SKEMA_VERSI = '2026-11-17-admin-1';
 var RUJUKAN_TAB = 'RujukanWaliKelas';
 var AKUN_WALI_TAB = 'AkunWaliKelas';
 var AKUN_SISWA_TAB = 'AkunSiswa';
@@ -87,7 +87,11 @@ var SKEMA = {
   FormulirTerisi: ['ID formulir', 'Akun siswa', 'Nama', 'Kelas', 'Waktu'],
   HasilPsikotes: ['ID', 'Waktu input', 'Akun siswa', 'Nama siswa', 'Kelas', 'Jenis tes', 'Tanggal tes', 'Catatan untuk siswa',
     'Tampil untuk siswa', 'Nama file asli', 'Ukuran (KB)', 'Link file (khusus pengelola)', 'File ID (jangan diubah)', 'Diunggah oleh'],
-  PesanChat: ['ID', 'Waktu', 'Akun siswa', 'Nama', 'Kelas', 'Dari', 'Nama pengirim', 'Isi', 'Dibaca']
+  PesanChat: ['ID', 'Waktu', 'Akun siswa', 'Nama', 'Kelas', 'Dari', 'Nama pengirim', 'Isi', 'Dibaca'],
+  LaporanKejadian: ['Kode pelanggaran', 'Poin'],
+  KatalogPoin: ['Kode', 'Kelompok', 'Pelanggaran', 'Poin', 'Aktif'],
+  MutasiSiswa: ['ID', 'Waktu input', 'Tanggal', 'Jenis', 'Nama', 'Kelas', 'Sekolah asal/tujuan', 'Alasan', 'Nomor surat', 'Diinput oleh'],
+  AnggaranBK: ['ID', 'Waktu input', 'Tahun ajaran', 'Kebutuhan', 'Harga satuan', 'Jumlah', 'Satuan', 'Total', 'Keterangan', 'Diinput oleh']
 };
 var CHECKIN_TAB = 'CheckinEmosi', FORM_TAB = 'FormulirSiswa', FORM_ISI_TAB = 'FormulirTerisi', HASIL_TAB = 'HasilPsikotes', CHAT_TAB = 'PesanChat';
 
@@ -449,6 +453,14 @@ function guruApi_(q) {
     case 'catatIzinOrtu': return catatIzinOrtu_(u, String(q.akun || ''), q.izin === true);
     case 'bukaUlangAngket': return bukaUlangAngket_(String(q.akun || ''), String(q.jenis || ''));
     case 'aturAngket': return aturAngket_(q.wajibOrtu === true);
+    case 'katalogPoin': return katalogPoin_();
+    case 'rekapPoin': return rekapPoin_(String(q.kelas || ''), String(q.dari || ''), String(q.sampai || ''));
+    case 'simpanMutasi': return simpanMutasi_(u, q.data || {});
+    case 'daftarMutasi': return daftarMutasi_();
+    case 'hapusMutasi': return hapusBarisId_(MUTASI_TAB, String(q.id || ''), 'Catatan mutasi tidak ditemukan.');
+    case 'simpanAnggaran': return simpanAnggaran_(u, q.data || {});
+    case 'daftarAnggaran': return daftarAnggaran_();
+    case 'hapusAnggaran': return hapusBarisId_(ANGGARAN_TAB, String(q.id || ''), 'Baris anggaran tidak ditemukan.');
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -535,7 +547,10 @@ function wajib_(d, keys) {
 function simpanKejadian_(u, d) {
   var kurang = wajib_(d, ['tanggal', 'nama', 'kelas', 'deskripsi', 'tindakLanjut']);
   if (kurang) return { ok: false, error: 'Kolom wajib belum diisi.' };
+  var butir = butirPoin_(d.kodePoin);
+  if (d.kodePoin && !butir) return { ok: false, error: 'Butir pelanggaran tidak ada di daftar poin.' };
   var id = tulisBaris_('LaporanKejadian', {
+    'Kode pelanggaran': butir ? butir.kode + ' ' + butir.nama : '', 'Poin': butir ? butir.poin : '',
     'Tanggal kejadian': clean_(d.tanggal), 'Nama siswa': clean_(d.nama), 'Kelas': clean_(d.kelas),
     'Kategori': KEJADIAN_KATEGORI.indexOf(d.kategori) >= 0 ? d.kategori : 'Lainnya',
     'Deskripsi kejadian': clean_(d.deskripsi), 'Tindak lanjut guru BK': clean_(d.tindakLanjut),
@@ -2625,4 +2640,107 @@ function bukaUlangAngket_(akun, jenis) {
 function aturAngket_(wajibOrtu) {
   PropertiesService.getScriptProperties().setProperty('ANGKET_WAJIB_ORTU', wajibOrtu ? 'YA' : 'TIDAK');
   return { ok: true, wajibOrtu: wajibOrtu_() };
+}
+
+/* =====================================================================
+   ADMINISTRASI BK: poin pelanggaran (menempel pada Laporan kejadian),
+   mutasi siswa, dan rencana anggaran BK.
+   ===================================================================== */
+var KATALOG_TAB = 'KatalogPoin', MUTASI_TAB = 'MutasiSiswa', ANGGARAN_TAB = 'AnggaranBK';
+// Daftar awal butir pelanggaran. Setelah tab KatalogPoin terisi, yang dipakai adalah isi tab itu.
+var KATALOG_AWAL = [["A.1", "Keterlambatan", "Terlambat 1 X", 2], ["A.2", "Keterlambatan", "Terlambat 2 X", 4], ["A.3", "Keterlambatan", "Terlambat berkali-kali", 10], ["A.4", "Keterlambatan", "Izin keluar tidak kembali masuk sekolah", 10], ["B.1", "Kehadiran", "Sakit tanpa keterangan", 2], ["B.2", "Kehadiran", "Tanpa keterangan / Alpa", 5], ["B.3", "Kehadiran", "Meninggalkan kelas dengan keterangan palsu", 5], ["B.4", "Kehadiran", "Meninggalkan kelas tanpa keterangan", 10], ["B.5", "Kehadiran", "Meninggalkan halaman sekolah tanpa izin guru piket", 2], ["B.6", "Kehadiran", "Meninggalkan pelajaran / tidak hadir pelajaran tambahan", 5], ["C.1", "Kelengkapan Pakaian", "Tidak memasukan baju", 5], ["C.2", "Kelengkapan Pakaian", "Seragam tidak sesuai ketentuan sekolah", 5], ["C.3", "Kelengkapan Pakaian", "Tidak bersepatu / berkaos kaki", 4], ["C.4", "Kelengkapan Pakaian", "Seragam tidak lengkap", 4], ["C.5", "Kelengkapan Pakaian", "Rok diatas lutut / ketat", 10], ["C.6", "Kelengkapan Pakaian", "Memakai kaos oblong", 5], ["C.7", "Kelengkapan Pakaian", "Memakai topi non sekolah didalam / lingkungan sekolah", 5], ["C.8", "Kelengkapan Pakaian", "Celana kuncup / sempit", 4], ["C.9", "Kelengkapan Pakaian", "Tidak memakai ikat pinggang", 4], ["C.10", "Kelengkapan Pakaian", "Memakai ikat pinggang berkepala besar", 4], ["C.11", "Kelengkapan Pakaian", "Berjilbab berwarna tidak sesuai ketentuan sekolah", 4], ["C.12", "Kelengkapan Pakaian", "Memakai jaket non sekolah dilingkungan sekolah", 5], ["D.1", "Kepribadian", "Siswa alisnya di cukur", 4], ["D.2", "Kepribadian", "Siswa berhias berlebihan", 4], ["D.3", "Kepribadian", "Siswa laki-laki memakai anting, gelang dan kalung", 5], ["D.4", "Kepribadian", "Siswa berjenggot", 4], ["D.5", "Kepribadian", "Siswa berambut gondrong", 5], ["D.6", "Kepribadian", "Siswa berambut di cat / kuku panjang", 10], ["D.7", "Kepribadian", "Meludah tidak pada tempatnya", 5], ["D.8", "Kepribadian", "Membuang sampah tidak pada tempatnya", 5], ["D.9", "Kepribadian", "Merusak tanaman / taman", 10], ["D.10", "Kepribadian", "Mencuri barang / uang orang lain / sekolah", 25], ["D.11", "Kepribadian", "Melanggar norma susila (bermesraan dengan pacar) Dll", 50], ["D.12", "Kepribadian", "Buang air kecil / besar tidak pada tempatnya", 25], ["E.1", "Ketertiban", "Meninggalkan buku dikelas", 10], ["E.2", "Ketertiban", "Menerima tamu tanpa seizing guru kelas", 5], ["E.3", "Ketertiban", "Menghilangkan kartu poin pelanggaran", 25], ["E.4", "Ketertiban", "Mencontek ulangan", 15], ["E.5", "Ketertiban", "Siswa laki-laki masuk WC wanita", 20], ["E.6", "Ketertiban", "Main gitar disekolah", 10], ["E.7", "Ketertiban", "Mencoret meja/ mengotori lingkungan sekolah", 10], ["E.8", "Ketertiban", "Merusak/ menghilangkan barang milik sekolah, guru dan teman", 15], ["E.9", "Ketertiban", "Melompat pagar", 30], ["E.10", "Ketertiban", "Celana / baju banyak coretan", 15], ["E.11", "Ketertiban", "Makan minum waktu belajar", 20], ["E.12", "Ketertiban", "Tidak melaksanakan piket kelas / umum", 10], ["E.13", "Ketertiban", "Mengotori sekolah dengan ulang tahun disekolah", 10], ["E.14", "Ketertiban", "Tidak ikut upacara bendera", 25], ["E.15", "Ketertiban", "Tidak membawa buku pelajaran", 20], ["E.16", "Ketertiban", "Tidak membuat PR", 10], ["E.17", "Ketertiban", "Memukul-mukul meja dikelas", 10], ["E.18", "Ketertiban", "Membuat gaduh di kelas", 20], ["E.19", "Ketertiban", "Tidak memakai topi pada saat upacara", 20], ["F.1", "Merokok", "Membawa sendiri / titipan", 20], ["F.2", "Merokok", "Tertangkap basah merokok", 50], ["F.3", "Merokok", "Memperjualbelikan rokok", 70], ["F.4", "Merokok", "Membawa korek api", 20], ["G.1", "Buku , Masalah, Dan Kaset Terlarang", "Membawa / melihat buku/ majalah/VCD porno", 50], ["G.2", "Buku , Masalah, Dan Kaset Terlarang", "Jual beli buku/majalah/VCD porno", 50], ["H.1", "Senjata", "Membawa senjata tajam", 50], ["H.2", "Senjata", "Membawa senjata api", 100], ["H.3", "Senjata", "Menggunakan senjata tajam/senjata api", 100], ["I.1", "Obat Dan Minuman Yang Terlarang", "Membawa narkoba/minuman terlarang", 100], ["I.2", "Obat Dan Minuman Yang Terlarang", "Menggunakan narkoba/minuman terlarang", 100], ["I.3", "Obat Dan Minuman Yang Terlarang", "Memperjualbelikan narkoba/minuman terlarang", 100], ["J.1", "Perkelahian / Tawuran", "Mengancam teman", 40], ["J.2", "Perkelahian / Tawuran", "Menghasut sehingga terjadinya tawuran", 100], ["J.3", "Perkelahian / Tawuran", "Perkelahian sesama teman sekolah", 75], ["J.4", "Perkelahian / Tawuran", "Perkelahian berat", 100], ["K.1", "Perjudian", "Membawa alat judi", 25], ["K.2", "Perjudian", "Melakukan perjudian", 75], ["L.1", "Keterlambatan Administrasi Tanpa Surat Orang Tua Siswa", "Terlambat lebih dari 2 kali dalam bulan", 20], ["L.2", "Keterlambatan Administrasi Tanpa Surat Orang Tua Siswa", "Terlambat 1 sd 2 kali dala 1 bulan", 10], ["M.1", "Panggilan Orang Tua", "Panggilan ke-1 tidak hadir", 10], ["M.2", "Panggilan Orang Tua", "Panggilan ke-2 tidak hadir", 25], ["M.3", "Panggilan Orang Tua", "Panggilan ke-3 tidak hadir", 75]];
+
+function katalogPoin_() {
+  var t = tabel_(KATALOG_TAB);
+  if (!t.rows.length) {
+    denganKunci_(function () {
+      var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(KATALOG_TAB);
+      if (sh.getLastRow() > 1) return;
+      sh.getRange(2, 1, KATALOG_AWAL.length, 5).setValues(KATALOG_AWAL.map(function (x) { return [x[0], x[1], x[2], x[3], 'YA']; }));
+    });
+    t = tabel_(KATALOG_TAB);
+  }
+  var out = [];
+  t.rows.forEach(function (r) {
+    var kode = teks_(sel_(t, r, 'Kode')), poin = Number(sel_(t, r, 'Poin'));
+    if (!kode || !bukanTidak_(sel_(t, r, 'Aktif')) || !(poin >= 0)) return;
+    out.push({ kode: kode, kelompok: teks_(sel_(t, r, 'Kelompok')), nama: teks_(sel_(t, r, 'Pelanggaran')), poin: poin });
+  });
+  return { ok: true, items: out };
+}
+function butirPoin_(kode) {
+  kode = String(kode || '').trim();
+  if (!kode) return null;
+  var k = katalogPoin_().items.filter(function (x) { return x.kode === kode; });
+  return k.length ? k[0] : null;
+}
+
+function rekapPoin_(kelas, dari, sampai) {
+  var t = tabel_('LaporanKejadian'), k = normKelas_(kelas), map = {}, kls = {};
+  dataSiswa_().forEach(function (s) { if (s.kelas) kls[s.kelas] = 1; });
+  t.rows.forEach(function (r) {
+    var poin = Number(sel_(t, r, 'Poin')), nama = teks_(sel_(t, r, 'Nama siswa')), kl = teks_(sel_(t, r, 'Kelas'));
+    if (!r[0] || !(poin > 0) || !nama) return;
+    if (kl) kls[normKelas_(kl)] = 1;
+    var tg = tglKey_(sel_(t, r, 'Tanggal kejadian'));
+    if ((k && normKelas_(kl) !== k) || (dari && tg < dari) || (sampai && tg > sampai)) return;
+    var key = norm_(nama) + '|' + normKelas_(kl), o = map[key] || (map[key] = { nama: nama, kelas: normKelas_(kl), total: 0, catatan: [] });
+    o.total += poin;
+    o.catatan.push({ id: teks_(r[0]), tanggal: tg, kode: teks_(sel_(t, r, 'Kode pelanggaran')), poin: poin, uraian: teks_(sel_(t, r, 'Deskripsi kejadian')).slice(0, 200) });
+  });
+  var out = Object.keys(map).map(function (x) { return map[x]; });
+  out.forEach(function (o) { o.catatan.sort(function (a, b) { return a.tanggal < b.tanggal ? 1 : -1; }); });
+  out.sort(function (a, b) { return b.total - a.total || (a.nama < b.nama ? -1 : 1); });
+  var urut = Object.keys(kls).sort(function (x, y) { return (parseInt(x, 10) - parseInt(y, 10)) || (x < y ? -1 : x > y ? 1 : 0); });
+  return { ok: true, kelas: urut, items: out };
+}
+
+function hapusBarisId_(tab, id, pesan) {
+  return denganKunci_(function () {
+    var t = tabel_(tab);
+    for (var r = 0; r < t.rows.length; r++) {
+      if (id && String(t.rows[r][0]).toUpperCase() === String(id).toUpperCase()) { t.sh.deleteRow(r + 2); return { ok: true }; }
+    }
+    return { ok: false, error: pesan };
+  });
+}
+
+var MUTASI_JENIS = ['Masuk', 'Keluar'];
+function simpanMutasi_(u, d) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.tanggal || ''))) return { ok: false, error: 'Isi tanggal mutasi.' };
+  if (MUTASI_JENIS.indexOf(d.jenis) < 0) return { ok: false, error: 'Pilih jenis mutasi.' };
+  if (wajib_(d, ['nama', 'kelas'])) return { ok: false, error: 'Isi nama dan kelas siswa.' };
+  var id = tulisBaris_(MUTASI_TAB, { 'Tanggal': d.tanggal, 'Jenis': d.jenis, 'Nama': clean_(d.nama).slice(0, 120), 'Kelas': normKelas_(d.kelas),
+    'Sekolah asal/tujuan': clean_(d.sekolah).slice(0, 200), 'Alasan': clean_(d.alasan), 'Nomor surat': clean_(d.surat).slice(0, 120), 'Diinput oleh': u.nama }, 'MT');
+  return { ok: true, id: id };
+}
+function daftarMutasi_() {
+  var t = tabel_(MUTASI_TAB), out = [];
+  t.rows.forEach(function (r) {
+    if (!r[0]) return;
+    out.push({ id: teks_(r[0]), tanggal: tglKey_(sel_(t, r, 'Tanggal')), jenis: teks_(sel_(t, r, 'Jenis')), nama: teks_(sel_(t, r, 'Nama')), kelas: teks_(sel_(t, r, 'Kelas')),
+      sekolah: teks_(sel_(t, r, 'Sekolah asal/tujuan')), alasan: teks_(sel_(t, r, 'Alasan')), surat: teks_(sel_(t, r, 'Nomor surat')), oleh: teks_(sel_(t, r, 'Diinput oleh')) });
+  });
+  out.sort(function (a, b) { return a.tanggal < b.tanggal ? 1 : a.tanggal > b.tanggal ? -1 : 0; });
+  return { ok: true, items: out.slice(0, 500) };
+}
+
+function simpanAnggaran_(u, d) {
+  var harga = Number(d.harga), jumlah = Number(d.jumlah), ta = String(d.tahun || '').trim();
+  if (!/^\d{4}\/\d{4}$/.test(ta)) return { ok: false, error: 'Tulis tahun ajaran seperti 2026/2027.' };
+  if (wajib_(d, ['kebutuhan'])) return { ok: false, error: 'Isi nama kebutuhan.' };
+  if (!(harga >= 0) || !(jumlah > 0) || harga > 1e10 || jumlah > 1e6) return { ok: false, error: 'Harga satuan dan jumlah harus berupa angka.' };
+  var id = tulisBaris_(ANGGARAN_TAB, { 'Tahun ajaran': ta, 'Kebutuhan': clean_(d.kebutuhan).slice(0, 200), 'Harga satuan': harga, 'Jumlah': jumlah,
+    'Satuan': clean_(d.satuan).slice(0, 40), 'Total': harga * jumlah, 'Keterangan': clean_(d.ket), 'Diinput oleh': u.nama }, 'AG');
+  return { ok: true, id: id };
+}
+function daftarAnggaran_() {
+  var t = tabel_(ANGGARAN_TAB), out = [];
+  t.rows.forEach(function (r) {
+    if (!r[0]) return;
+    var h = Number(sel_(t, r, 'Harga satuan')) || 0, j = Number(sel_(t, r, 'Jumlah')) || 0;
+    out.push({ id: teks_(r[0]), tahun: teks_(sel_(t, r, 'Tahun ajaran')).replace(/^'/, ''), kebutuhan: teks_(sel_(t, r, 'Kebutuhan')), harga: h, jumlah: j,
+      satuan: teks_(sel_(t, r, 'Satuan')), total: h * j, ket: teks_(sel_(t, r, 'Keterangan')) });
+  });
+  return { ok: true, items: out };
 }

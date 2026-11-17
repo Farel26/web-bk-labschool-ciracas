@@ -167,3 +167,8 @@ Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemi
 - Butir angket ada di `assets/js/angket-data.js` (halaman) dan `ANGKET_BUTIR` di `apps-script/Code.gs` (Sheet). Keduanya harus sama urutannya.
 - Tab Sheet yang dibuat otomatis: `PersetujuanSiswa`, `IzinOrtuAngket`, `LatarBelakangSiswa`, `AngketAKPD`, `AngketDCM`, `AngketSosiometri`, `ButirAngket`.
 - Setelah mengubah `Code.gs`: tempel ke editor Apps Script, lalu Deploy → Manage deployments → Edit → Version: New version → Deploy (URL tetap sama).
+
+## Administrasi BK (poin, mutasi, anggaran)
+
+- Poin pelanggaran menempel pada Laporan kejadian (kolom `Kode pelanggaran` dan `Poin`). Daftar butir ada di tab `KatalogPoin` dan boleh diubah langsung di Sheet.
+- `administrasi.html` (guru BK): rekap poin per siswa, mutasi siswa (tab `MutasiSiswa`), rencana anggaran (tab `AnggaranBK`).

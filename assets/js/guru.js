@@ -62,6 +62,21 @@
   }
 
   /* ---------- Tampilan umum ---------- */
+  // Butir pelanggaran dan poinnya (tab KatalogPoin di Sheet) untuk formulir Laporan kejadian.
+  function muatKatalogPoin() {
+    var sel = $("k-poin");
+    if (sel.options.length > 1) return;
+    api("katalogPoin").then(function (d) {
+      if (!d.ok || sel.options.length > 1) return;
+      var grup = {};
+      d.items.forEach(function (x) {
+        var g = grup[x.kelompok] || (grup[x.kelompok] = document.createElement("optgroup"));
+        if (!g.label) { g.label = x.kelompok || "Lainnya"; sel.appendChild(g); }
+        var o = document.createElement("option"); o.value = x.kode; o.textContent = x.kode + " · " + x.nama + " (" + x.poin + " poin)"; g.appendChild(o);
+      });
+    }).catch(function () {});
+  }
+
   function tampilDashboard() {
     $("panel-login").hidden = true;
     $("panel-dash").hidden = false;
@@ -71,6 +86,7 @@
       sesi.kategori.forEach(function (k) { var o = document.createElement("option"); o.textContent = k; sel.appendChild(o); });
     }
     ["k-tanggal", "p-tanggal", "sl-tanggal", "j-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
+    muatKatalogPoin();
     pilihTab("inbox");
     muatNamaSiswa();
     muatPantau(true);
@@ -484,7 +500,7 @@
     sibuk(btn, true, "Menyimpan…"); status(st, "");
     api("simpanKejadian", { data: {
       tanggal: $("k-tanggal").value, nama: $("k-nama").value, kelas: $("k-kelas").value, kategori: $("k-kategori").value,
-      deskripsi: $("k-deskripsi").value, tindakLanjut: $("k-tindak").value, status: $("k-status").value, pantau: $("k-pantau").value } })
+      deskripsi: $("k-deskripsi").value, tindakLanjut: $("k-tindak").value, status: $("k-status").value, pantau: $("k-pantau").value, kodePoin: $("k-poin").value } })
       .then(function (d) {
         if (!d.ok) { status(st, d.error || "Gagal menyimpan.", "err"); return; }
         f.reset(); $("k-tanggal").value = hariIni(); dimuat.statistik = false;

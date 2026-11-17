@@ -51,7 +51,8 @@
           <span class="eyebrow">Dashboard guru BK</span>
           <h1 class="h2" style="margin-top: 8px; font-size: 32px">Halo, <span id="nama-guru"></span></h1>
         </div>
-        <span style="display: flex; gap: 10px; flex-wrap: wrap"><a class="btn-line" href="hasil-angket.html" style="display: inline-flex; align-items: center; text-decoration: none">Hasil angket (AKPD, DCM, sosiometri)</a>
+        <span style="display: flex; gap: 10px; flex-wrap: wrap"><a class="btn-line" href="hasil-angket.html" style="display: inline-flex; align-items: center; text-decoration: none">Hasil angket</a>
+        <a class="btn-line" href="administrasi.html" style="display: inline-flex; align-items: center; text-decoration: none">Administrasi BK</a>
         <button type="button" id="btn-keluar" class="btn-line">Keluar</button></span>
       </div>
 
@@ -191,6 +192,7 @@
             <div class="field"><label for="k-kategori">Kategori</label><select id="k-kategori"><option value="Lainnya">Pilih kategori</option></select></div>
             <div class="field"><label for="k-status">Status</label><select id="k-status"><option>Dalam pendampingan</option><option>Selesai</option><option>Dirujuk/alih tangan</option></select></div>
           </div>
+          <div class="field"><label for="k-poin">Butir pelanggaran dan poin (opsional)</label><select id="k-poin"><option value="">Tanpa poin</option></select><span class="hint">Pilih bila kejadian ini termasuk pelanggaran tata tertib. Poinnya ikut tercatat dan dijumlahkan di Administrasi BK → Rekap poin. Daftar butir bisa diubah di tab KatalogPoin pada Sheet.</span></div>
           <div class="field"><label for="k-deskripsi">Deskripsi kejadian</label><textarea id="k-deskripsi" rows="5" required></textarea><span class="hint">Tulis fakta: apa yang terjadi, di mana, siapa saja yang terlibat.</span></div>
           <div class="field"><label for="k-tindak">Tindak lanjut guru BK</label><textarea id="k-tindak" rows="4" required></textarea></div>
           <div class="field" style="max-width: 320px"><label for="k-pantau">Jadwal pemantauan berikutnya (opsional)</label><input id="k-pantau" type="date"><span class="hint">Kasus akan muncul di menu Pemantauan saat jadwalnya dekat.</span></div>
