@@ -159,3 +159,11 @@ Batas pemakaian Apps Script: semua permintaan web memakai kuota akun Google pemi
 - Semua fitur di atas sudah tayang, termasuk halaman materi.
 - `Code.gs` terpasang sebagai Versi 13 di deployment yang sama (URL `/exec` tidak berubah). Versi 13 menambahkan daftar kelas untuk form aktivasi di `masuk.html` (hanya nama kelas, tanpa nama atau nomor siswa).
 - Tab **DataSiswa** berisi 348 siswa kelas 7 dan 8 TP 2026/2027 dengan kolom NIS, jadi aktivasi akun siswa mewajibkan NIS.
+
+## Angket BK (AKPD, DCM, sosiometri)
+
+- `angket.html` (siswa, setelah masuk portal): persetujuan → data diri (sekali) → AKPD, DCM, sosiometri. Nama dan kelas diambil dari akun.
+- `hasil-angket.html` (guru BK, setelah masuk dashboard): status pengisian, izin orang tua, buka ulang, dan analisis tiap angket.
+- Butir angket ada di `assets/js/angket-data.js` (halaman) dan `ANGKET_BUTIR` di `apps-script/Code.gs` (Sheet). Keduanya harus sama urutannya.
+- Tab Sheet yang dibuat otomatis: `PersetujuanSiswa`, `IzinOrtuAngket`, `LatarBelakangSiswa`, `AngketAKPD`, `AngketDCM`, `AngketSosiometri`, `ButirAngket`.
+- Setelah mengubah `Code.gs`: tempel ke editor Apps Script, lalu Deploy → Manage deployments → Edit → Version: New version → Deploy (URL tetap sama).

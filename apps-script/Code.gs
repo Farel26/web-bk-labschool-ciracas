@@ -62,7 +62,7 @@ var CEK_JENIS = { Curhat: 'Curhat', LaporanPerundungan: 'Laporan perundungan', K
  * saat web pertama kali dipanggil setelah Code.gs diperbarui. Data lama tidak diubah.
  * Kolom pertama setiap tab penting: "Waktu masuk" untuk kotak masuk, "ID" untuk catatan bernomor.
  */
-var SKEMA_VERSI = '2026-11-08-portal-3';
+var SKEMA_VERSI = '2026-11-17-angket-1';
 var RUJUKAN_TAB = 'RujukanWaliKelas';
 var AKUN_WALI_TAB = 'AkunWaliKelas';
 var AKUN_SISWA_TAB = 'AkunSiswa';
@@ -445,6 +445,10 @@ function guruApi_(q) {
     case 'chatKirim': return chatKirim_(String(q.akun || ''), String(q.isi || ''), 'Guru BK', u.nama);
     case 'hapusDataSiswa': return hapusDataSiswa_(String(q.id || ''));
     case 'bersihkanAlumni': return bersihkanAlumni_(q.jalankan === true);
+    case 'angketRekap': return angketRekap_(String(q.kelas || ''));
+    case 'catatIzinOrtu': return catatIzinOrtu_(u, String(q.akun || ''), q.izin === true);
+    case 'bukaUlangAngket': return bukaUlangAngket_(String(q.akun || ''), String(q.jenis || ''));
+    case 'aturAngket': return aturAngket_(q.wajibOrtu === true);
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -1623,6 +1627,13 @@ function siswaApi_(q) {
     case 'lihatHasil': return lihatHasil_(String(q.id || ''), u);
     case 'chatAmbil': return chatAmbil_(u.id, Number(q.sejak) || 0, 'siswa');
     case 'chatKirim': return chatKirimSiswa_(u, String(q.isi || ''));
+    case 'angketStatus': return statusAngket_(u);
+    case 'simpanPersetujuan': return simpanPersetujuan_(u, q.data || {});
+    case 'simpanLatar': return simpanLatar_(u, q.data || {});
+    case 'simpanAkpd': return simpanAkpd_(u, q.data || {});
+    case 'simpanDcm': return simpanDcm_(u, q.data || {});
+    case 'simpanSosio': return simpanSosio_(u, q.data || {});
+    case 'dataSayaAngket': return dataSayaAngket_(u);
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -2261,7 +2272,8 @@ function hapusDataSiswa_(id) {
   lock.waitLock(20000);
   try {
     var hasil = {};
-    [[AKUN_SISWA_TAB, 'ID'], [TARGET_TAB, 'Akun siswa'], [CHECKIN_TAB, 'Akun siswa'], [CHAT_TAB, 'Akun siswa'], [FORM_ISI_TAB, 'Akun siswa']].forEach(function (x) {
+    [[AKUN_SISWA_TAB, 'ID'], [TARGET_TAB, 'Akun siswa'], [CHECKIN_TAB, 'Akun siswa'], [CHAT_TAB, 'Akun siswa'], [FORM_ISI_TAB, 'Akun siswa'],
+      [IZIN_TAB, 'Akun siswa'], [ORTU_TAB, 'Akun siswa'], [LATAR_TAB, 'Akun siswa'], [AKPD_TAB, 'Akun siswa'], [DCM_TAB, 'Akun siswa'], [SOSIO_TAB, 'Akun siswa']].forEach(function (x) {
       var t = tabel_(x[0]), i = kol_(t, x[1]), n = 0;
       if (i < 0) return;
       for (var r = t.rows.length - 1; r >= 0; r--) {
@@ -2331,4 +2343,286 @@ function ymd_(v) {
 
 function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ================= Angket BK: persetujuan, latar belakang, AKPD, DCM, sosiometri =================
+ * Siswa mengisi dari angket.html setelah masuk ke portal siswa. Nama dan kelas diambil dari akun
+ * yang sedang masuk, bukan dari isian. Urutannya: persetujuan -> data diri -> angket.
+ * Tiap isian hanya sekali. Guru BK bisa membuka ulang dari hasil-angket.html; baris lama tetap
+ * tersimpan dengan kolom "Berlaku" = TIDAK.
+ * Tab baru (dibuat otomatis): PersetujuanSiswa, IzinOrtuAngket, LatarBelakangSiswa, AngketAKPD,
+ * AngketDCM, AngketSosiometri, dan ButirAngket (daftar pernyataan, untuk dibaca).
+ */
+var VERSI_PERSETUJUAN = '2026-11-draf';
+var LATAR_KOLOM = [["tl","Tempat lahir",0],["tgl","Tanggal lahir",0],["jk","Jenis kelamin",0],["agama","Agama",0],["status","Status dalam keluarga",0],["anakke","Anak ke",0],["saudara","Jumlah saudara kandung",0],["alamat","Alamat lengkap",1],["hp","Nomor HP siswa",0],["asal","Sekolah asal",0],["ayah","Nama ayah",0],["kayah","Pekerjaan ayah",0],["ibu","Nama ibu",0],["kibu","Pekerjaan ibu",0],["hportu","Nomor HP orang tua",1],["wali","Nama wali (jika ada)",0],["tinggal","Tinggal bersama",0],["hobi","Hobi",0],["cita","Cita-cita",0],["kegiatan","Kegiatan di luar sekolah",0],["pesan","Hal yang ingin guru BK ketahui",0]];
+var ANGKET_BUTIR = {"akpd":{"7":{"b":"PPPPPPPPPPPPPPPPPPPPSSSSSSSSSSSBBBBBBBBBBBKKKKKKKK","q":["Saya belum bersungguh-sungguh beribadah pada Tuhan YME","Kadang-kadang perbuatan saya tidak sesuai dengan yang diucapkan","Saya kadang lupa bersyukur atas nikmat dan karunia dari Tuhan YME","Saya merasa pernah menyontek pada waktu ulangan","Saya lebih senang budaya luar (asing) daripada budaya Indonesia","Saya merasa kurang memiliki rasa tanggung jawab","Saya gampang marah tanpa tahu penyebabnya","Saya merasa rendah diri","Saya merasa malu dengan kondisi fisik (jasmani) yang dimiliki","Saya merasa kurang mendapatkan perhatian dari orang tua","Saya belum tahu cara menjaga kesehatan yang baik dan benar","Saya belum tahu tentang potensi diri saya sendiri","Saya sering mengalami sakit / alergi","Saya belum memahami kelebihan dan kekurangan yang saya miliki","Orang tua saya tidak mempunyai penghasilan tetap","Saya merasa kesulitan mengatur waktu belajar dan bermain","Saya belum mengenal jati diri saya yang sebenarnya","Saya belum tahu perubahan apa saja yang terjadi pada masa remaja","Saya belum terbiasa disiplin dalam kehidupan","Saya belum tahu cara menjadi pribadi mandiri","Pemahaman saya masih sedikit tentang bahaya atau dampak rokok","Kata maaf, tolong dan terimakasih kadang lupa saya ucapkan dalam pergaulan","Saya merasa malu untuk berinteraksi dengan para guru dan karyawan di sekolah","Saya belum banyak mengenal lingkungan sekolah baru saya (guru, fasilitas, prestasi, dll)","Saya merasa sulit bergaul/kaku dengan teman-teman di sekolah","Saya ingin menyelesaikan masalah dengan teman bermain","Saya belum banyak teman atau sahabat","Saya belum tahu tentang bullying dan cara mensikapinya","Saya sering lupa waktu ketika bermain/membuka medsos (fb, wa, dll)","Saya merasa malu jika bergaul dengan teman yang beda jenis kelamin","Saya jarang bermain/berteman di lingkungan tempat saya tinggal","Orang tua saya tidak peduli dengan kegiatan belajar saya","Saya masih kesulitan dalam memahami pelajaran tertentu","Saya merasa tidak disiplin kalau belajar di rumah sendiri","Saya belajarnya jika akan ada ulangan atau ujian saja","Saya belajar di rumah kalau disuruh/diperintah orang tua","Saya sering menunda-nunda pekerjaan sekolah","Saya belum tahu cara meraih prestasi di sekolah","Saya selalu malas untuk belajar","Saya belum terbiasa belajar kelompok, biasanya saya selalu belajar sendiri","Saya belum paham cara yang baik belajar di sekolah baru (SMP/MTs)","Saya belum ada teman yang cocok untuk belajar bersama","Saya belum tahu cara memperoleh bantuan pendidikan (beasiswa)","Saya terpaksa harus bekerja untuk mencukupi kebutuhan hidup","Saya merasa bingung memilih kegiatan esktrakurikuler di sekolah","Saya merasa pesimis bisa naik kelas","Saya belum mempunyai cita-cita yang pasti","Saya belum banyak tahu tentang jenis-jenis pekerjaan di masyakarat","Saya belum tahu tentang osis dan kegiatannya","saya merasa belum paham hubungan antara hobi, bakat, minat dan kemampuan"]},"8":{"b":"PPPPPPPPPPPPPPPPSSSSSSSSSSSSSBBBBBBBBBBBBBBBBKKKKK","q":["Saya kadang lupa bersyukur atas nikmat dan karunia dari Tuhan YME","Saya kadang lupa untuk berprilaku sopan dan santun dalam kehidupan","Saya merasa belum paham etika yang baik dan benar dalam pergaulan teman sebaya","Saya merasa sulit mematuhi tata tertib di sekolah","Kadang-kadang saya masih suka menyontek pada waktu ulangan","Waktu saya banyak dihabiskan untuk bermain game atau games online","Saya sulit meminta maaf jika melakukan kesalahan terhadap orang lain","Saya masih merasa belum memiliki rasa percaya diri","Saya belum tahu cara mengendalikan emosi","Saya belum tahu cara melakukan eksplorasi bakat secara mandiri","Saya masih sering mengalami sakit / alergi","Kondisi keluarga saya sedang tidak harmonis","Saya sedang mempunyai masalah dengan anggauta keluarga di rumah","Saya merasa belum bisa menjadi pribadi yang mandiri","Saya sering lupa waktu ketika bermain/membuka media sosial (fb, wa, instagram, dll)","Saya merasa sulit mengendalikan ketergantungan dengan handphone","Saya merasa tidak betah tinggal di rumah sendiri","Saya merasa tidak pernah di perhatikan dari orang tua","Kata maaf, tolong dan terimakasih kadang lupa saya ucapkan dalam pergaulan","Saya belum tahu tentang bentuk-bentuk kenakalan remaja saat ini dan cara mensikapinya","Saya sering beda pendapat dengan orang lain","Saya sedang mempunyai masalah dengan teman di sekolah","Saya belum tahu cara untuk menjaga persahabatan agar tetap langgeng","Saya belum tahu tentang bullying dan cara mensikapinya","Saya sukar bergaul dengan teman-teman di sekolah","Saya merasa masih sedikit pemahaman tentang kesehatan reproduksi remaja","Saya belum banyak tahu tentang dampak dari pacaran","Saya malu jika membicarakan masalah seks dan pacar kepada orang tua","Saya merasa malu jika bergaul dengan teman yang beda jenis kelamin","Saya merasa takut bertanya atau menjawab di kelas","Saya belum paham yang harus dilakuan dengan adanya pemanasan global","Saya belum mengetahui banyak tentang jenis obat-obat terlarang serta dampaknya","Saya belum tahu cara memilih lembaga bimbingan belajar","Saya merasa tidak memiliki semangat belajar","Saya belum tahu cara meraih prestasi di sekolah","Saya belum paham tentang gaya belajar dan strategi yang sesuai dengannya","Saya merasa kesulitan dalam memahami pelajaran","Saya belum terbiasa belajar bersama atau kelompok","Saya merasa belum menenumkan cara belajar yang efektif","Saya selalu malas untuk belajar di rumah","Saya belajarnya jika akan ada ulangan atau ujian saja","Orang tua kurang peduli dengan kegiatan belajar saya","Saya belum bisa membuat peta pikiran (mind mapping)","Saya belum mengenal tentang macam-macam kecerdasan","Saya belum paham cara kerja otak kiri dan otak kanan","Saya sering dimarahi orang tua karena boros","Saya tidak terbiasa menabung","Saya kurang dapat menyalurkan bakat dan minat di sekolah","Saya belum tahu tentang prospek karir untuk setiap mapel","Saya belum banyak tahu tentang jenis-jenis profesi di masyarakat dan Prospeknya"]},"9":{"b":"PPPPPPPPPPPPPPPPPSSSSSSSSSSSSBBBBBBBBKKKKKKKKKKKKK","q":["Saya dalam menjalankan ibadah masih karena terpaksa","Saya merasa belum memiliki kebiasaan untuk berpikir dan bersikap positif","Kadang saya masih suka mencontek saat tes","Saya merasa tertekan (stress) menghadapi kehidupan/kegiatan","Saya masih sulit mengendalikan emosi","Saya belum mengenal macam-macam kepribadian manusia","Saya belum tahu cara menjaga kesehatan agar tetap fit menghadapi waktu ujian","Saya merasa masih sering membuang sampah tidak pada tempatnya","Saya jenuh dan enggan masuk sekolah","Saya meras sulit meninggalkan ketergantungan dengan media sosial (fc, wa, ig, dll)","Saya merasa sulit menghilangkan kebiasaan keluar malem (bermain,begadang)","Saya merasa khawatir/takut tidak dapat lulus sekolah","Saya sedang mempunyai masalah dengan anggota keluarga di rumah","Saya banyak menghabiskan waktu dengan main game atau games online","Saya merasa sulit mengendalikan ketergantungan dengan pada handphone","Saya masih merasa belum memiliki rasa percaya diri","Saya belum tahu cara menyelesaikan masalah (konflik)","Saya sering merasa tidak lancar dalam berkomunikasi dengan orang lain","Saya belum paham pentingnya nilai-nilai kehidupan di masyarakat","Saya belum memahami tentang etika berlalu lintas","Saya merasa belum paham tentang kiat sukses hidup bermasyarakat","Saya belum tahu lebih banyak akibat tawuran di kalangan pelajar","Saya masih belum bisa menjaga sebuah persahabatan agar tetap langgeng","Saya merasa sulit untuk antri","Saya belum tahu tentang bentuk-bentuk kenakalan remaja saat ini dan cara mensikapinya","Saya belum tahu membuat persahabatan yang baik melalui medsos","Saya kadang masih lupa mengucapkan kata maaf, tolong dan terimakasih dalam pergaulan","Saya belum tahu akibat nikah di usia dini","Saya belum banyak tahu dampak pacaran di kalangan remaja","Saya belum paham cara meningkatkan motivasi belajar","Saya belum bisa mengevaluasi hasil prestasi belajar","Saya belum tahu kiat sukses dalam menghadapi Ujian","Saya masih belum bisa belajar secara rutin","Saya masih memiliki kebiasaan belajar apabila akan ada tes/ujian","Saya belum tahu informasi syarat-syarat kelulusan","Saya belum paham cara meningkatkan konsentrasi belajar","Saya merasa kesulitan mempelajari dan memahami mata pelajaran tertentu","Saya berencana untuk indekos saat melanjutkan ke SLTA tetapi belum tahu cara mengelola keuangan","Saya mudah putus asa setiap menghadapi kegagalan","Cita-cita saya tidak sejalan dengan orang tua","Saya belum mengenal jenis-jenis organisasi di masyarakat","Saya sulit untuk mengambil keputusan pilihan karir","Saya masih ragu untuk melanjutkan sekolah ke jenjang SLTA","Saya belum tahu tentang cara atau strategi masuk sekolah favorit","Saya belum merencanaan karir masa depan","Saya kurang berminat memikirkan masa depan","Saya belum memahami tentang dunia kerja","Saya masih bingung memikirkan karir setelah lulus SMP/MTs","Saya belum paham masalah peminatan/jurusan di SMA/MA","Saya belum paham masalah peminatan/jurusan di SMK/MAK"]}},"dcm":[{"n":"I. Kesehatan","q":["Sering sakit ketika di SD","Sering sakit ketika di SMP","Jantung sering berdebar-debar","Sering keluar keringat dingin","Kesehatan saya sering terganggu","Pernah dioperasi","Merasa terlalu gemuk","Merasa terlalu kurus","Selalu kurang nafsu makan","Saya merasa kurang bahagia karena cacat tubuh","Sering kurang/tidak dapat tidur","Merasa lelah dan tidak bersemangat","Makanan saya kurang bergizi","Kurang makan sehingga sering merasa lapar","Sering merasa mengantuk","Penglihatan saya kurang jelas","Pendengaran saya kurang baik","Saya sering merasa pusing","Saya sering gugup","Kurang hawa segar"]},{"n":"II. Keadaan Ekonomi","q":["Uang saku saya kurang mencukupi","Kekurangan buku karena tidak mampu membeli","Ayah sudah pensiun dan tidak bekerja lagi","Ayah sudah meninggal dan ibu tidak bekerja","Saya terpaksa harus bekerja karena ekonomi tidak cukup","Orang tua tidak bekerja, sehingga saya harus bekerja","Banyak adik/kakak yang masih menjadi tanggungan orang tua","Tidak tahu bagaimana cara memberoleh tambahan biaya untuk sekolah","Saya sering pinjam uang","Tidak ingin melanjutkan sekolah karena soal biaya","Saya ingin mempunyai kamar sendiri","Penerangan lampu di rumah tidak cukup","Uang sekolah sering tidak dapat terbayar","Selalu berjalan kaki ke sekolah, padahal rumah jauh","Orang tua tidak mempunyai penghasilan tetap","Uang sekolah saya terlalu tinggi","Tidak ada uang cukup untuk membeli pakaian","Ibu harus bekerja untuk biaya sekolah saya","Saya mengharapkan memperoleh bea siswa","Saya ikut saudara yang penghasilannya pas-pasan"]},{"n":"III. Kehidupan keluarga","q":["Saya seorang anak tunggal","Saya hidup tidak bersama orang tua sendiri","Selalu bertengkar dengan adik/kakak","Ayah dan ibu pulang kerja terlalu sore","Tidak pernah bercengkerama (bergembira) dengan ayah dan ibu","Di rumah hampir tidak ada waktu untuk diri sendiri, selalu sibuk dengan tugas rumah","Pertengkaran ayah dan ibu di rumah mengganggu pikiran saya","Mata pencaharian orang tua mengganggu pikiran saya","Pendapat keluarga yang kolot menyebabkan saya tidak dapat meneruskan sekolah","Saya merasa kurang mendapatan perhatian orang tua","Orang tua saya terlalu banyak bepergian","Orang tua sering mencampuri urusan saya","Sukar menyesuaikan diri dengan orang tua","Saya merasa kurang merasa senang (tidak kerasan) di rumah","Kehidupan di rumah kurang teratur","Saya ingin mengadakan perubahan di rumah","Keluarga saya kurang tolong menolong","Ayah dan ibu hidup berpisah","Keluarga kami berantakan (broken home, tidak harmonis)","Saya mempunyai ayah/ibu tiri"]},{"n":"IV. Agama & Moral","q":["Saya masih meragukan adanya Tuhan","Saya tidak dapat bersungguh-sungguh dalam beribadah","Saya malas beribadah","Saya Ingin pindah agama","Sering berdusta/tidak jujur","Ucapan dan perbuatan saya sering tidak sesuai dengan norma agama","Sering terdorong untuk mengambil barang orang lain","Saya sering tidak mengembalikan barang pinjaman","Saya sering mempermainkan orang lain","Saya pernah melanggar kesusilaan","Saya merasa tidak berkewajiban untuk menghormati tiap-tiap agama","Saya merasa terganggu jika orang lain menjalankan ibadahnya","Tidak menyadari sebagai makhluk Tuhan","Merasa tidak berkewajiban dalam beribadah kepada Tuhan","Merasa tidak bebas dalam menganut agama","Selalu merasa bertentangan dengan ajaran yang saya anut","Hubungan antar manusia lebih penting bagi saya","Saya tidak menghormati pemeluk agama lain","Saya merasa berdosa sekali","Agama tidak merupakan kebutuhan bagi saya"]},{"n":"V. Rekreasi & Hoby","q":["Saya hampir tidak mempunyai waktu untuk bermain","Keinginan untuk rekreasi sering terhalang","Gemar melukis, tetapi tidak mempunyai alat","Pada waktu libur saya harus bekerja","Suka olah raga, tetapi tidak ada kesempatan","Tidak suka olah raga walaupun ada kesempatan","Hobi saya sering mengganggu belajar saya","Saya lebih suka membaca buku-buku hiburan daripada buku-buku pelajaran","Setiap malam saya selalu menonton film teve/sinetron","Senang menari tetapi tidak mempunyai waktu","Saya tidak dapat menggunakan waktu luang","Salah seorang anggota keluarga saya sering menghalangi hobi saya","Saya ingin belajar menari, tetapi tidak dijinkan orang tua","Kesenangan saya membaca majalah dan sering menghabiskan waktu belajar saya","Waktu saya habis untuk menonton televisi","Orang tuaku tidak pernah mengajak rekreasi","Setiap hari libur selalu rekreasi ke luar kota","Senang menyanyi tetapi tidak ada kesempatan","Teman-teman yang sering bertamu menghabiskan waktu belajar saya","Waktu belajar saya habis untuk bermain-main"]},{"n":"VI. Hub. Pribadi","q":["Tidak suka bergaul dengan orang yang kedudukannya lebih rendah","Tidak suka bergaul dengan orang yang kedudukannya lebih tinggi","Sering merasa malu bergaul dengan kawan lain jenis kelamin","Sering merasa iri hati atas prestasi orang lain","Sukar untuk mendapatkan kawan","Tidak suka bertamu","Enggan menerima tamu","Merasa harga diri kurang","Sering merasa curiga terhadap orang lain","Bersikap kaku dan tidak toleransi","Bersifat dingin dalam pergaulan","Sering menyesali diri sendiri","Sering ingin bunuh diri","Merasa tidak mempunyai harapan (pesimis)","Saya ingin tampak lebih menarik","Saya ingin sekali dikagumi","Saya ingin mempunyai kawan yang akrab","Saya merasa diri saya tidak sebaik orang lain","Saya mempunyai kebiasaan jelek","Saya ingin hidup lebih tenang"]},{"n":"VII. Kehidupan sosial & berorganisasi","q":["Tidak senang bermain dalam kelompok","Sering gagal dalam usaha mencari kawan dekat","Saya sukar bergaul","Merasa tidak disenangi kawan-kawan di luar sekolah","Saya sama sekali tidak berminat terhadap organisasi","Saya terlalu aktif dalam organisasi","Saya sukar menyesuaikan diri","Saya mudah tersinggung","Takut bergaul dengan orang yang lebih tua","Tidak pernah menjadi pemimpin","Tidak pernah mengemukakan pendapat","Sering bertentangan pendapat dengan orang lain","Sukar menerima kekalahan","Selalu ingin berkuasa dalam pergaulan","Saya sering bingung bila berhadapan dengan orang banyak","Merasa malu jika berhadapan dengan orang banyak","Mudah marah","Sering tidak sabar","Sering tidak menepati janji","Sering ditegur karena kurang sopan"]},{"n":"VIII. Masalah remaja","q":["Sering melamun memikirkan si dia","Saya tidak dapat belajar kalau si dia tidak berkirim surat","Saya ragu-ragu terhadap pacar saya","Pacarku selalu mengajakku ke luar rumah","Saya merasa kesepian karena belum mempunyai pacar","Saya merasa iri melihat kawan-kawan berpasangan","Saya menggunakan banyak waktu untuk bersolek","Memilih calon suami/istri sukar bagiku","Mudah mencintai, tetapi juga mudah putus cinta","Cinta saya sering ditolak","Pernah dibujuk orang tua untuk menikah","Karena patah hati, saya sukar untuk mencintai orang lain","Sukar bergaul dengan jenis kelamin lain","Saya sudah dijodohkan oleh orang tua","Saat ini saya dilarang berpacaran oleh orang tua","Saya mudah merasa cemburu terhadap teman putra/putri","Berpacaran merupakan kebutuhan penting bagi saya","Bergaul dengan teman sejenis lebih menyenangkan dari pada dengan lawan jenis","Pacar saya bersifat egois (mau menang sendiri/mementingkan diri sendiri)","Saya bersikap terbuka/jujur terhadap pacar saya"]},{"n":"IX. Penyesuaian thd sekolah","q":["Saya tidak suka masuk sekolah","Sekolah saya sekarang tidak sesuai dengan keinginan saya","Saya ingin pindah ke sekolah lain","Saya ingin pindah kelas lain","Merasa kurang dimengerti oleh guru","Peraturan sekolah terlalu menekan saya","Pribadi salah seorang guru menyebabkan saya merasa sebal terhadap pelajarannya dan saya enggan memperhatikan pelajarannya","Beberapa mata pelajaran saya anggap tidak penting","Saya tidak dapat memusatkan perhatian di sekolah","Saya sering melamun di dalam kelas","Saya sering datang terlambat","Saya sering absen (tidak masuk sekolah)","Saya merasa dibenci oleh kawan-kawan di sekolah","Seorang kawan selalu menjengkelkan saya","Tidak ada teman yang saya sukai untuk belajar bersama","Merasa salah memilih jurusan","Saya sering tidak dapat menyelesaikan tugas sekolah","Hubungan saya dengan guru kurang akrab","Catatan pelajaran tidak lengkap dan tidak teratur","Merasa diperlakukan tidak adil oleh guru"]},{"n":"X. Penyesuaian thd kurikulum","q":["Pelajaran sekolah terlalu berat bagi saya","Pelajaran di sekolah terlalu mudah bagi saya","Enggan mengikuti kegiatan-kegiatan di luar kelas","Sukar mendapatkan buku-buku pelajaran","Sulit mengerti isi buku pelajaran","Saya sering takut/cemas menghadapi ulangan","Saya merasa rendah diri karena pernah tidak naik kelas","Saya tidak suka belajar","Saya tidak tertarik dengan buku-buku pelajaran","Saya sering mendapat nilai rendah","Saya tidak senang belajar bersama (belajar kelompok)","Sukar menangkap dan mengikuti pelajaran Matematika dan Fisika","Sering kuatir kalau-kalau mendapat giliran mengerjakan soal di papan tulis","Sering mendapat kesukaran dalam menyelesaikan tugas pekerjaan rumah","Sukar mempelajari Biologi","Merasa kurang memiliki pengetahuan dasar (membaca, menulis, berhitung)","Sukar menyesuaikan diri dengan suasana belajar di kelas","Sulit mengerti isi buku pelajaran yang saya baca","Merasa beban pelajaran terlalu berat","Merasa pelajaran tidak ada gunanya"]},{"n":"XI. Kebiasaan Belajar","q":["Saya belajar kalaun ada ulangan","Saya belajar tidak teratur waktunya","Saya belajar hanya waktu malam hari","Saya belajar hanya waktu siang hari","Saya sukar memusatkan perhatian waktu belajar di rumah","Saya sukar memusatkan perhatian waktu mengikuti kegiatan belajar mengajar di kelas","Saya sukar mengingat pelajaran yang telah dihafal","Saya sulit memulai belajar","Kalau belajar saya sering mengantuk","Saya sering merasa malas belajar","Saya sering merasa terganggu saudara ketika belajar","Saya belajar dengan cara menghafal","Saya belajar dengan cara membanyangkan","Saya belajar dengan cara membuat ringkasan","Saya tidak dapat menerapkan cara belajar yang baik","Saya sering menyalin PR teman","Saya sering memperoleh nilai di bawah KKM setiap ulangan","Saya sering merasa terganggu kebisingan di sekitar rumah ketika belajar","Saya sering merasa terganggu ajakan teman untuk bermain ketika belajar","Saya sering merasa terganggu lampu penerangan rumah ketika belajar"]},{"n":"XII. Masa depan & Cita-cita","q":["Saya khawatir tidak dapat berdiri sendiri kelak","Saya tidak tahu berbuat apa setelah lulus","Saya ingin melanjutkan sekolah, tetapi juga ingin bekerja","Saya sukar untuk menetapkan pilihan SLTA/Perguruan Tinggi","Bagi saya sulit untuk memilih pekerjaan","Bagi saya sulit untuk menetapkan pilihan jurusan","Khawatir tidak diterima di SLTA/Perguruan Tinggi","Saya ingin mengetahui bakat dan kemampuan saya","Cita-citaku tidak sesuai dengan kemampuanku","Ingin melanjutkan sekolah, tetapi tidak ada biaya","Cita-citaku tidak sama dengan teman-temanku","Cita-citaku tidak disetujui oleh orang tua","Cita-citaku terganggu oleh hobi","Belum mempunyai cita-cita tertentu","Tidak ada orang yang membantu mengenali cita-citaku","Cita-citaku selalu goyah/berubah","Saya merasa, sekolah tidak menjamin masa depanku","Mudah terpengaruh cita-cita orang lain","Koneksi (KKN) adalah unsur yang menentukan masa depan saya","Masa depan saya tidak ditentukan oleh usaha saat sekarang"]}],"sos":{"A":["Teman Kelas paling dekat dengan saya (mis: sahabat, teman akrab)","Teman untuk mengikuti kegiatan organisasi/ekskur/sosial bersama saya","Teman Kelas yang paling saya sukai dalam belajar kelompok","Teman yang saya pilih untuk melanjutkan sekolah/kuliah bersama"],"B":["Teman Kelas paling ingin saya jauhi / mengganggu saya","Teman kegiatan organisasi/ekskur/sosial yang ingin saya hindari/jauhi","Teman Kelas yang ingin saya jauhi dalam belajar kelompok","Teman yang ingin saya jauhi dalam melanjutkan sekolah/kuliah bersama"]}};
+var IZIN_TAB = 'PersetujuanSiswa', ORTU_TAB = 'IzinOrtuAngket', LATAR_TAB = 'LatarBelakangSiswa';
+var AKPD_TAB = 'AngketAKPD', DCM_TAB = 'AngketDCM', SOSIO_TAB = 'AngketSosiometri', BUTIR_TAB = 'ButirAngket';
+var BUTIR_VERSI = '2026-11-17';
+var AKPD_BIDANG = { P: 'Pribadi', S: 'Sosial', B: 'Belajar', K: 'Karir' };
+var ANGKET_TAB = { persetujuan: IZIN_TAB, latar: LATAR_TAB, akpd: AKPD_TAB, dcm: DCM_TAB, sosio: SOSIO_TAB };
+
+(function () {
+  var no = []; for (var i = 1; i <= 50; i++) no.push('No ' + i);
+  var dj = [], dn = [];
+  ANGKET_BUTIR.dcm.forEach(function (t) { dj.push(t.n + ' (jml)'); dn.push(t.n + ' (nomor)'); });
+  var so = [];
+  ['A', 'B'].forEach(function (g) { for (var k = 1; k <= 4; k++) so.push(g + k + (g === 'A' ? ' Dipilih' : ' Ditolak'), g + k + ' Alasan'); });
+  SKEMA[IZIN_TAB] = ['Waktu', 'Akun siswa', 'Nama', 'Kelas', 'Keputusan', 'Versi teks', 'Berlaku'];
+  SKEMA[ORTU_TAB] = ['Akun siswa', 'Nama', 'Kelas', 'Izin orang tua', 'Dicatat oleh', 'Waktu'];
+  SKEMA[LATAR_TAB] = ['Waktu', 'Akun siswa', 'Nama', 'Kelas'].concat(LATAR_KOLOM.map(function (x) { return x[1]; })).concat(['Berlaku']);
+  SKEMA[AKPD_TAB] = ['Waktu', 'Akun siswa', 'Nama', 'Kelas', 'Jenjang', 'Jumlah Ya', 'Pribadi', 'Sosial', 'Belajar', 'Karir', 'Nomor yang dijawab Ya', 'Berlaku'].concat(no);
+  SKEMA[DCM_TAB] = ['Waktu', 'Akun siswa', 'Nama', 'Kelas', 'Jumlah masalah'].concat(dj).concat(dn)
+    .concat(['241. Masalah yang belum tercantum', '242. Masalah yang paling menyusahkan', '243. Suka membicarakan kesulitan?', '243. Dengan siapa', 'Berlaku']);
+  SKEMA[SOSIO_TAB] = ['Waktu', 'Akun siswa', 'Nama', 'Kelas'].concat(so).concat(['Berlaku']);
+  SKEMA[BUTIR_TAB] = ['Angket', 'Jenjang', 'No', 'Bidang / Topik', 'Pernyataan'];
+})();
+
+// Daftar pernyataan ditulis sekali ke tab ButirAngket supaya angka di tab angket bisa dibaca artinya.
+function pastikanButir_() {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('BUTIR_VERSI') === BUTIR_VERSI) return;
+  var rows = [];
+  ['7', '8', '9'].forEach(function (g) {
+    ANGKET_BUTIR.akpd[g].q.forEach(function (q, k) { rows.push(['AKPD', 'Kelas ' + g, k + 1, AKPD_BIDANG[ANGKET_BUTIR.akpd[g].b.charAt(k)], q]); });
+  });
+  ANGKET_BUTIR.dcm.forEach(function (t, ti) { t.q.forEach(function (q, k) { rows.push(['DCM', 'Semua', ti * 20 + k + 1, t.n, q]); }); });
+  ['A', 'B'].forEach(function (g) { ANGKET_BUTIR.sos[g].forEach(function (q, k) { rows.push(['Sosiometri', 'Semua', g + (k + 1), g === 'A' ? 'Memilih' : 'Menolak', q]); }); });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BUTIR_TAB);
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 5).clearContent();
+    sh.getRange(2, 1, rows.length, 5).setValues(rows);
+    props.setProperty('BUTIR_VERSI', BUTIR_VERSI);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function denganKunci_(fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try { return fn(); } finally { lock.releaseLock(); }
+}
+function bukanTidak_(v) { return String(v).trim().toUpperCase() !== 'TIDAK'; }
+// Baris terakhir milik akun ini yang masih berlaku.
+function berlaku_(tab, akun) {
+  var t = tabel_(tab), iA = kol_(t, 'Akun siswa'), iB = kol_(t, 'Berlaku');
+  if (iA < 0) return null;
+  for (var r = t.rows.length - 1; r >= 0; r--) {
+    if (String(t.rows[r][iA]).trim() === akun && (iB < 0 || bukanTidak_(t.rows[r][iB]))) return { t: t, row: t.rows[r], baris: r + 2 };
+  }
+  return null;
+}
+function batalkan_(tab, akun) {
+  var t = tabel_(tab), iA = kol_(t, 'Akun siswa'), iB = kol_(t, 'Berlaku'), n = 0;
+  if (iA < 0 || iB < 0) return 0;
+  t.rows.forEach(function (row, r) {
+    if (String(row[iA]).trim() === akun && bukanTidak_(row[iB])) { t.sh.getRange(r + 2, iB + 1).setValue('TIDAK'); n++; }
+  });
+  return n;
+}
+function jenjang_(kelas) { var m = normKelas_(kelas).match(/^[789]/); return m ? m[0] : ''; }
+function temanSekelas_(u) {
+  var k = normKelas_(u.kelas), aku = norm_(u.nama);
+  return dataSiswa_().filter(function (s) { return normKelas_(s.kelas) === k && norm_(s.nama) !== aku; })
+    .map(function (s) { return s.nama; }).sort();
+}
+function wajibOrtu_() { return PropertiesService.getScriptProperties().getProperty('ANGKET_WAJIB_ORTU') === 'YA'; }
+function izinOrtuAngket_(akun) {
+  var b = cariBaris_(ORTU_TAB, 'Akun siswa', akun);
+  return !!b && /^ya$/i.test(String(sel_(b.t, b.row, 'Izin orang tua')).trim());
+}
+
+function statusAngket_(u) {
+  var p = berlaku_(IZIN_TAB, u.id), setuju = !!p && String(sel_(p.t, p.row, 'Keputusan')).trim() === 'Setuju';
+  var latar = !!berlaku_(LATAR_TAB, u.id), wajib = wajibOrtu_(), ortu = izinOrtuAngket_(u.id);
+  var siap = setuju && latar && (!wajib || ortu);
+  var o = { ok: true, nama: u.nama, kelas: u.kelas, jenjang: jenjang_(u.kelas),
+    persetujuan: p ? { keputusan: String(sel_(p.t, p.row, 'Keputusan')).trim(), waktu: tglKey_(p.row[0]) } : null,
+    latar: latar, wajibOrtu: wajib, ortu: ortu, siap: siap,
+    akpd: !!berlaku_(AKPD_TAB, u.id), dcm: !!berlaku_(DCM_TAB, u.id), sosio: !!berlaku_(SOSIO_TAB, u.id) };
+  if (siap) o.teman = temanSekelas_(u);
+  return o;
+}
+function dasar_(u) { return { 'Waktu': new Date(), 'Akun siswa': u.id, 'Nama': u.nama, 'Kelas': u.kelas, 'Berlaku': 'YA' }; }
+
+function simpanPersetujuan_(u, d) {
+  return denganKunci_(function () {
+    var p = berlaku_(IZIN_TAB, u.id);
+    if (p && String(sel_(p.t, p.row, 'Keputusan')).trim() === 'Setuju') return { ok: false, error: 'Persetujuanmu sudah tercatat.' };
+    if (p) batalkan_(IZIN_TAB, u.id);
+    var n = dasar_(u);
+    n['Keputusan'] = d.setuju === true ? 'Setuju' : 'Belum setuju';
+    n['Versi teks'] = VERSI_PERSETUJUAN;
+    tulisBarisKolom_(IZIN_TAB, n);
+    return statusAngket_(u);
+  });
+}
+
+function simpanLatar_(u, d) {
+  return denganKunci_(function () {
+    var s = statusAngket_(u);
+    if (!s.persetujuan || s.persetujuan.keputusan !== 'Setuju') return { ok: false, error: 'Isi persetujuan terlebih dahulu.' };
+    if (s.latar) return { ok: false, error: 'Data dirimu sudah tercatat. Bila perlu diubah, sampaikan ke guru BK.' };
+    var n = dasar_(u), kurang = '';
+    LATAR_KOLOM.forEach(function (x) {
+      var v = clean_(d[x[0]]).slice(0, 500);
+      if (x[2] && !v && !kurang) kurang = x[1];
+      n[x[1]] = v;
+    });
+    if (kurang) return { ok: false, error: 'Bagian "' + kurang + '" belum diisi.' };
+    tulisBarisKolom_(LATAR_TAB, n);
+    return statusAngket_(u);
+  });
+}
+
+function bolehIsi_(u, jenis) {
+  var s = statusAngket_(u);
+  if (!s.siap) return 'Angket belum dibuka. Selesaikan persetujuan dan data diri terlebih dahulu.';
+  if (s[jenis]) return 'Angket ini sudah kamu kirim.';
+  return '';
+}
+
+function simpanAkpd_(u, d) {
+  return denganKunci_(function () {
+    var galat = bolehIsi_(u, 'akpd');
+    if (galat) return { ok: false, error: galat };
+    var g = jenjang_(u.kelas), butir = ANGKET_BUTIR.akpd[g], j = d.jawaban;
+    if (!butir) return { ok: false, error: 'Angket untuk kelasmu belum tersedia. Hubungi guru BK.' };
+    if (!Array.isArray(j) || j.length !== 50 || j.some(function (v) { return v !== true && v !== false; })) return { ok: false, error: 'Semua pernyataan harus dijawab Ya atau Tidak.' };
+    var n = dasar_(u), jml = { P: 0, S: 0, B: 0, K: 0 }, ya = [];
+    j.forEach(function (v, k) { n['No ' + (k + 1)] = v ? 'Ya' : 'Tidak'; if (v) { jml[butir.b.charAt(k)]++; ya.push(k + 1); } });
+    n['Jenjang'] = 'Kelas ' + g; n['Jumlah Ya'] = ya.length;
+    n['Pribadi'] = jml.P; n['Sosial'] = jml.S; n['Belajar'] = jml.B; n['Karir'] = jml.K;
+    n['Nomor yang dijawab Ya'] = ya.join(', ');
+    tulisBarisKolom_(AKPD_TAB, n);
+    return statusAngket_(u);
+  });
+}
+
+function simpanDcm_(u, d) {
+  return denganKunci_(function () {
+    var galat = bolehIsi_(u, 'dcm');
+    if (galat) return { ok: false, error: galat };
+    if (!Array.isArray(d.nomor)) return { ok: false, error: 'Jawaban tidak terbaca. Coba kirim lagi.' };
+    var ada = {}, per = ANGKET_BUTIR.dcm.map(function () { return []; });
+    d.nomor.forEach(function (x) { x = Number(x); if (x >= 1 && x <= 240 && x === Math.floor(x)) ada[x] = 1; });
+    var semua = Object.keys(ada).map(Number).sort(function (a, b) { return a - b; });
+    semua.forEach(function (x) { per[Math.floor((x - 1) / 20)].push(x); });
+    var n = dasar_(u), isi = d.isian || {};
+    n['Jumlah masalah'] = semua.length;
+    ANGKET_BUTIR.dcm.forEach(function (t, i) { n[t.n + ' (jml)'] = per[i].length; n[t.n + ' (nomor)'] = per[i].join(', '); });
+    n['241. Masalah yang belum tercantum'] = clean_(isi.a).slice(0, 1000);
+    n['242. Masalah yang paling menyusahkan'] = clean_(isi.b).slice(0, 1000);
+    n['243. Suka membicarakan kesulitan?'] = /^(Suka|Tidak suka)$/.test(String(isi.c || '')) ? isi.c : '';
+    n['243. Dengan siapa'] = clean_(isi.d).slice(0, 200);
+    tulisBarisKolom_(DCM_TAB, n);
+    return statusAngket_(u);
+  });
+}
+
+function simpanSosio_(u, d) {
+  return denganKunci_(function () {
+    var galat = bolehIsi_(u, 'sosio');
+    if (galat) return { ok: false, error: galat };
+    var teman = temanSekelas_(u), n = dasar_(u);
+    var pilih = d.pilih || [], tolak = d.tolak || [], ap = d.alasanPilih || [], at = d.alasanTolak || [];
+    for (var k = 0; k < 4; k++) {
+      var a = String(pilih[k] || ''), b = String(tolak[k] || '');
+      if (teman.indexOf(a) < 0) return { ok: false, error: 'Pertanyaan A nomor ' + (k + 1) + ' belum diisi dengan nama teman sekelas.' };
+      if (b && teman.indexOf(b) < 0) return { ok: false, error: 'Nama pada pertanyaan B nomor ' + (k + 1) + ' tidak ada di kelasmu.' };
+      if (b && a === b) return { ok: false, error: 'Pada nomor ' + (k + 1) + ', teman yang dipilih dan yang dijauhi tidak boleh orang yang sama.' };
+      n['A' + (k + 1) + ' Dipilih'] = a; n['A' + (k + 1) + ' Alasan'] = clean_(ap[k]).slice(0, 300);
+      n['B' + (k + 1) + ' Ditolak'] = b; n['B' + (k + 1) + ' Alasan'] = b ? clean_(at[k]).slice(0, 300) : '';
+    }
+    tulisBarisKolom_(SOSIO_TAB, n);
+    return statusAngket_(u);
+  });
+}
+
+// Persetujuan dan data diri milik siswa sendiri (hanya untuk dibaca).
+function dataSayaAngket_(u) {
+  var s = statusAngket_(u), b = berlaku_(LATAR_TAB, u.id), data = [];
+  if (b) LATAR_KOLOM.forEach(function (x) { data.push([x[1], teks_(sel_(b.t, b.row, x[1]))]); });
+  return { ok: true, persetujuan: s.persetujuan, data: data };
+}
+
+/* ---- Sisi guru BK ---- */
+function angketRekap_(kelas) {
+  pastikanButir_();
+  var ds = dataSiswa_(), kls = {};
+  ds.forEach(function (s) { if (s.kelas) kls[s.kelas] = 1; });
+  var urut = Object.keys(kls).sort(function (x, y) { return (parseInt(x, 10) - parseInt(y, 10)) || (x < y ? -1 : x > y ? 1 : 0); });
+  var pilih = kelas && kls[kelas] ? kelas : (urut[0] || ''), k = normKelas_(pilih);
+  function ambil(tab, fn) {
+    var t = tabel_(tab), iB = kol_(t, 'Berlaku'), iK = kol_(t, 'Kelas'), out = [];
+    t.rows.forEach(function (row) {
+      if (!row[0] || iK < 0 || normKelas_(row[iK]) !== k) return;
+      if (iB >= 0 && !bukanTidak_(row[iB])) return;
+      var o = fn(t, row);
+      o.akun = String(sel_(t, row, 'Akun siswa')).trim(); o.nama = teks_(sel_(t, row, 'Nama'));
+      out.push(o);
+    });
+    return out;
+  }
+  var a = tabel_(AKUN_SISWA_TAB), akun = [];
+  a.rows.forEach(function (r) {
+    if (r[0] && String(sel_(a, r, 'Aktif')).trim().toUpperCase() === 'YA' && normKelas_(sel_(a, r, 'Kelas')) === k) akun.push({ id: teks_(sel_(a, r, 'ID')), nama: teks_(sel_(a, r, 'Nama')) });
+  });
+  var o = tabel_(ORTU_TAB), ortu = {};
+  o.rows.forEach(function (r) { if (/^ya$/i.test(String(sel_(o, r, 'Izin orang tua')).trim())) ortu[String(sel_(o, r, 'Akun siswa')).trim()] = true; });
+  return { ok: true, kelas: urut, kelasDipilih: pilih, jenjang: jenjang_(pilih), wajibOrtu: wajibOrtu_(),
+    daftar: ds.filter(function (s) { return normKelas_(s.kelas) === k; }).map(function (s) { return s.nama; }).sort(),
+    akun: akun, ortu: ortu,
+    persetujuan: ambil(IZIN_TAB, function (t, r) { return { keputusan: String(sel_(t, r, 'Keputusan')).trim(), waktu: tglKey_(r[0]) }; }),
+    latar: ambil(LATAR_TAB, function (t, r) { return { data: LATAR_KOLOM.map(function (x) { return [x[1], teks_(sel_(t, r, x[1]))]; }) }; }),
+    akpd: ambil(AKPD_TAB, function (t, r) {
+      var j = []; for (var i = 1; i <= 50; i++) j.push(String(sel_(t, r, 'No ' + i)).trim() === 'Ya');
+      return { jenjang: String(sel_(t, r, 'Jenjang')).replace(/\D/g, ''), jawaban: j, waktu: tglKey_(r[0]) };
+    }),
+    dcm: ambil(DCM_TAB, function (t, r) {
+      var nomor = [];
+      ANGKET_BUTIR.dcm.forEach(function (tp) { String(sel_(t, r, tp.n + ' (nomor)')).split(',').forEach(function (x) { x = Number(String(x).trim()); if (x >= 1 && x <= 240) nomor.push(x); }); });
+      return { nomor: nomor, waktu: tglKey_(r[0]), isian: [teks_(sel_(t, r, '241. Masalah yang belum tercantum')), teks_(sel_(t, r, '242. Masalah yang paling menyusahkan')),
+        teks_(sel_(t, r, '243. Suka membicarakan kesulitan?')), teks_(sel_(t, r, '243. Dengan siapa'))] };
+    }),
+    sosio: ambil(SOSIO_TAB, function (t, r) {
+      var x = { pilih: [], alasanPilih: [], tolak: [], alasanTolak: [], waktu: tglKey_(r[0]) };
+      for (var i = 1; i <= 4; i++) {
+        x.pilih.push(teks_(sel_(t, r, 'A' + i + ' Dipilih'))); x.alasanPilih.push(teks_(sel_(t, r, 'A' + i + ' Alasan')));
+        x.tolak.push(teks_(sel_(t, r, 'B' + i + ' Ditolak'))); x.alasanTolak.push(teks_(sel_(t, r, 'B' + i + ' Alasan')));
+      }
+      return x;
+    }) };
+}
+
+function catatIzinOrtu_(u, akun, izin) {
+  var a = cariBaris_(AKUN_SISWA_TAB, 'ID', akun);
+  if (!a) return { ok: false, error: 'Akun siswa tidak ditemukan.' };
+  return denganKunci_(function () {
+    var b = cariBaris_(ORTU_TAB, 'Akun siswa', akun), waktu = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm');
+    if (b) {
+      tulisSel_(b.t, b.baris, 'Izin orang tua', izin ? 'YA' : 'TIDAK');
+      tulisSel_(b.t, b.baris, 'Dicatat oleh', u.nama);
+      tulisSel_(b.t, b.baris, 'Waktu', waktu);
+    } else {
+      tulisBarisKolom_(ORTU_TAB, { 'Akun siswa': akun, 'Nama': teks_(sel_(a.t, a.row, 'Nama')), 'Kelas': teks_(sel_(a.t, a.row, 'Kelas')),
+        'Izin orang tua': izin ? 'YA' : 'TIDAK', 'Dicatat oleh': u.nama, 'Waktu': waktu });
+    }
+    return { ok: true };
+  });
+}
+
+// Membuka ulang satu isian: baris lama tidak dihapus, hanya ditandai tidak berlaku.
+function bukaUlangAngket_(akun, jenis) {
+  var tab = ANGKET_TAB[jenis];
+  if (!tab || !akun) return { ok: false, error: 'Permintaan tidak dikenal.' };
+  return denganKunci_(function () { return { ok: true, dibatalkan: batalkan_(tab, akun) }; });
+}
+
+function aturAngket_(wajibOrtu) {
+  PropertiesService.getScriptProperties().setProperty('ANGKET_WAJIB_ORTU', wajibOrtu ? 'YA' : 'TIDAK');
+  return { ok: true, wajibOrtu: wajibOrtu_() };
 }
