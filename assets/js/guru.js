@@ -87,7 +87,8 @@
     }
     ["k-tanggal", "p-tanggal", "sl-tanggal", "j-tanggal"].forEach(function (id) { if (!$(id).value) $(id).value = hariIni(); });
     muatKatalogPoin();
-    pilihTab("inbox");
+    var awal = (location.hash || "").replace("#", "");
+    pilihTab(awal && document.getElementById("tab-" + awal) && document.getElementById("t-" + awal) ? awal : "dasbor");
     muatNamaSiswa();
     muatPantau(true);
     muatChatDaftar(true); muatCheckin(true);
@@ -104,6 +105,7 @@
     $("wali-sandi").hidden = true; $("siswa-sandi").hidden = true; dimuat = {};
     chatGuruBerhenti(); cg.akun = ""; $("chat-isi-guru").innerHTML = ""; $("chat-daftar").innerHTML = "";
     $("checkin-list").innerHTML = ""; $("hasil-list").innerHTML = ""; $("formulir-list").innerHTML = "";
+    (window.BK_PANEL_RESET || []).forEach(function (f) { try { f(); } catch (e) {} });
     status($("login-status"), pesan || "", pesan ? "err" : "");
     $("l-user").focus();
   }
@@ -129,7 +131,19 @@
     if (nama === "minat" && !dimuat.minat) muatMinat();
     if (nama === "scan" && !dimuat.scan) muatScan();
     if (nama === "scan" && !dimuat.nomor) muatNomor();
+    if (window.BK_PANEL && window.BK_PANEL[nama]) window.BK_PANEL[nama]();
+    try { history.replaceState(null, "", "#" + nama); } catch (e) {}
   }
+  window.addEventListener("hashchange", function () {
+    var h = (location.hash || "").replace("#", "");
+    if (!$("panel-dash").hidden && h && document.getElementById("tab-" + h) && document.getElementById("t-" + h)) pilihTab(h);
+  });
+  window.BK_PILIH_TAB = function (nama) {
+    if (!document.getElementById("tab-" + nama)) return;
+    pilihTab(nama);
+    var t = document.getElementById("t-" + nama); if (t) t.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  };
 
   /* ---------- Login ---------- */
   $("form-login").addEventListener("submit", function (e) {
@@ -153,8 +167,10 @@
   document.querySelectorAll(".dash-tab").forEach(function (b, i, all) {
     b.addEventListener("click", function () { pilihTab(b.dataset.tab); });
     b.addEventListener("keydown", function (e) {
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      var n = all[(i + (e.key === "ArrowRight" ? 1 : all.length - 1)) % all.length];
+      var maju = e.key === "ArrowRight" || e.key === "ArrowDown", mundur = e.key === "ArrowLeft" || e.key === "ArrowUp";
+      if (!maju && !mundur) return;
+      e.preventDefault();
+      var n = all[(i + (maju ? 1 : all.length - 1)) % all.length];
       n.focus(); pilihTab(n.dataset.tab);
     });
   });

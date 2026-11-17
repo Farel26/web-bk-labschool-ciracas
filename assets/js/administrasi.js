@@ -4,8 +4,7 @@
   var URL_API = ((window.BK_CONFIG || {}).SCRIPT_URL || "").trim(), KEY = "bk_guru_sesi";
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
-  var sesi = null, tab = "poin", data = {}, kelasPoin = "";
-  try { sesi = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) {}
+  var sesi = null, tab = "poin", data = {}, kelasPoin = "", dimulai = false;
   var isi = $("ad-isi"), stEl = $("ad-status");
   function status(msg, type) { stEl.textContent = msg || ""; stEl.className = "form-status" + (type ? " " + type : ""); }
   function api(action, extra) {
@@ -13,7 +12,7 @@
     for (var k in extra || {}) body[k] = extra[k];
     return fetch(URL_API, { method: "POST", body: JSON.stringify(body) })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.auth === false) { try { sessionStorage.removeItem(KEY); } catch (e) {} location.replace("guru.html"); throw new Error("auth"); } return d; });
+      .then(function (d) { if (d && d.auth === false) { try { sessionStorage.removeItem(KEY); } catch (e) {} location.reload(); throw new Error("auth"); } return d; });
   }
   var kartu = function (judul, html) { return '<section class="card-form" style="padding: 24px; gap: 16px"><h2 class="dash-h" style="font-size: 19px">' + judul + "</h2>" + html + "</section>"; };
   function tbl(kepala, baris, kosong) {
@@ -87,7 +86,7 @@
   }
 
   function gambar() {
-    document.querySelectorAll("#ad-tabs .dash-tab").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"); });
+    document.querySelectorAll("#ad-tabs .rg-subtab").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"); });
     isi.innerHTML = tab === "peta" ? vPeta() : !data[tab] ? "" : tab === "mutasi" ? vMutasi() : tab === "anggaran" ? vAnggaran() : vPoin();
   }
   function muat(pesan) {
@@ -129,9 +128,15 @@
       api("hapus" + b.dataset.hapus, { id: b.dataset.id }).then(function (d) { if (d.ok) muat("Baris dihapus."); else { b.disabled = false; status(d.error, "err"); } }).catch(function () { b.disabled = false; });
     }
   });
-  $("ad-tabs").addEventListener("click", function (e) { var b = e.target.closest(".dash-tab"); if (b) { tab = b.dataset.tab; gambar(); muat(); } });
+  $("ad-tabs").addEventListener("click", function (e) { var b = e.target.closest(".rg-subtab"); if (b) { tab = b.dataset.tab; gambar(); muat(); } });
 
-  if (!sesi || !sesi.token) { location.replace("guru.html"); return; }
-  if (!URL_API) { status("Halaman ini belum bisa dibuka.", "err"); return; }
-  muat();
+  // Dibuka dari menu "Poin, mutasi, dana" di Ruang Guru BK (guru.html), setelah guru masuk.
+  window.BK_PANEL = window.BK_PANEL || {};
+  window.BK_PANEL.admin = function () {
+    try { sesi = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) { sesi = null; }
+    if (!sesi || !sesi.token) return;
+    if (!URL_API) { status("Halaman ini belum bisa dibuka.", "err"); return; }
+    if (!dimulai) { dimulai = true; muat(); }
+  };
+  (window.BK_PANEL_RESET = window.BK_PANEL_RESET || []).push(function () { dimulai = false; data = {}; tab = "poin"; kelasPoin = ""; isi.innerHTML = ""; status(""); });
 })();

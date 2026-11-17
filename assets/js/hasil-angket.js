@@ -6,8 +6,7 @@
   var D = window.BK_ANGKET, KEY = "bk_guru_sesi";
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
-  var sesi = null, R = null, tab = "status";
-  try { sesi = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) {}
+  var sesi = null, R = null, tab = "status", dimulai = false;
   var isi = $("ha-isi"), stEl = $("ha-status"), selKelas = $("ha-kelas");
   var BID = [["Pribadi", [0, 1, 2, 3, 4]], ["Sosial", [5, 6, 7]], ["Belajar", [8, 9, 10]], ["Karir", [11]]];
   var NAMA_B = { P: "Pribadi", S: "Sosial", B: "Belajar", K: "Karir" };
@@ -18,7 +17,7 @@
     for (var k in extra || {}) body[k] = extra[k];
     return fetch(URL_API, { method: "POST", body: JSON.stringify(body) })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.auth === false) { try { sessionStorage.removeItem(KEY); } catch (e) {} location.replace("guru.html"); throw new Error("auth"); } return d; });
+      .then(function (d) { if (d && d.auth === false) { try { sessionStorage.removeItem(KEY); } catch (e) {} location.reload(); throw new Error("auth"); } return d; });
   }
   var kartu = function (judul, html) { return '<section class="card-form" style="padding: 24px; gap: 16px"><h2 class="dash-h" style="font-size: 19px">' + judul + "</h2>" + html + "</section>"; };
   function tbl(kepala, baris, kosong) {
@@ -175,7 +174,7 @@
   }
 
   function gambar() {
-    document.querySelectorAll("#ha-tabs .dash-tab").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"); });
+    document.querySelectorAll("#ha-tabs .rg-subtab").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false"); });
     isi.innerHTML = tab === "akpd" ? vAkpd() : tab === "dcm" ? vDcm() : tab === "sosio" ? vSosio() : tab === "latar" ? vLatar() : tab === "sheet" ? vSheet() : vStatus();
   }
   function muat(kelas, pesan) {
@@ -204,10 +203,16 @@
     if (e.target.id !== "ha-wajib") return;
     api("aturAngket", { wajibOrtu: e.target.checked }).then(function (d) { if (d.ok) { R.wajibOrtu = d.wajibOrtu; status(d.wajibOrtu ? "Angket sekarang menunggu izin orang tua." : "Angket tidak lagi menunggu izin orang tua.", "ok"); } }).catch(function () {});
   });
-  $("ha-tabs").addEventListener("click", function (e) { var b = e.target.closest(".dash-tab"); if (b) { tab = b.dataset.tab; gambar(); } });
+  $("ha-tabs").addEventListener("click", function (e) { var b = e.target.closest(".rg-subtab"); if (b) { tab = b.dataset.tab; gambar(); } });
   selKelas.addEventListener("change", function () { muat(selKelas.value); });
 
-  if (!sesi || !sesi.token) { location.replace("guru.html"); return; }
-  if (!URL_API || !D) { status("Halaman ini belum bisa dibuka.", "err"); return; }
-  muat("");
+  // Dibuka dari menu "Hasil angket" di Ruang Guru BK (guru.html), setelah guru masuk.
+  window.BK_PANEL = window.BK_PANEL || {};
+  window.BK_PANEL.angket = function () {
+    try { sesi = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) { sesi = null; }
+    if (!sesi || !sesi.token) return;
+    if (!URL_API || !D) { status("Halaman ini belum bisa dibuka.", "err"); return; }
+    if (!dimulai) { dimulai = true; muat(""); }
+  };
+  (window.BK_PANEL_RESET = window.BK_PANEL_RESET || []).push(function () { dimulai = false; R = null; tab = "status"; isi.innerHTML = ""; selKelas.innerHTML = ""; $("ha-tabs").hidden = true; status(""); });
 })();

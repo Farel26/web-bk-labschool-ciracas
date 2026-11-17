@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261117a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261117b">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -31,7 +31,7 @@
     </a>
     <a href="index.html" style="font-weight: 700; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center">Kembali ke beranda</a>
   </header>
-  <main style="max-width: 1040px; margin: 0 auto; padding: 24px 0 88px">
+  <main class="guru-main">
     <section id="panel-login" class="guru-login">
       <span class="eyebrow">Ruang guru BK</span>
       <h1 class="h2" style="margin-top: 12px">Masuk ke dashboard</h1>
@@ -45,38 +45,87 @@
       <p class="muted" style="margin-top: 16px">Lupa password? Minta guru BK pengelola web untuk mengatur ulang akun Anda.</p>
     </section>
 
-    <section id="panel-dash" hidden>
-      <div class="dash-top">
+    <section id="panel-dash" class="rg" hidden>
+      <div class="rg-bar">
         <div>
-          <span class="eyebrow">Dashboard guru BK</span>
-          <h1 class="h2" style="margin-top: 8px; font-size: 32px">Halo, <span id="nama-guru"></span></h1>
+          <p class="rg-judul">Ruang Guru BK</p>
+          <p class="rg-sub">SMP Labschool Ciracas · Tahun Pelajaran 2026/2027 · <span id="nama-guru"></span></p>
         </div>
-        <span style="display: flex; gap: 10px; flex-wrap: wrap"><a class="btn-line" href="hasil-angket.html" style="display: inline-flex; align-items: center; text-decoration: none">Hasil angket</a>
-        <a class="btn-line" href="administrasi.html" style="display: inline-flex; align-items: center; text-decoration: none">Administrasi BK</a>
-        <button type="button" id="btn-keluar" class="btn-line">Keluar</button></span>
+        <button type="button" id="btn-keluar" class="btn-line">Keluar</button>
       </div>
 
-      <div class="dash-tabs" role="tablist" aria-label="Menu dashboard">
-        <button type="button" class="dash-tab" role="tab" id="t-inbox" data-tab="inbox" aria-controls="tab-inbox" aria-selected="true">Kotak masuk <span class="badge" id="badge-inbox" hidden></span></button>
-        <button type="button" class="dash-tab" role="tab" id="t-chat" data-tab="chat" aria-controls="tab-chat" aria-selected="false" tabindex="-1">Chat siswa <span class="badge" id="badge-chat" hidden></span></button>
-        <button type="button" class="dash-tab" role="tab" id="t-checkin" data-tab="checkin" aria-controls="tab-checkin" aria-selected="false" tabindex="-1">Check-in emosi <span class="badge" id="badge-checkin" hidden></span></button>
-        <button type="button" class="dash-tab" role="tab" id="t-pantau" data-tab="pantau" aria-controls="tab-pantau" aria-selected="false" tabindex="-1">Pemantauan <span class="badge" id="badge-pantau" hidden></span></button>
-        <button type="button" class="dash-tab" role="tab" id="t-jurnal" data-tab="jurnal" aria-controls="tab-jurnal" aria-selected="false" tabindex="-1">Jurnal harian</button>
-        <button type="button" class="dash-tab" role="tab" id="t-siswa" data-tab="siswa" aria-controls="tab-siswa" aria-selected="false" tabindex="-1">Profil siswa</button>
-        <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="false" tabindex="-1">Laporan kejadian</button>
-        <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
-        <button type="button" class="dash-tab" role="tab" id="t-surat" data-tab="surat" aria-controls="tab-surat" aria-selected="false" tabindex="-1">Surat lain</button>
-        <button type="button" class="dash-tab" role="tab" id="t-scan" data-tab="scan" aria-controls="tab-scan" aria-selected="false" tabindex="-1">Arsip scan</button>
-        <button type="button" class="dash-tab" role="tab" id="t-hasil" data-tab="hasil" aria-controls="tab-hasil" aria-selected="false" tabindex="-1">Hasil psikotes</button>
-        <button type="button" class="dash-tab" role="tab" id="t-formulir" data-tab="formulir" aria-controls="tab-formulir" aria-selected="false" tabindex="-1">Formulir siswa</button>
-        <button type="button" class="dash-tab" role="tab" id="t-minat" data-tab="minat" aria-controls="tab-minat" aria-selected="false" tabindex="-1">Tes minat</button>
-        <button type="button" class="dash-tab" role="tab" id="t-statistik" data-tab="statistik" aria-controls="tab-statistik" aria-selected="false" tabindex="-1">Statistik</button>
-        <button type="button" class="dash-tab" role="tab" id="t-riwayat" data-tab="riwayat" aria-controls="tab-riwayat" aria-selected="false" tabindex="-1">Riwayat</button>
-        <button type="button" class="dash-tab" role="tab" id="t-akun" data-tab="akun" aria-controls="tab-akun" aria-selected="false" tabindex="-1">Akun</button>
+      <div class="rg-body">
+        <div class="dash-tabs rg-nav" role="tablist" aria-label="Menu Ruang Guru BK" aria-orientation="vertical">
+          <button type="button" class="dash-tab" role="tab" id="t-dasbor" data-tab="dasbor" aria-controls="tab-dasbor" aria-selected="false" tabindex="-1">Dasbor</button>
+          <span class="rg-grp" role="presentation">Data master</span>
+          <button type="button" class="dash-tab" role="tab" id="t-datasiswa" data-tab="datasiswa" aria-controls="tab-datasiswa" aria-selected="false" tabindex="-1">Data siswa</button>
+          <button type="button" class="dash-tab" role="tab" id="t-siswa" data-tab="siswa" aria-controls="tab-siswa" aria-selected="false" tabindex="-1">Profil siswa</button>
+          <button type="button" class="dash-tab" role="tab" id="t-akun" data-tab="akun" aria-controls="tab-akun" aria-selected="false" tabindex="-1">Akun dan password</button>
+          <span class="rg-grp" role="presentation">Layanan</span>
+          <button type="button" class="dash-tab" role="tab" id="t-inbox" data-tab="inbox" aria-controls="tab-inbox" aria-selected="false" tabindex="-1">Kotak masuk <span class="badge" id="badge-inbox" hidden></span></button>
+          <button type="button" class="dash-tab" role="tab" id="t-chat" data-tab="chat" aria-controls="tab-chat" aria-selected="false" tabindex="-1">Chat siswa <span class="badge" id="badge-chat" hidden></span></button>
+          <button type="button" class="dash-tab" role="tab" id="t-checkin" data-tab="checkin" aria-controls="tab-checkin" aria-selected="false" tabindex="-1">Check-in emosi <span class="badge" id="badge-checkin" hidden></span></button>
+          <button type="button" class="dash-tab" role="tab" id="t-pantau" data-tab="pantau" aria-controls="tab-pantau" aria-selected="false" tabindex="-1">Pemantauan <span class="badge" id="badge-pantau" hidden></span></button>
+          <button type="button" class="dash-tab" role="tab" id="t-jurnal" data-tab="jurnal" aria-controls="tab-jurnal" aria-selected="false" tabindex="-1">Jurnal harian</button>
+          <span class="rg-grp" role="presentation">Asesmen</span>
+          <button type="button" class="dash-tab" role="tab" id="t-angket" data-tab="angket" aria-controls="tab-angket" aria-selected="false" tabindex="-1">Hasil angket</button>
+          <button type="button" class="dash-tab" role="tab" id="t-minat" data-tab="minat" aria-controls="tab-minat" aria-selected="false" tabindex="-1">Tes minat</button>
+          <button type="button" class="dash-tab" role="tab" id="t-hasil" data-tab="hasil" aria-controls="tab-hasil" aria-selected="false" tabindex="-1">Hasil psikotes</button>
+          <button type="button" class="dash-tab" role="tab" id="t-formulir" data-tab="formulir" aria-controls="tab-formulir" aria-selected="false" tabindex="-1">Formulir siswa</button>
+          <span class="rg-grp" role="presentation">Administrasi</span>
+          <button type="button" class="dash-tab" role="tab" id="t-kejadian" data-tab="kejadian" aria-controls="tab-kejadian" aria-selected="false" tabindex="-1">Laporan kejadian</button>
+          <button type="button" class="dash-tab" role="tab" id="t-admin" data-tab="admin" aria-controls="tab-admin" aria-selected="false" tabindex="-1">Poin, mutasi, dana</button>
+          <button type="button" class="dash-tab" role="tab" id="t-perjanjian" data-tab="perjanjian" aria-controls="tab-perjanjian" aria-selected="false" tabindex="-1">Surat perjanjian</button>
+          <button type="button" class="dash-tab" role="tab" id="t-surat" data-tab="surat" aria-controls="tab-surat" aria-selected="false" tabindex="-1">Surat lain</button>
+          <button type="button" class="dash-tab" role="tab" id="t-scan" data-tab="scan" aria-controls="tab-scan" aria-selected="false" tabindex="-1">Arsip scan</button>
+          <span class="rg-grp" role="presentation">Laporan</span>
+          <button type="button" class="dash-tab" role="tab" id="t-statistik" data-tab="statistik" aria-controls="tab-statistik" aria-selected="false" tabindex="-1">Statistik</button>
+          <button type="button" class="dash-tab" role="tab" id="t-riwayat" data-tab="riwayat" aria-controls="tab-riwayat" aria-selected="false" tabindex="-1">Riwayat</button>
+        </div>
+        <div class="rg-main">
+
+      <!-- Dasbor -->
+      <div id="tab-dasbor" class="dash-panel" role="tabpanel" aria-labelledby="t-dasbor">
+        <div id="dasbor-isi" aria-live="polite"></div>
+      </div>
+
+      <!-- Data siswa (NISN hanya untuk guru BK) -->
+      <div id="tab-datasiswa" class="dash-panel" role="tabpanel" aria-labelledby="t-datasiswa" hidden>
+        <div id="ds-isi"></div>
+      </div>
+
+      <!-- Hasil angket -->
+      <div id="tab-angket" class="dash-panel" role="tabpanel" aria-labelledby="t-angket" hidden>
+        <div class="rg-head rg-head-baris"><div><span class="eyebrow">Asesmen</span><h2>Hasil angket</h2></div>
+          <div class="field ak-noprint" style="min-width: 160px"><label for="ha-kelas">Kelas</label><select id="ha-kelas"></select></div></div>
+        <p class="form-status" id="ha-status" role="status" aria-live="polite"></p>
+        <div class="rg-subtabs ak-noprint" role="tablist" aria-label="Bagian hasil angket" id="ha-tabs" hidden>
+          <button type="button" class="rg-subtab" role="tab" data-tab="status" aria-selected="true">Status pengisian</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="akpd" aria-selected="false">AKPD</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="dcm" aria-selected="false">DCM</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="sosio" aria-selected="false">Sosiometri</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="latar" aria-selected="false">Data diri</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="sheet" aria-selected="false">Baca di Sheet</button>
+        </div>
+        <div id="ha-isi" style="margin-top: 20px; display: flex; flex-direction: column; gap: 20px"></div>
+      </div>
+
+      <!-- Administrasi: poin, mutasi, anggaran -->
+      <div id="tab-admin" class="dash-panel" role="tabpanel" aria-labelledby="t-admin" hidden>
+        <div class="rg-head"><span class="eyebrow">Administrasi</span><h2>Poin, mutasi, dan anggaran</h2></div>
+        <p class="form-status" id="ad-status" role="status" aria-live="polite"></p>
+        <div class="rg-subtabs ak-noprint" role="tablist" aria-label="Bagian administrasi" id="ad-tabs">
+          <button type="button" class="rg-subtab" role="tab" data-tab="poin" aria-selected="true">Rekap poin</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="mutasi" aria-selected="false">Mutasi siswa</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="anggaran" aria-selected="false">Anggaran BK</button>
+          <button type="button" class="rg-subtab" role="tab" data-tab="peta" aria-selected="false">Letak fitur lain</button>
+        </div>
+        <div id="ad-isi" style="margin-top: 20px; display: flex; flex-direction: column; gap: 20px"></div>
       </div>
 
       <!-- Kotak masuk -->
-      <div id="tab-inbox" class="dash-panel" role="tabpanel" aria-labelledby="t-inbox">
+      <div id="tab-inbox" class="dash-panel" role="tabpanel" aria-labelledby="t-inbox" hidden>
+        <div class="rg-head"><span class="eyebrow">Layanan</span><h2>Kotak masuk</h2></div>
         <div class="seg" role="group" aria-label="Pilih kotak masuk">
           <button type="button" class="seg-btn" data-jenis="curhat" aria-pressed="true">Curhat <span class="badge" id="b-curhat" hidden></span></button>
           <button type="button" class="seg-btn" data-jenis="laporan" aria-pressed="false">Laporan perundungan <span class="badge" id="b-laporan" hidden></span></button>
@@ -96,6 +145,7 @@
 
       <!-- Chat siswa -->
       <div id="tab-chat" class="dash-panel" role="tabpanel" aria-labelledby="t-chat" hidden>
+        <div class="rg-head"><span class="eyebrow">Layanan</span><h2>Chat siswa</h2></div>
         <p class="muted" style="margin: 0 0 14px">Pesan dari siswa yang memakai Portal Siswa. Daftar diperbarui otomatis selama menu ini terbuka. Siswa melihat nama guru yang membalas.</p>
         <div class="chat-guru">
           <div class="chat-daftar" id="chat-daftar" aria-live="polite"></div>
@@ -114,6 +164,7 @@
 
       <!-- Check-in emosi -->
       <div id="tab-checkin" class="dash-panel" role="tabpanel" aria-labelledby="t-checkin" hidden>
+        <div class="rg-head"><span class="eyebrow">Layanan</span><h2>Check-in emosi</h2></div>
         <div id="checkin-ringkas"></div>
         <div class="bar-aksi">
           <h2 class="dash-h">Perlu diperhatikan</h2>
@@ -128,6 +179,7 @@
       <!-- Profil siswa -->
       <!-- Pemantauan kasus -->
       <div id="tab-pantau" class="dash-panel" role="tabpanel" aria-labelledby="t-pantau" hidden>
+        <div class="rg-head"><span class="eyebrow">Layanan</span><h2>Pemantauan kasus</h2></div>
         <div class="pantau-ringkas" id="pantau-ringkas"></div>
         <div class="bar-aksi">
           <label class="check"><input type="checkbox" id="pantau-semua"> Tampilkan juga kasus yang sudah selesai</label>
@@ -138,6 +190,7 @@
 
       <!-- Jurnal harian -->
       <div id="tab-jurnal" class="dash-panel" role="tabpanel" aria-labelledby="t-jurnal" hidden>
+        <div class="rg-head"><span class="eyebrow">Layanan</span><h2>Jurnal harian</h2></div>
         <form id="form-jurnal" class="card-form" novalidate>
           <h2 class="dash-h">Catat kegiatan hari ini</h2>
           <p class="muted" style="margin: 0">Jurnal harian guru BK: semua kegiatan layanan, konsultasi, koordinasi, dan administrasi. Bisa dicetak per bulan untuk laporan dan supervisi.</p>
@@ -166,8 +219,8 @@
       </div>
 
       <div id="tab-siswa" class="dash-panel" role="tabpanel" aria-labelledby="t-siswa" hidden>
+        <div class="rg-head"><span class="eyebrow">Data master</span><h2>Profil siswa</h2></div>
         <form id="form-profil" class="card-form" role="search" novalidate>
-          <h2 class="dash-h">Profil siswa</h2>
           <p class="muted" style="margin: 0">Semua catatan tentang satu siswa: laporan kejadian, surat perjanjian, surat lain, permintaan konseling, janji orang tua, dan laporan perundungan yang menyebut namanya. Curhat anonim tidak ikut karena tidak memakai nama.</p>
           <div class="cari-baris">
             <div class="field" style="flex: 1"><label for="cari-nama">Nama siswa</label><input id="cari-nama" type="search" list="dl-siswa" autocomplete="off" required><span class="hint">Minimal 3 huruf. Boleh nama depan saja.</span></div>
@@ -181,8 +234,8 @@
 
       <!-- Laporan kejadian -->
       <div id="tab-kejadian" class="dash-panel" role="tabpanel" aria-labelledby="t-kejadian" hidden>
+        <div class="rg-head"><span class="eyebrow">Administrasi</span><h2>Laporan kejadian</h2></div>
         <form id="form-kejadian" class="card-form" novalidate>
-          <h2 class="dash-h">Laporan kejadian</h2>
           <div class="g3f">
             <div class="field"><label for="k-tanggal">Tanggal kejadian</label><input id="k-tanggal" type="date" required></div>
             <div class="field"><label for="k-nama">Nama siswa</label><input id="k-nama" type="text" list="dl-siswa" required></div>
@@ -204,6 +257,7 @@
 
       <!-- Surat perjanjian -->
       <div id="tab-perjanjian" class="dash-panel" role="tabpanel" aria-labelledby="t-perjanjian" hidden>
+        <div class="rg-head"><span class="eyebrow">Administrasi</span><h2>Surat perjanjian</h2></div>
         <form id="form-perjanjian" class="card-form" novalidate>
           <h2 class="dash-h">Surat perjanjian siswa</h2>
           <div class="g3f">
@@ -226,8 +280,8 @@
 
       <!-- Surat lain -->
       <div id="tab-surat" class="dash-panel" role="tabpanel" aria-labelledby="t-surat" hidden>
+        <div class="rg-head"><span class="eyebrow">Administrasi</span><h2>Surat lain</h2></div>
         <form id="form-surat" class="card-form" novalidate>
-          <h2 class="dash-h">Surat lain</h2>
           <fieldset class="seg" style="border: 0; padding: 0; margin: 0">
             <legend class="sr-only">Jenis surat</legend>
             <label class="seg-radio"><input type="radio" name="sl-jenis" value="panggilan" checked> Panggilan orang tua</label>
@@ -253,6 +307,7 @@
 
       <!-- Arsip scan -->
       <div id="tab-scan" class="dash-panel" role="tabpanel" aria-labelledby="t-scan" hidden>
+        <div class="rg-head"><span class="eyebrow">Administrasi</span><h2>Arsip scan</h2></div>
         <form id="form-scan" class="card-form" novalidate>
           <h2 class="dash-h">Unggah scan dokumen</h2>
           <p class="muted" style="margin: 0">Cukup pilih nomor dokumen dari daftar. Nama, kelas, tanggal, dan jenis dokumen terisi otomatis. Untuk dokumen baru, lampirkan scan langsung saat menyimpan laporan atau surat.</p>
@@ -273,6 +328,7 @@
 
       <!-- Hasil psikotes -->
       <div id="tab-hasil" class="dash-panel" role="tabpanel" aria-labelledby="t-hasil" hidden>
+        <div class="rg-head"><span class="eyebrow">Asesmen</span><h2>Hasil psikotes</h2></div>
         <form id="form-hasil" class="card-form" novalidate>
           <h2 class="dash-h">Unggah hasil psikotes</h2>
           <p class="muted" style="margin: 0">Pilih satu atau banyak file sekaligus. Bila nama file sama dengan nama siswa (mis. <strong>Ahmad Rizky Pratama.pdf</strong>), nama dan kelas terisi otomatis. Hasil awalnya <strong>tersembunyi</strong>. Sebaiknya hasil psikotes dibahas dulu bersama siswa (dan orang tua bila perlu) supaya tidak disalahartikan sebagai label, baru setelah itu ditampilkan di Portal Siswa.</p>
@@ -296,6 +352,7 @@
 
       <!-- Formulir siswa -->
       <div id="tab-formulir" class="dash-panel" role="tabpanel" aria-labelledby="t-formulir" hidden>
+        <div class="rg-head"><span class="eyebrow">Asesmen</span><h2>Formulir siswa</h2></div>
         <form id="form-formulir" class="card-form" novalidate>
           <h2 class="dash-h">Bagikan formulir ke siswa</h2>
           <p class="muted" style="margin: 0">Tempel tautan Google Form (angket, asesmen, atau survei). Formulir muncul di Portal Siswa sesuai sasaran. Jawaban tetap tersimpan di Google Form; di sini Anda melihat siapa yang sudah menandai selesai.</p>
@@ -327,6 +384,7 @@
 
       <!-- Tes minat karier -->
       <div id="tab-minat" class="dash-panel" role="tabpanel" aria-labelledby="t-minat" hidden>
+        <div class="rg-head"><span class="eyebrow">Asesmen</span><h2>Tes minat</h2></div>
         <div class="bar-aksi">
           <div class="field" style="min-width: 200px"><label for="minat-kelas">Kelas</label><select id="minat-kelas"><option value="">Semua kelas</option></select></div>
           <div class="tombol-baris"><a class="btn-mini" href="tes-minat.html" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; text-decoration: none">Buka halaman tes</a><button type="button" id="minat-muat" class="btn-mini">Muat ulang</button></div>
@@ -337,6 +395,7 @@
 
       <!-- Statistik -->
       <div id="tab-statistik" class="dash-panel" role="tabpanel" aria-labelledby="t-statistik" hidden>
+        <div class="rg-head"><span class="eyebrow">Laporan</span><h2>Statistik</h2></div>
         <form id="form-statistik" class="filter-baris" novalidate>
           <div class="field"><label for="st-dari">Dari</label><input id="st-dari" type="date"></div>
           <div class="field"><label for="st-sampai">Sampai</label><input id="st-sampai" type="date"></div>
@@ -362,6 +421,7 @@
 
       <!-- Riwayat -->
       <div id="tab-riwayat" class="dash-panel" role="tabpanel" aria-labelledby="t-riwayat" hidden>
+        <div class="rg-head"><span class="eyebrow">Laporan</span><h2>Riwayat</h2></div>
         <div class="bar-aksi">
           <p class="muted" style="margin: 0">15 data terbaru. Data lengkap ada di Google Sheet BK.</p>
           <button type="button" id="btn-muat-ulang" class="btn-mini">Muat ulang</button>
@@ -376,6 +436,7 @@
 
       <!-- Akun -->
       <div id="tab-akun" class="dash-panel" role="tabpanel" aria-labelledby="t-akun" hidden>
+        <div class="rg-head"><span class="eyebrow">Data master</span><h2>Akun dan password</h2></div>
         <form id="form-wali" class="card-form" novalidate>
           <h2 class="dash-h">Akun wali kelas</h2>
           <p class="muted" style="margin: 0">Wali kelas masuk ke <a href="wali.html" target="_blank" rel="noopener">Portal Wali Kelas</a> untuk mengirim rujukan dan melihat status serta tanggapan guru BK. Mereka tidak bisa melihat catatan konseling.</p>
@@ -426,6 +487,8 @@
         </div>
         <div id="scan-viewer-isi"></div>
       </section>
+        </div>
+      </div>
     </section>
 
     <section id="surat-cetak" aria-hidden="true">
@@ -444,6 +507,10 @@
 
 <script src="assets/js/config.js?v=20261109a"></script>
 <script src="assets/js/main.js?v=20261109a"></script>
-<script src="assets/js/guru.js?v=20261109a"></script>
+<script src="assets/js/angket-data.js?v=20261117b"></script>
+<script src="assets/js/ruang-guru.js?v=20261117b"></script>
+<script src="assets/js/hasil-angket.js?v=20261117b"></script>
+<script src="assets/js/administrasi.js?v=20261117b"></script>
+<script src="assets/js/guru.js?v=20261117b"></script>
 </body>
 </html>

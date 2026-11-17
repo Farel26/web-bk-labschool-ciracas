@@ -62,7 +62,7 @@ var CEK_JENIS = { Curhat: 'Curhat', LaporanPerundungan: 'Laporan perundungan', K
  * saat web pertama kali dipanggil setelah Code.gs diperbarui. Data lama tidak diubah.
  * Kolom pertama setiap tab penting: "Waktu masuk" untuk kotak masuk, "ID" untuk catatan bernomor.
  */
-var SKEMA_VERSI = '2026-11-17-admin-1';
+var SKEMA_VERSI = '2026-11-17-ruang-1';
 var RUJUKAN_TAB = 'RujukanWaliKelas';
 var AKUN_WALI_TAB = 'AkunWaliKelas';
 var AKUN_SISWA_TAB = 'AkunSiswa';
@@ -453,6 +453,8 @@ function guruApi_(q) {
     case 'catatIzinOrtu': return catatIzinOrtu_(u, String(q.akun || ''), q.izin === true);
     case 'bukaUlangAngket': return bukaUlangAngket_(String(q.akun || ''), String(q.jenis || ''));
     case 'aturAngket': return aturAngket_(q.wajibOrtu === true);
+    case 'dataSiswaGuru': return dataSiswaGuru_();
+    case 'dasbor': return dasbor_();
     case 'katalogPoin': return katalogPoin_();
     case 'rekapPoin': return rekapPoin_(String(q.kelas || ''), String(q.dari || ''), String(q.sampai || ''));
     case 'simpanMutasi': return simpanMutasi_(u, q.data || {});
@@ -2743,4 +2745,81 @@ function daftarAnggaran_() {
       satuan: teks_(sel_(t, r, 'Satuan')), total: h * j, ket: teks_(sel_(t, r, 'Keterangan')) });
   });
   return { ok: true, items: out };
+}
+
+/* =====================================================================
+   RUANG GURU BK: data siswa lengkap dan dasbor ringkasan.
+   NISN dan data diri hanya dikirim ke sesi guru BK (guruApi_). Portal siswa
+   dan wali kelas tidak pernah menerima kolom ini.
+   ===================================================================== */
+function idxKolom_(t, pola) { for (var i = 0; i < t.h.length; i++) if (pola.test(t.h[i])) return i; return -1; }
+
+// Baris terakhir yang masih berlaku per akun siswa, dari satu tab angket/persetujuan.
+function petaBerlaku_(tab) {
+  var t = tabel_(tab), iA = kol_(t, 'Akun siswa'), iB = kol_(t, 'Berlaku'), out = {};
+  if (iA < 0) return { t: t, peta: out };
+  t.rows.forEach(function (r) {
+    var a = String(r[iA] || '').trim();
+    if (!a || (iB >= 0 && !bukanTidak_(r[iB]))) return;
+    out[a] = r;
+  });
+  return { t: t, peta: out };
+}
+
+function dataSiswaGuru_() {
+  var t = tabel_(SISWA_TAB);
+  var iJk = idxKolom_(t, /^(L\s*\/\s*P|jenis kelamin|JK)$/i), iNis = idxKolom_(t, /^NIS\b/i), iNisn = idxKolom_(t, /^NISN\b/i);
+  var a = tabel_(AKUN_SISWA_TAB), akun = {};
+  a.rows.forEach(function (r) {
+    if (!r[0]) return;
+    var key = norm_(sel_(a, r, 'Nama')) + '|' + normKelas_(sel_(a, r, 'Kelas'));
+    var aktif = String(sel_(a, r, 'Aktif')).trim().toUpperCase() === 'YA';
+    if (akun[key] && akun[key].aktif && !aktif) return;   // utamakan akun yang aktif
+    akun[key] = { id: teks_(sel_(a, r, 'ID')), email: teks_(sel_(a, r, 'Email')), aktif: aktif, terakhir: tglKey_(sel_(a, r, 'Terakhir masuk')) };
+  });
+  var setuju = petaBerlaku_(IZIN_TAB), latar = petaBerlaku_(LATAR_TAB), akpd = petaBerlaku_(AKPD_TAB), dcm = petaBerlaku_(DCM_TAB), sosio = petaBerlaku_(SOSIO_TAB);
+  var o = tabel_(ORTU_TAB), ortu = {};
+  o.rows.forEach(function (r) { if (/^ya$/i.test(String(sel_(o, r, 'Izin orang tua')).trim())) ortu[String(sel_(o, r, 'Akun siswa')).trim()] = true; });
+  var items = [];
+  t.rows.forEach(function (r) {
+    var nama = rapiNama_(r[0]);
+    if (!nama) return;
+    var kelas = normKelas_(r[1]), ak = akun[norm_(nama) + '|' + kelas] || null, id = ak ? ak.id : '';
+    var x = { nama: nama, kelas: kelas, jk: iJk >= 0 ? teks_(r[iJk]).toUpperCase() : '', nis: iNis >= 0 ? teks_(r[iNis]) : '', nisn: iNisn >= 0 ? teks_(r[iNisn]) : '',
+      akun: ak, setuju: '', latar: null, akpd: false, dcm: false, sosio: false, ortu: false };
+    if (id) {
+      var p = setuju.peta[id]; if (p) x.setuju = String(sel_(setuju.t, p, 'Keputusan')).trim();
+      var l = latar.peta[id]; if (l) x.latar = LATAR_KOLOM.map(function (k) { return [k[1], teks_(sel_(latar.t, l, k[1]))]; });
+      x.akpd = !!akpd.peta[id]; x.dcm = !!dcm.peta[id]; x.sosio = !!sosio.peta[id]; x.ortu = !!ortu[id];
+    }
+    items.push(x);
+  });
+  var kls = {}; items.forEach(function (x) { kls[x.kelas] = 1; });
+  return { ok: true, items: items, kelas: Object.keys(kls).sort(function (p, q) { return (parseInt(p, 10) - parseInt(q, 10)) || (p < q ? -1 : p > q ? 1 : 0); }) };
+}
+
+function dasbor_() {
+  var d = dataSiswaGuru_(), jenjang = {};
+  d.items.forEach(function (x) {
+    var j = String(parseInt(x.kelas, 10) || '?'), s = jenjang[j] || (jenjang[j] = { siswa: 0, akun: 0, setuju: 0, latar: 0, akpd: 0, dcm: 0, sosio: 0 });
+    s.siswa++; if (x.akun && x.akun.aktif) s.akun++; if (x.setuju === 'Setuju') s.setuju++; if (x.latar) s.latar++;
+    if (x.akpd) s.akpd++; if (x.dcm) s.dcm++; if (x.sosio) s.sosio++;
+  });
+  var perhatian = [], baru = hitungBaru_();
+  var NAMA_INBOX = { curhat: 'curhat', laporan: 'laporan perundungan', konseling: 'permintaan konseling', rujukan: 'rujukan wali kelas', janji: 'janji orang tua' };
+  Object.keys(baru).forEach(function (k) { if (baru[k]) perhatian.push({ judul: baru[k] + ' ' + (NAMA_INBOX[k] || k) + ' belum ditangani', tab: 'inbox', jenis: k, tingkat: k === 'laporan' ? 2 : 1 }); });
+  var p = pemantauan_(false);
+  if (p.terlambat) perhatian.push({ judul: p.terlambat + ' kasus lewat jadwal pemantauan', tab: 'pantau', tingkat: 2 });
+  if (p.segera) perhatian.push({ judul: p.segera + ' kasus perlu dipantau minggu ini', tab: 'pantau', tingkat: 1 });
+  var c = checkinRingkas_();
+  (c.perhatian || []).slice(0, 6).forEach(function (x) {
+    perhatian.push({ judul: x.nama + ' (' + x.kelas + ')', ket: 'Check-in: ' + x.alasan.join(', '), tab: 'checkin', tingkat: x.darurat ? 2 : 1 });
+  });
+  var ch = chatDaftar_();
+  if (ch.belum) perhatian.push({ judul: ch.belum + ' pesan chat siswa belum dibaca', tab: 'chat', tingkat: 1 });
+  perhatian.sort(function (a, b) { return b.tingkat - a.tingkat; });
+  var poin = rekapPoin_('', '', '').items.slice(0, 5).map(function (x) { return { nama: x.nama, kelas: x.kelas, total: x.total }; });
+  var akunAktif = d.items.filter(function (x) { return x.akun && x.akun.aktif; }).length;
+  return { ok: true, siswa: d.items.length, akunAktif: akunAktif, kasusAktif: p.aktif, jenjang: jenjang, perhatian: perhatian, poin: poin,
+    belumDitangani: Object.keys(baru).reduce(function (s, k) { return s + (baru[k] || 0); }, 0) };
 }
