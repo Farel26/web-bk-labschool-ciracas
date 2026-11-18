@@ -62,7 +62,7 @@ var CEK_JENIS = { Curhat: 'Curhat', LaporanPerundungan: 'Laporan perundungan', K
  * saat web pertama kali dipanggil setelah Code.gs diperbarui. Data lama tidak diubah.
  * Kolom pertama setiap tab penting: "Waktu masuk" untuk kotak masuk, "ID" untuk catatan bernomor.
  */
-var SKEMA_VERSI = '2026-11-17-ruang-1';
+var SKEMA_VERSI = '2026-11-18-wali-1';
 var RUJUKAN_TAB = 'RujukanWaliKelas';
 var AKUN_WALI_TAB = 'AkunWaliKelas';
 var AKUN_SISWA_TAB = 'AkunSiswa';
@@ -1470,6 +1470,7 @@ function waliApi_(q) {
     case 'kirimRujukan': return kirimRujukan_(u, q.data || {});
     case 'daftarRujukan': return daftarRujukan_(u);
     case 'gantiPassword': return gantiPasswordWali_(u, String(q.lama || ''), String(q.baru || ''));
+    case 'kelasSaya': return kelasWali_(u);
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
@@ -2822,4 +2823,22 @@ function dasbor_() {
   var akunAktif = d.items.filter(function (x) { return x.akun && x.akun.aktif; }).length;
   return { ok: true, siswa: d.items.length, akunAktif: akunAktif, kasusAktif: p.aktif, jenjang: jenjang, perhatian: perhatian, poin: poin,
     belumDitangani: Object.keys(baru).reduce(function (s, k) { return s + (baru[k] || 0); }, 0) };
+}
+
+/* =====================================================================
+   PORTAL WALI KELAS: daftar kelas dan rekap poin kelas perwalian.
+   Hanya status (sudah/belum) dan poin pelanggaran. Tidak dikirim: NISN,
+   isi angket, data diri, uraian kejadian, catatan BK, curhat, konseling.
+   ===================================================================== */
+function kelasWali_(u) {
+  var k = normKelas_(u.kelas);
+  if (!k) return { ok: false, error: 'Kelas perwalian belum diisi. Hubungi guru BK.' };
+  var siswa = dataSiswaGuru_().items.filter(function (x) { return x.kelas === k; }).map(function (x) {
+    return { nama: x.nama, nis: x.nis, jk: x.jk, akun: !x.akun ? 'Belum aktivasi' : x.akun.aktif ? 'Aktif' : 'Nonaktif',
+      setuju: x.setuju || '', latar: !!x.latar, akpd: x.akpd, dcm: x.dcm, sosio: x.sosio };
+  });
+  var poin = rekapPoin_(k, '', '').items.map(function (x) {
+    return { nama: x.nama, total: x.total, catatan: x.catatan.map(function (c) { return { tanggal: c.tanggal, kode: c.kode, poin: c.poin }; }) };
+  });
+  return { ok: true, kelas: k, siswa: siswa, poin: poin };
 }

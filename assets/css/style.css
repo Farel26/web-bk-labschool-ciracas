@@ -947,3 +947,8 @@ tr.rg-pick:focus{outline:2px solid #B9C8F2;outline-offset:-2px}
   body.cetak-rekap #ds-doc,body.cetak-rekap #ds-doc *{visibility:visible!important}
   body.cetak-rekap #ds-doc{position:absolute;left:0;top:0;width:100%;padding:12mm}
 }
+.portal-grid[hidden]{display:none}
+.poin-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.poin-list li{background:#FEFBF2;border-radius:14px;padding:12px 16px}
+.poin-kepala{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;font-size:15px;color:#12204F}
+.poin-list p{margin:4px 0 0;font-size:14px;line-height:1.5;color:#3B4568}

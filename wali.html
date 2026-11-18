@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261117a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261118a">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -56,7 +56,16 @@
         <button type="button" id="btn-keluar" class="btn-line">Keluar</button>
       </div>
 
-      <div class="portal-grid">
+      <div class="rg-subtabs" role="tablist" aria-label="Menu portal wali kelas" id="wali-tabs" style="margin-top: 20px">
+        <button type="button" class="rg-subtab" role="tab" id="wt-rujukan" data-wt="rujukan" aria-controls="wp-rujukan" aria-selected="true">Rujukan</button>
+        <button type="button" class="rg-subtab" role="tab" id="wt-kelas" data-wt="kelas" aria-controls="wp-kelas" aria-selected="false" tabindex="-1">Daftar kelas</button>
+        <button type="button" class="rg-subtab" role="tab" id="wt-poin" data-wt="poin" aria-controls="wp-poin" aria-selected="false" tabindex="-1">Poin kelas</button>
+      </div>
+
+      <div id="wp-kelas" role="tabpanel" aria-labelledby="wt-kelas" hidden><div id="kelas-isi" aria-live="polite"></div></div>
+      <div id="wp-poin" role="tabpanel" aria-labelledby="wt-poin" hidden><div id="poin-isi" aria-live="polite"></div></div>
+
+      <div class="portal-grid" id="wp-rujukan" role="tabpanel" aria-labelledby="wt-rujukan">
         <div class="portal-kolom">
           <form id="form-rujukan" class="kartu-stk" novalidate>
             <h2 class="dash-h">Kirim rujukan baru</h2>
@@ -101,7 +110,8 @@
             <h2 class="dash-h" style="font-size: 19px">Yang Anda lihat di sini</h2>
             <ul class="target-list" style="gap: 6px">
               <li style="grid-template-columns: auto 1fr"><span aria-hidden="true" style="color: #17603B; font-weight: 800">✓</span><span class="t-teks">Status rujukan, jadwal siswa bertemu guru BK, dan tanggapan guru BK untuk Anda.</span></li>
-              <li style="grid-template-columns: auto 1fr"><span aria-hidden="true" style="color: #A1260D; font-weight: 800">✕</span><span class="t-teks">Isi pembicaraan dan catatan konseling. Itu rahasia siswa, sesuai kode etik ABKIN.</span></li>
+              <li style="grid-template-columns: auto 1fr"><span aria-hidden="true" style="color: #17603B; font-weight: 800">✓</span><span class="t-teks">Daftar kelas Anda: status akun portal dan sudah atau belum mengisi angket BK, beserta poin pelanggaran dari laporan kejadian.</span></li>
+              <li style="grid-template-columns: auto 1fr"><span aria-hidden="true" style="color: #A1260D; font-weight: 800">✕</span><span class="t-teks">Isi pembicaraan dan catatan konseling, isi jawaban angket, data diri siswa, curhat, dan laporan perundungan. Itu rahasia siswa, sesuai kode etik ABKIN.</span></li>
             </ul>
             <p class="muted" style="margin: 0; font-size: 14px">Bila penanganan butuh kerja sama Anda, guru BK akan menghubungi Anda langsung.</p>
           </div>
@@ -127,6 +137,6 @@
 
 <script src="assets/js/config.js?v=20261109a"></script>
 <script src="assets/js/jadwal.js?v=20261109a"></script>
-<script src="assets/js/wali.js?v=20261109a"></script>
+<script src="assets/js/wali.js?v=20261118a"></script>
 </body>
 </html>

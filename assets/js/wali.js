@@ -56,6 +56,7 @@
   }
 
   function keluar(pesan) {
+    KELAS = null; $("kelas-isi").innerHTML = ""; $("poin-isi").innerHTML = ""; pilihTabWali("rujukan");
     if (sesi && sesi.token && !pesan) api("logout").catch(function () {});
     simpanSesi(null);
     $("panel-portal").hidden = true; $("panel-masuk").hidden = false;
@@ -126,6 +127,66 @@
     }).catch(function (err) { if (err.message !== "auth") box.innerHTML = '<p class="muted">Gagal memuat. Coba lagi.</p>'; });
   }
   $("btn-muat").addEventListener("click", muatDaftar);
+
+  /* ---------- Tab: Rujukan · Daftar kelas · Poin kelas ---------- */
+  var KELAS = null, tabWali = "rujukan";
+  function pilihTabWali(t) {
+    tabWali = t;
+    ["rujukan", "kelas", "poin"].forEach(function (x) {
+      var b = $("wt-" + x), aktif = x === t;
+      b.setAttribute("aria-selected", aktif ? "true" : "false"); b.tabIndex = aktif ? 0 : -1;
+      $("wp-" + x).hidden = !aktif;
+    });
+    if (t !== "rujukan" && !KELAS) muatKelas(); else if (t !== "rujukan") gambarKelas();
+  }
+  $("wali-tabs").addEventListener("click", function (e) { var b = e.target.closest("[data-wt]"); if (b) pilihTabWali(b.dataset.wt); });
+  $("wali-tabs").addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    var L = ["rujukan", "kelas", "poin"], i = L.indexOf(tabWali), n = L[(i + (e.key === "ArrowRight" ? 1 : 2)) % 3];
+    pilihTabWali(n); $("wt-" + n).focus();
+  });
+  var cek = function (v, teks) { return '<span class="rg-cek' + (v ? " on" : "") + '">' + teks + "</span>"; };
+  function muatKelas() {
+    var a = $("kelas-isi"), b = $("poin-isi");
+    a.innerHTML = b.innerHTML = '<p class="muted">Memuat…</p>';
+    return api("kelasSaya").then(function (d) {
+      if (!d.ok) { a.innerHTML = b.innerHTML = '<p class="form-status err">' + esc(d.error) + "</p>"; return; }
+      KELAS = d; gambarKelas();
+    }).catch(function (err) { if (err.message !== "auth") a.innerHTML = b.innerHTML = '<p class="form-status err">Gagal memuat. <button type="button" class="btn-mini" data-ulang-kelas="1">Coba lagi</button></p>'; });
+  }
+  function gambarKelas() {
+    var d = KELAS, S = d.siswa, n = S.length;
+    var hit = function (f) { return S.filter(f).length; };
+    var aktif = hit(function (x) { return x.akun === "Aktif"; }), setuju = hit(function (x) { return x.setuju === "Setuju"; }),
+      akpd = hit(function (x) { return x.akpd; }), dcm = hit(function (x) { return x.dcm; }), sosio = hit(function (x) { return x.sosio; });
+    var belumAkun = S.filter(function (x) { return x.akun !== "Aktif"; }).map(function (x) { return x.nama; });
+    var belumAngket = S.filter(function (x) { return x.akun === "Aktif" && !(x.akpd && x.dcm && x.sosio); }).map(function (x) { return x.nama; });
+    var tiles = '<div class="rg-tiles">' + [[n, "siswa di kelas " + d.kelas], [aktif + "/" + n, "sudah aktivasi akun"], [setuju + "/" + n, "setuju ikut angket"], [akpd + "/" + n, "AKPD"], [dcm + "/" + n, "DCM"], [sosio + "/" + n, "Sosiometri"]]
+      .map(function (t) { return '<div class="rg-tile"><b>' + t[0] + "</b><span>" + esc(t[1]) + "</span></div>"; }).join("") + "</div>";
+    var ingat = (belumAkun.length ? '<p class="rg-warnbox"><b>Belum aktivasi akun (' + belumAkun.length + "):</b> " + belumAkun.map(esc).join(", ") + ".</p>" : "") +
+      (belumAngket.length ? '<p class="rg-warnbox" style="margin-top: 10px"><b>Sudah punya akun, angket belum lengkap (' + belumAngket.length + "):</b> " + belumAngket.map(esc).join(", ") + ".</p>" : "");
+    $("kelas-isi").innerHTML = '<section class="rg-card" style="margin-top: 4px">' + tiles + ingat +
+      '<div class="table-wrap rg-tbl"><table><thead><tr><th scope="col">No</th><th scope="col">NIS</th><th scope="col">Nama</th><th scope="col">L/P</th><th scope="col">Akun portal</th><th scope="col">Persetujuan</th><th scope="col">Data diri</th><th scope="col">Angket</th></tr></thead><tbody>' +
+      S.map(function (x, i) {
+        var ak = x.akun === "Aktif" ? '<span class="pill ok">Aktif</span>' : x.akun === "Nonaktif" ? '<span class="pill warn">Nonaktif</span>' : '<span class="rg-redup">Belum aktivasi</span>';
+        var st = x.setuju === "Setuju" ? '<span class="pill ok">Setuju</span>' : x.setuju ? '<span class="pill wait">' + esc(x.setuju) + "</span>" : '<span class="rg-redup">–</span>';
+        return "<tr><td>" + (i + 1) + '</td><td class="mono">' + esc(x.nis) + "</td><td><b>" + esc(x.nama) + "</b></td><td>" + esc(x.jk) + "</td><td>" + ak + "</td><td>" + st + "</td><td>" + (x.latar ? '<span class="pill ok">Sudah</span>' : '<span class="rg-redup">Belum</span>') +
+          '</td><td class="nowrap">' + cek(x.akpd, "AKPD") + cek(x.dcm, "DCM") + cek(x.sosio, "Sosio") + "</td></tr>";
+      }).join("") + "</tbody></table></div>" +
+      '<p class="rg-note">Yang tampil hanya status sudah atau belum. Isi jawaban angket dan data diri siswa hanya dibaca guru BK. Siswa yang belum aktivasi bisa diarahkan ke Panduan Masuk Portal Siswa; bila nama atau NIS tidak cocok, kabari guru BK.</p>' +
+      '<div class="tombol-baris"><button type="button" class="btn-mini" data-ulang-kelas="1">Muat ulang</button></div></section>';
+    var P = d.poin;
+    $("poin-isi").innerHTML = '<section class="rg-card" style="margin-top: 4px"><h3>Poin pelanggaran kelas ' + esc(d.kelas) + "</h3>" +
+      (P.length ? '<ul class="poin-list">' + P.map(function (x) {
+        return '<li><div class="poin-kepala"><b>' + esc(x.nama) + '</b><span class="pill wait">' + x.total + " poin · " + x.catatan.length + " catatan</span></div>" +
+          x.catatan.map(function (c) { return '<p>' + esc(J.tglPanjang(c.tanggal)) + " · <b>" + c.poin + " poin</b> · " + esc(c.kode) + "</p>"; }).join("") + "</li>";
+      }).join("") + "</ul>" : '<div class="kosong"><strong>Belum ada poin pelanggaran.</strong><span>Poin tercatat saat guru BK menulis laporan kejadian dengan butir pelanggaran.</span></div>') +
+      '<p class="rg-note">Poin dicatat guru BK lewat laporan kejadian, mengikuti daftar butir tata tertib sekolah. Uraian kejadian dan catatan tindak lanjut tidak ditampilkan. Bila ada catatan yang keliru, sampaikan ke guru BK.</p>' +
+      '<div class="tombol-baris"><button type="button" class="btn-mini" data-ulang-kelas="1">Muat ulang</button></div></section>';
+  }
+  ["kelas-isi", "poin-isi"].forEach(function (id) {
+    $(id).addEventListener("click", function (e) { if (e.target.closest("[data-ulang-kelas]")) { KELAS = null; muatKelas(); } });
+  });
 
   /* ---------- Ganti password ---------- */
   $("form-password").addEventListener("submit", function (e) {
