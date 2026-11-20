@@ -34,26 +34,47 @@
       .then(function (d) { if (d && d.auth === false) { keluar(d.error); throw new Error("auth"); } return d; });
   }
 
-  // Pilihan kelas rujukan: semua kelas dari tab DataSiswa, kelas perwalian terpilih otomatis.
-  var daftarKelas = null;
+  // Form rujukan: pilih kelas dulu, lalu nama siswa kelas itu muncul sebagai dropdown.
+  var kelasSaya = "", namaPerKelas = {}, mintaNama = 0;
   function urutKelas(a, b) { return (parseInt(a, 10) - parseInt(b, 10)) || (a < b ? -1 : a > b ? 1 : 0); }
-  function isiKelasRujukan(kelasSaya) {
-    var sel = $("r-kelas");
-    function isi(list) {
-      var semua = list.slice();
-      if (kelasSaya && semua.indexOf(kelasSaya) < 0) semua.push(kelasSaya);
-      semua.sort(urutKelas);
-      var nilai = sel.value || kelasSaya;
-      sel.innerHTML = '<option value="">Pilih kelas</option>' + semua.map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + "</option>"; }).join("");
-      sel.value = nilai;
-    }
-    isi(daftarKelas || []);
-    if (daftarKelas) return;
-    fetch(URL_API, { method: "POST", body: JSON.stringify({ peran: "siswa", action: "infoAktivasi" }) })
-      .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.ok && (d.kelas || []).length) { daftarKelas = d.kelas; isi(daftarKelas); } })
-      .catch(function () {});
+  function isiKelasRujukan(info) {
+    var sel = $("r-kelas"), semua = (info.daftarKelas || []).slice();
+    kelasSaya = info.kelas || "";
+    namaPerKelas = {};
+    if (kelasSaya) namaPerKelas[kelasSaya] = (info.siswa || []).slice().sort(function (a, b) { return a.localeCompare(b, "id"); });
+    if (kelasSaya && semua.indexOf(kelasSaya) < 0) semua.push(kelasSaya);
+    semua.sort(urutKelas);
+    sel.innerHTML = '<option value="">Pilih kelas dulu</option>' + semua.map(function (k) {
+      return '<option value="' + esc(k) + '">' + esc(k) + (k === kelasSaya ? " (kelas Anda)" : "") + "</option>";
+    }).join("");
+    sel.value = "";
+    isiNamaRujukan();
   }
+  function aturNama(teksAwal, daftar, hint) {
+    var sel = $("r-nama");
+    sel.innerHTML = '<option value="">' + esc(teksAwal) + "</option>" + (daftar || []).map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("");
+    sel.disabled = !(daftar && daftar.length);
+    $("r-nama-hint").textContent = hint;
+  }
+  function isiNamaRujukan() {
+    var k = $("r-kelas").value, nomor = ++mintaNama;
+    if (!k) { aturNama("Pilih kelas dulu", null, "Pilih kelas, lalu nama siswanya muncul di sini."); return; }
+    function tampil(daftar) {
+      if (nomor !== mintaNama) return;   // kelas sudah diganti lagi
+      if (!daftar.length) aturNama("Belum ada siswa", null, "Belum ada nama siswa kelas " + k + " di data sekolah. Hubungi guru BK.");
+      else aturNama("Pilih nama siswa", daftar, daftar.length + " siswa kelas " + k + ".");
+    }
+    if (namaPerKelas[k]) { tampil(namaPerKelas[k]); return; }
+    aturNama("Memuat nama siswa…", null, "Memuat daftar kelas " + k + "…");
+    api("siswaKelas", { kelas: k }).then(function (d) {
+      if (!d.ok) throw new Error(d.error || "gagal");
+      namaPerKelas[k] = d.siswa || []; tampil(namaPerKelas[k]);
+    }).catch(function (err) {
+      if (err.message === "auth" || nomor !== mintaNama) return;
+      aturNama("Gagal memuat", null, "Daftar nama gagal dimuat. Pilih ulang kelasnya untuk mencoba lagi.");
+    });
+  }
+  $("r-kelas").addEventListener("change", function () { isiNamaRujukan(); });
 
   /* ---------- Masuk & keluar ---------- */
   function tampilPortal(info) {
@@ -62,9 +83,7 @@
     $("panel-masuk").hidden = true; $("panel-portal").hidden = false;
     $("nama-wali").textContent = info.nama;
     $("kelas-wali").textContent = info.kelas ? "Wali kelas " + info.kelas : "Wali kelas";
-    isiKelasRujukan(info.kelas || "");
-    $("dl-siswa-kelas").innerHTML = (info.siswa || []).map(function (n) { return '<option value="' + esc(n) + '">'; }).join("");
-    $("r-nama-hint").textContent = (info.siswa || []).length ? "Ketik untuk memilih dari " + info.siswa.length + " siswa kelas " + info.kelas + "." : "Tulis nama lengkap siswa.";
+    isiKelasRujukan(info);
     var al = $("r-alasan");
     if (al.options.length <= 1) (info.alasan || []).forEach(function (a) { var o = document.createElement("option"); o.textContent = a; al.appendChild(o); });
     var ug = $("r-urgensi");
@@ -110,7 +129,7 @@
     e.preventDefault();
     var f = this, st = $("rujukan-status"), btn = f.querySelector("button[type=submit]");
     var bad = tandaiWajib(f);
-    if (bad) { status(st, "Lengkapi nama siswa, kelas, alasan, dan hal yang Anda amati.", "err"); bad.focus(); return; }
+    if (bad) { status(st, "Lengkapi kelas, nama siswa, alasan, dan hal yang Anda amati.", "err"); bad.focus(); return; }
     var data = { nama: $("r-nama").value.trim(), kelas: $("r-kelas").value.trim(), alasan: $("r-alasan").value,
       urgensi: (document.querySelector("input[name=r-urgensi]:checked") || {}).value || "Biasa",
       diamati: $("r-diamati").value, upaya: $("r-upaya").value, ortu: (document.querySelector("input[name=r-ortu]:checked") || {}).value };
@@ -118,6 +137,7 @@
     api("kirimRujukan", { data: data }).then(function (d) {
       if (!d.ok) { status(st, d.error || "Gagal mengirim.", "err"); return; }
       ["r-nama", "r-diamati", "r-upaya"].forEach(function (id) { $(id).value = ""; });
+      $("r-kelas").value = ""; isiNamaRujukan();
       $("r-alasan").value = "";
       var ug = document.querySelector("input[name=r-urgensi]"); if (ug) ug.checked = true;
       $("r-darurat").hidden = true;

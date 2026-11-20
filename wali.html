@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Yellowtail&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css?v=20261118a">
+<link rel="stylesheet" href="assets/css/style.css?v=20261120b">
 </head>
 <body>
 <div style="background: #FEFBF2; min-height: 100vh">
@@ -69,11 +69,10 @@
         <div class="portal-kolom">
           <form id="form-rujukan" class="kartu-stk" novalidate>
             <h2 class="dash-h">Kirim rujukan baru</h2>
-            <div class="g-nama-kelas">
-              <div class="field"><label for="r-nama">Nama siswa</label><input id="r-nama" type="text" list="dl-siswa-kelas" autocomplete="off" required><span class="hint" id="r-nama-hint">Ketik untuk memilih dari daftar kelas.</span></div>
-              <div class="field"><label for="r-kelas">Kelas</label><select id="r-kelas" required><option value="">Pilih kelas</option></select></div>
+            <div class="g-kelas-nama">
+              <div class="field"><label for="r-kelas">1. Kelas</label><select id="r-kelas" required><option value="">Pilih kelas dulu</option></select></div>
+              <div class="field"><label for="r-nama">2. Nama siswa</label><select id="r-nama" required disabled><option value="">Pilih kelas dulu</option></select><span class="hint" id="r-nama-hint">Pilih kelas, lalu nama siswanya muncul di sini.</span></div>
             </div>
-            <datalist id="dl-siswa-kelas"></datalist>
             <div class="field"><label for="r-alasan">Alasan rujukan</label><select id="r-alasan" required><option value="">Pilih alasan</option></select></div>
             <fieldset class="field" style="border: 0; padding: 0; margin: 0">
               <legend style="font-size: 14px; font-weight: 600; color: #12204F; margin-bottom: 6px; padding: 0">Seberapa mendesak?</legend>
@@ -137,6 +136,6 @@
 
 <script src="assets/js/config.js?v=20261109a"></script>
 <script src="assets/js/jadwal.js?v=20261109a"></script>
-<script src="assets/js/wali.js?v=20261120a"></script>
+<script src="assets/js/wali.js?v=20261120b"></script>
 </body>
 </html>

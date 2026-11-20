@@ -1471,14 +1471,28 @@ function waliApi_(q) {
     case 'daftarRujukan': return daftarRujukan_(u);
     case 'gantiPassword': return gantiPasswordWali_(u, String(q.lama || ''), String(q.baru || ''));
     case 'kelasSaya': return kelasWali_(u);
+    case 'siswaKelas': return siswaKelasWali_(q.kelas);
   }
   return { ok: false, error: 'Aksi tidak dikenal.' };
 }
 
+function urutKelas_(x, y) { return (parseInt(x, 10) - parseInt(y, 10)) || (x < y ? -1 : x > y ? 1 : 0); }
+
 function infoWali_(u) {
-  var k = normKelas_(u.kelas);
-  var siswa = k ? dataSiswa_().filter(function (s) { return normKelas_(s.kelas) === k; }).map(function (s) { return s.nama; }) : [];
-  return { ok: true, nama: u.nama, email: u.email, kelas: u.kelas, siswa: siswa, alasan: RUJUKAN_ALASAN, urgensi: RUJUKAN_URGENSI };
+  var k = normKelas_(u.kelas), ds = dataSiswa_(), kelas = {};
+  ds.forEach(function (s) { if (s.kelas) kelas[normKelas_(s.kelas)] = 1; });
+  var siswa = k ? ds.filter(function (s) { return normKelas_(s.kelas) === k; }).map(function (s) { return s.nama; }) : [];
+  return { ok: true, nama: u.nama, email: u.email, kelas: u.kelas, siswa: siswa, daftarKelas: Object.keys(kelas).sort(urutKelas_),
+    alasan: RUJUKAN_ALASAN, urgensi: RUJUKAN_URGENSI };
+}
+
+// Untuk form rujukan: hanya nama siswa satu kelas (tanpa NIS, NISN, atau data lain).
+function siswaKelasWali_(kelas) {
+  var k = normKelas_(kelas);
+  if (!k) return { ok: false, error: 'Pilih kelas dulu.' };
+  var nama = dataSiswa_().filter(function (s) { return normKelas_(s.kelas) === k; }).map(function (s) { return s.nama; });
+  nama.sort(function (a, b) { return a.localeCompare(b, 'id'); });
+  return { ok: true, kelas: k, siswa: nama };
 }
 
 function loginWali_(email, pw) {

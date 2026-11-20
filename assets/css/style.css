@@ -655,6 +655,9 @@ form[hidden]{display:none !important}
 .pikiran-blok[hidden]{display:none}
 .g-nama-kelas{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.7fr);gap:16px}
 @media (max-width: 420px){.g-nama-kelas{grid-template-columns:minmax(0,1fr)}}
+.g-kelas-nama{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:16px}
+@media (max-width: 420px){.g-kelas-nama{grid-template-columns:minmax(0,1fr)}}
+select:disabled{opacity:.6;cursor:not-allowed}
 .card-form[hidden],.field[hidden],.kartu-stk[hidden]{display:none}
 @media (max-width: 560px){.inbox-judul{white-space:normal;overflow:visible;line-height:1.5}.inbox-judul .pill{margin-bottom:2px}}
 
