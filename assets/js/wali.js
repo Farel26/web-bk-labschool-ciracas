@@ -34,6 +34,27 @@
       .then(function (d) { if (d && d.auth === false) { keluar(d.error); throw new Error("auth"); } return d; });
   }
 
+  // Pilihan kelas rujukan: semua kelas dari tab DataSiswa, kelas perwalian terpilih otomatis.
+  var daftarKelas = null;
+  function urutKelas(a, b) { return (parseInt(a, 10) - parseInt(b, 10)) || (a < b ? -1 : a > b ? 1 : 0); }
+  function isiKelasRujukan(kelasSaya) {
+    var sel = $("r-kelas");
+    function isi(list) {
+      var semua = list.slice();
+      if (kelasSaya && semua.indexOf(kelasSaya) < 0) semua.push(kelasSaya);
+      semua.sort(urutKelas);
+      var nilai = sel.value || kelasSaya;
+      sel.innerHTML = '<option value="">Pilih kelas</option>' + semua.map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + "</option>"; }).join("");
+      sel.value = nilai;
+    }
+    isi(daftarKelas || []);
+    if (daftarKelas) return;
+    fetch(URL_API, { method: "POST", body: JSON.stringify({ peran: "siswa", action: "infoAktivasi" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok && (d.kelas || []).length) { daftarKelas = d.kelas; isi(daftarKelas); } })
+      .catch(function () {});
+  }
+
   /* ---------- Masuk & keluar ---------- */
   function tampilPortal(info) {
     sesi.nama = info.nama; sesi.kelas = info.kelas;
@@ -41,7 +62,7 @@
     $("panel-masuk").hidden = true; $("panel-portal").hidden = false;
     $("nama-wali").textContent = info.nama;
     $("kelas-wali").textContent = info.kelas ? "Wali kelas " + info.kelas : "Wali kelas";
-    $("r-kelas").value = info.kelas || "";
+    isiKelasRujukan(info.kelas || "");
     $("dl-siswa-kelas").innerHTML = (info.siswa || []).map(function (n) { return '<option value="' + esc(n) + '">'; }).join("");
     $("r-nama-hint").textContent = (info.siswa || []).length ? "Ketik untuk memilih dari " + info.siswa.length + " siswa kelas " + info.kelas + "." : "Tulis nama lengkap siswa.";
     var al = $("r-alasan");

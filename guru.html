@@ -439,11 +439,11 @@
         <div class="rg-head"><span class="eyebrow">Data master</span><h2>Akun dan password</h2></div>
         <form id="form-wali" class="card-form" novalidate>
           <h2 class="dash-h">Akun wali kelas</h2>
-          <p class="muted" style="margin: 0">Wali kelas masuk ke <a href="wali.html" target="_blank" rel="noopener">Portal Wali Kelas</a> untuk mengirim rujukan dan melihat status serta tanggapan guru BK. Mereka tidak bisa melihat catatan konseling.</p>
+          <p class="muted" style="margin: 0">Wali kelas masuk ke <a href="wali.html" target="_blank" rel="noopener">Portal Wali Kelas</a> untuk mengirim rujukan, melihat daftar kelas (status akun dan angket siswa), serta poin pelanggaran kelasnya. Mereka tidak bisa melihat catatan konseling, NISN, maupun isi angket.</p>
           <div class="g3f">
             <div class="field"><label for="w-nama">Nama wali kelas</label><input id="w-nama" type="text" required></div>
             <div class="field"><label for="w-email">Email</label><input id="w-email" type="email" autocomplete="off" required></div>
-            <div class="field"><label for="w-kelas">Kelas perwalian</label><input id="w-kelas" type="text" placeholder="mis. 7A" required></div>
+            <div class="field"><label for="w-kelas">Kelas perwalian</label><select id="w-kelas" required><option value="">Pilih kelas</option></select></div>
           </div>
           <div class="tombol-baris"><button type="submit" class="btn-solid">Simpan akun</button></div>
           <p class="form-status" id="wali-status" role="status" aria-live="polite"></p>
@@ -508,9 +508,9 @@
 <script src="assets/js/config.js?v=20261109a"></script>
 <script src="assets/js/main.js?v=20261109a"></script>
 <script src="assets/js/angket-data.js?v=20261117b"></script>
-<script src="assets/js/ruang-guru.js?v=20261117b"></script>
+<script src="assets/js/ruang-guru.js?v=20261120a"></script>
 <script src="assets/js/hasil-angket.js?v=20261117b"></script>
 <script src="assets/js/administrasi.js?v=20261117b"></script>
-<script src="assets/js/guru.js?v=20261117b"></script>
+<script src="assets/js/guru.js?v=20261120a"></script>
 </body>
 </html>

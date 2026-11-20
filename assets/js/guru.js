@@ -1227,11 +1227,44 @@
     el.innerHTML = "<span>" + esc(judulTeks) + '</span><strong class="nilai">' + esc(nilai) + "</strong><span>" + esc(catatan) + "</span>";
     el.hidden = false; el.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+  // Pilihan kelas perwalian diambil dari tab DataSiswa (hanya kode kelas, tanpa data siswa).
+  var janjiKelas = null;
+  function daftarKelas() {
+    if (!janjiKelas) janjiKelas = fetch(URL_API, { method: "POST", body: JSON.stringify({ peran: "siswa", action: "infoAktivasi" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d || !d.ok || !(d.kelas || []).length) throw new Error("kosong"); return d.kelas; })
+      .catch(function (e) { janjiKelas = null; throw e; });
+    return janjiKelas;
+  }
+  function urutKelas(a, b) { return (parseInt(a, 10) - parseInt(b, 10)) || (a < b ? -1 : a > b ? 1 : 0); }
+  function isiPilihanKelasWali() {
+    var sel = $("w-kelas");
+    return daftarKelas().catch(function () { return []; }).then(function (kelas) {
+      var dipakai = {};
+      dataWali.forEach(function (w) { if (w.kelas && w.aktif) dipakai[w.kelas] = w.nama; });
+      var semua = kelas.slice();
+      dataWali.forEach(function (w) { if (w.kelas && semua.indexOf(w.kelas) < 0) semua.push(w.kelas); });
+      semua.sort(urutKelas);
+      var nilai = sel.value;
+      sel.innerHTML = '<option value="">' + (semua.length ? "Pilih kelas" : "Daftar kelas gagal dimuat") + "</option>" + semua.map(function (k) {
+        return '<option value="' + esc(k) + '">' + esc(k) + (dipakai[k] ? " (sudah: " + esc(dipakai[k]) + ")" : "") + "</option>";
+      }).join("");
+      sel.value = nilai;
+    });
+  }
+  function pilihKelasWali(k) {
+    var sel = $("w-kelas");
+    if (k && !Array.prototype.some.call(sel.options, function (o) { return o.value === k; })) {
+      var o = document.createElement("option"); o.value = k; o.textContent = k; sel.appendChild(o);
+    }
+    sel.value = k || "";
+  }
   function muatAkunWali() {
     var box = $("wali-list");
     box.innerHTML = '<p class="muted">Memuat…</p>';
     return api("daftarAkunWali").then(function (d) {
       dataWali = d.items || [];
+      isiPilihanKelasWali();
       if (!dataWali.length) { box.innerHTML = '<div class="kosong"><strong>Belum ada akun wali kelas.</strong><span>Isi nama, email, dan kelas perwalian di atas. Password sementara muncul sekali setelah disimpan.</span></div>'; return; }
       box.innerHTML = '<div class="table-wrap"><table><thead><tr><th scope=col>Kelas</th><th scope=col>Wali kelas</th><th scope=col>Terakhir masuk</th><th scope=col><span class=sr-only>Aksi</span></th></tr></thead><tbody>' +
         dataWali.map(function (w, i) {
@@ -1265,7 +1298,7 @@
     var st = $("wali-status");
     if (b.dataset.ubahWali) {
       var w = dataWali[+b.dataset.ubahWali];
-      $("w-nama").value = w.nama; $("w-email").value = w.email; $("w-kelas").value = w.kelas; $("w-nama").focus();
+      $("w-nama").value = w.nama; $("w-email").value = w.email; pilihKelasWali(w.kelas); $("w-nama").focus();
       status(st, "Ubah nama atau kelas lalu tekan Simpan akun. Email dipakai sebagai pengenal akun.", "");
       return;
     }
